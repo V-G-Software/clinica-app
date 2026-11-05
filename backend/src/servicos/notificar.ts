@@ -1,0 +1,51 @@
+// Central de notificações (8.2): toda notificação aparece na central (RN-NOT-001); push e e-mail são
+// cópias DISCRETAS, sem conteúdo clínico nem nome de paciente (RN-NOT-002); canal pela RN-NOT-003.
+import { novoId } from '../cripto.ts';
+import { todos, um, type Tx } from '../db.ts';
+import { emitir } from '../eventos.ts';
+import type { Org } from '../nucleo.ts';
+import { enviarEmail } from './email.ts';
+import { contadoresDe } from './contadores.ts';
+
+const TEXTO_DISCRETO: Record<string, string> = {
+  CHAT_MENSAGEM: 'Você tem uma nova mensagem', CHECKIN_DISPONIVEL: 'Seu check-in de hoje está disponível',
+  CHECKIN_LEMBRETE: 'Lembrete: seu check-in ainda não foi respondido', ALERTA_CRIADO: 'Há um novo alerta para revisar',
+  ACOMPANHAMENTO_INICIADO: 'Seu acompanhamento foi iniciado', ACOMPANHAMENTO_CONCLUIDO: 'Seu acompanhamento foi concluído',
+  CONVITE_ACEITO: 'Um convite foi aceito', SISTEMA: 'Você tem um novo aviso',
+};
+const EMAIL_SEM_PUSH = new Set(['CHECKIN_DISPONIVEL', 'CHECKIN_LEMBRETE', 'ALERTA_CRIADO']);
+export interface NovaNotificacao { tipo: string; titulo: string; texto: string; destino: unknown; agrupar?: string }
+type Log = { info: (o: unknown, m: string) => void };
+
+export async function notificar(tx: Tx, org: Org, usuarioId: string, n: NovaNotificacao, log: Log) {
+  const u = await um(tx, 'SELECT id, email, status, preferencias_notificacao FROM usuarios WHERE organizacao_id = $1 AND id = $2', [org.id, usuarioId]);
+  if (!u || u.status !== 'ATIVO') return;
+  // Mensagens não lidas da mesma conversa viram uma notificação só (QUESTION-009).
+  const existente = n.agrupar ? await um(tx, 'SELECT id FROM notificacoes WHERE organizacao_id = $1 AND usuario_id = $2 AND agrupar = $3 AND lido_em IS NULL', [org.id, usuarioId, n.agrupar]) : null;
+  let id: string;
+  if (existente) {
+    id = existente.id;
+    await tx.query('UPDATE notificacoes SET titulo = $3, texto = $4, criado_em = now() WHERE organizacao_id = $1 AND id = $2', [org.id, id, n.titulo, n.texto]);
+  } else {
+    id = novoId('ntf');
+    await tx.query('INSERT INTO notificacoes (organizacao_id, id, usuario_id, tipo, titulo, texto, destino, agrupar) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+      [org.id, id, usuarioId, n.tipo, n.titulo, n.texto, n.destino ?? null, n.agrupar ?? null]);
+  }
+  await emitir(tx, org.id, 'notificacao.criada', { notificacaoId: id }, [usuarioId]);
+  await avisarContadores(tx, org, [usuarioId]);
+
+  const pref = u.preferencias_notificacao?.[n.tipo] ?? { push: true, email: true };
+  const inscricoes = await todos(tx, 'SELECT id FROM inscricoes_push WHERE organizacao_id = $1 AND usuario_id = $2', [org.id, usuarioId]);
+  const discreto = `${TEXTO_DISCRETO[n.tipo] ?? 'Você tem uma nova notificação'} — ${org.nome}.`;
+  if (inscricoes.length && pref.push) {
+    // Envio Web Push (VAPID) entra na F2 com a fila de jobs; aqui fica o ponto de integração.
+    log.info({ org: org.slug, notificacaoId: id, inscricoes: inscricoes.length }, 'push enfileirado');
+    return;
+  }
+  if (!pref.email) return;
+  if (EMAIL_SEM_PUSH.has(n.tipo)) enviarEmail({ org: org.slug, para: u.email, assunto: org.nome, texto: `${discreto} Abra o app para ver.` }, log);
+}
+
+export async function avisarContadores(tx: Tx, org: Org, usuarios: string[]) {
+  for (const id of new Set(usuarios)) await emitir(tx, org.id, 'contadores.alterados', await contadoresDe(tx, org, id), [id]);
+}

@@ -3,5 +3,6 @@ packages:
   - mock
   - conformidade
   - frontend
+  - backend
 onlyBuiltDependencies:
   - esbuild
