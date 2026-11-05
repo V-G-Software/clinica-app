@@ -38,6 +38,13 @@ jobs:
           pnpm --filter frontend dev > vite.log 2>&1 &
           for i in $(seq 1 30); do curl -sf localhost:5173 >/dev/null && break; sleep 1; done
           NODE_PATH=$(npm root -g) pnpm --filter frontend e2e
+          NODE_PATH=$(npm root -g) pnpm --filter frontend e2e:a11y
+      - name: Frontend — CSP no build de produção (homologação)
+        run: |
+          pnpm --filter frontend build:homologacao
+          pnpm --filter frontend preview:homologacao > preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:4173 >/dev/null && break; sleep 1; done
+          NODE_PATH=$(npm root -g) pnpm --filter frontend e2e:csp
       - name: Mock sem violações de contrato
         run: '! grep -i "RESPOSTA FORA DO CONTRATO" mock.log'
       - uses: actions/upload-artifact@v4

@@ -77,7 +77,7 @@ const AVISO: Record<string, string> = { PUSH: 'Recebe avisos no celular', EMAIL:
       <header class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold">{{ p.nomeSocial ?? p.nome }}</h1>
-          <p v-if="p.nomeSocial" class="text-sm text-zinc-500">Nome civil: {{ p.nome }}</p>
+          <p v-if="p.nomeSocial" class="text-sm text-secundario">Nome civil: {{ p.nome }}</p>
           <p v-if="p.status === 'INATIVO'" class="font-semibold text-atencao">Inativo</p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -90,17 +90,17 @@ const AVISO: Record<string, string> = { PUSH: 'Recebe avisos no celular', EMAIL:
         <div class="mb-2 flex items-center justify-between"><h2 class="font-bold">Dados</h2>
           <Botao v-if="acoes.has('EDITAR')" variante="fantasma" @click="editando = true"><Pencil class="size-4" aria-hidden="true" /> Editar</Botao></div>
         <dl class="grid gap-2 sm:grid-cols-2">
-          <div v-if="p.dataNascimento"><dt class="text-sm text-zinc-500">Nascimento</dt><dd>{{ formatarData(p.dataNascimento, app.locale) }}</dd></div>
-          <div v-if="p.contato.email"><dt class="text-sm text-zinc-500">E-mail</dt><dd>{{ p.contato.email }}</dd></div>
-          <div v-if="p.contato.celular"><dt class="text-sm text-zinc-500">Celular</dt><dd><a :href="`tel:${p.contato.celular}`" class="text-acao underline">{{ formatarTelefone(p.contato.celular) }}</a></dd></div>
-          <div v-for="r in p.responsaveis" :key="r.nome"><dt class="text-sm text-zinc-500">{{ capitalizar(termo('responsavel').singular) }}{{ r.parentesco ? ` (${r.parentesco})` : '' }}</dt><dd>{{ r.nome }} · {{ r.contato.email ?? formatarTelefone(r.contato.celular) }}</dd></div>
-          <div v-for="(v, k) in p.camposAdicionais as Record<string, unknown>" :key="k"><dt class="text-sm text-zinc-500">{{ k }}</dt><dd>{{ v }}</dd></div>
+          <div v-if="p.dataNascimento"><dt class="text-sm text-secundario">Nascimento</dt><dd>{{ formatarData(p.dataNascimento, app.locale) }}</dd></div>
+          <div v-if="p.contato.email"><dt class="text-sm text-secundario">E-mail</dt><dd>{{ p.contato.email }}</dd></div>
+          <div v-if="p.contato.celular"><dt class="text-sm text-secundario">Celular</dt><dd><a :href="`tel:${p.contato.celular}`" class="text-acao underline">{{ formatarTelefone(p.contato.celular) }}</a></dd></div>
+          <div v-for="r in p.responsaveis" :key="r.nome"><dt class="text-sm text-secundario">{{ capitalizar(termo('responsavel').singular) }}{{ r.parentesco ? ` (${r.parentesco})` : '' }}</dt><dd>{{ r.nome }} · {{ r.contato.email ?? formatarTelefone(r.contato.celular) }}</dd></div>
+          <div v-for="(v, k) in p.camposAdicionais as Record<string, unknown>" :key="k"><dt class="text-sm text-secundario">{{ k }}</dt><dd>{{ v }}</dd></div>
         </dl>
       </Cartao>
 
       <Cartao>
         <h2 class="mb-1 font-bold">Acesso ao app</h2>
-        <p>{{ ACESSO[p.acessoApp.status] ?? p.acessoApp.status }}<span v-if="p.acessoApp.ultimoAcessoEm" class="text-sm text-zinc-500"> · último acesso {{ formatarDataHora(p.acessoApp.ultimoAcessoEm, app.fuso, app.locale) }}</span></p>
+        <p>{{ ACESSO[p.acessoApp.status] ?? p.acessoApp.status }}<span v-if="p.acessoApp.ultimoAcessoEm" class="text-sm text-secundario"> · último acesso {{ formatarDataHora(p.acessoApp.ultimoAcessoEm, app.fuso, app.locale) }}</span></p>
         <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ AVISO[p.acessoApp.notificacoes] }}</p>
         <div v-if="acoes.has('CONVIDAR') && p.acessoApp.status !== 'ATIVO'" class="mt-3 flex flex-wrap gap-2">
           <Botao :carregando="convidar.isPending.value" @click="convidar.mutate(false)"><QrCode class="size-5" aria-hidden="true" /> Mostrar QR code</Botao>
@@ -111,9 +111,9 @@ const AVISO: Record<string, string> = { PUSH: 'Recebe avisos no celular', EMAIL:
 
       <Cartao>
         <h2 class="mb-2 font-bold">{{ capitalizar(termo('acompanhamento').plural) }}</h2>
-        <p v-if="!acps.data.value?.itens.length" class="text-zinc-500">Nenhum ainda.</p>
+        <p v-if="!acps.data.value?.itens.length" class="text-secundario">Nenhum ainda.</p>
         <RouterLink v-for="a in acps.data.value?.itens ?? []" :key="a.id" :to="`/acompanhamentos/${a.id}`" class="flex min-h-12 items-center justify-between border-t border-zinc-100 py-2 first:border-0 dark:border-zinc-700">
-          <span>{{ a.protocolo.nome }} <span class="text-sm text-zinc-500">· {{ formatarData(a.dataInicio, app.locale) }}</span></span>
+          <span>{{ a.protocolo.nome }} <span class="text-sm text-secundario">· {{ formatarData(a.dataInicio, app.locale) }}</span></span>
           <span class="text-sm">{{ a.status === 'ATIVO' ? `Dia ${a.diaAtual}/${a.totalDias}` : a.status.toLowerCase() }}<strong v-if="a.alertasAbertos" class="ml-2 text-erro">{{ a.alertasAbertos }} alerta(s)</strong></span>
         </RouterLink>
       </Cartao>

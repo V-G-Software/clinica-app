@@ -8,6 +8,8 @@ import { registrarServiceWorker } from './pwa/registro';
 import { iniciar } from './app/inicializacao';
 import { clienteConsultas } from './dados/consultas';
 import { ligarTempoReal } from './tempo-real/integracao';
+import { instalarCapturaDeErros } from './observabilidade/erros';
+import { useAppStore } from './app/store';
 import './estilo.css';
 
 const app = createApp(App).use(createPinia());
@@ -18,5 +20,6 @@ app
   .use(VueQueryPlugin, { queryClient: clienteConsultas })
   .mount('#app');
 ligarTempoReal();
+instalarCapturaDeErros(app, router, () => useAppStore().organizacao?.slug ?? null);
 
 registrarServiceWorker();

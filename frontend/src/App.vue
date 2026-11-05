@@ -38,6 +38,10 @@ async function tentarDeNovo() {
 watch(() => sessao.logado, (logado, antes) => {
   if (antes && !logado && !rota.meta.publica) router.replace({ path: '/entrar', query: { voltar: rota.fullPath } });
 });
+// Densidade da equipe (preferência do usuário); paciente sempre confortável.
+watch(() => [sessao.manifesto?.usuario.preferencias.densidade, sessao.ehPaciente] as const, ([d, paciente]) => {
+  document.documentElement.classList.toggle('compacta', d === 'COMPACTA' && !paciente);
+}, { immediate: true });
 let tentativa: ReturnType<typeof setInterval> | undefined;
 watch(() => app.estado, (e) => {
   clearInterval(tentativa);

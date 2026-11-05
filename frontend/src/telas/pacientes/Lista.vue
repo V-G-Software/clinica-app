@@ -9,6 +9,7 @@ import { useSessaoStore } from '@/sessao/store';
 import { capitalizar, nenhum, novo } from '@/i18n/termos';
 import { useTermos } from '@/dados/util';
 import Botao from '@/ds/Botao.vue';
+import EstadoConsulta from '@/ds/EstadoConsulta.vue';
 
 const { t } = useI18n();
 const sessao = useSessaoStore();
@@ -49,8 +50,8 @@ const ACESSO: Record<string, [string, string]> = { ATIVO: ['Usa o app', 'bg-gree
     <div class="flex gap-2" role="group" aria-label="Status">
       <button v-for="[v, r] in [['ATIVO', 'Ativos'], ['INATIVO', 'Inativos']] as const" :key="v" type="button" class="min-h-10 rounded-full border-2 px-4 text-sm font-medium" :class="status === v ? 'border-acao bg-acao text-acao-texto' : 'border-zinc-300'" @click="status = v">{{ r }}</button>
     </div>
-    <p v-if="carregando">{{ t('app.carregando') }}</p>
-    <p v-else-if="!itens.length" class="text-zinc-600">{{ capitalizar(nenhum(termo('paciente'))) }} encontrad{{ termo('paciente').genero === 'F' ? 'a' : 'o' }}.</p>
+    <EstadoConsulta :carregando="carregando" :erro="buscaAtiva ? resultado.error.value : lista.error.value" :vazio="!itens.length"
+      :texto-vazio="`${capitalizar(nenhum(termo('paciente')))} encontrad${termo('paciente').genero === 'F' ? 'a' : 'o'}.`" @tentar="buscaAtiva ? resultado.refetch() : lista.refetch()" />
     <RouterLink v-for="p in itens" :key="p.id" :to="`/pacientes/${p.id}`" class="flex min-h-16 items-center gap-3 rounded-xl border border-zinc-200 px-4 py-2 hover:border-acao dark:border-zinc-700">
       <div class="min-w-0 flex-1">
         <p class="font-semibold">{{ p.nomeSocial ?? p.nome }}</p>

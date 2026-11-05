@@ -61,7 +61,7 @@ const m = useMutation({
     <Aviso v-if="m.error.value" tipo="erro" :detalhe="msg(m.error.value)?.suporte">{{ msg(m.error.value)?.texto }}</Aviso>
 
     <Cartao v-if="pacienteId && paciente.data.value" class="flex items-center justify-between">
-      <span><span class="text-sm text-zinc-500">{{ capitalizar(termo('paciente').singular) }}:</span> <strong>{{ paciente.data.value.nome }}</strong></span>
+      <span><span class="text-sm text-secundario">{{ capitalizar(termo('paciente').singular) }}:</span> <strong>{{ paciente.data.value.nome }}</strong></span>
       <Botao variante="fantasma" @click="pacienteId = ''">Trocar</Botao>
     </Cartao>
     <div v-else class="flex flex-col gap-2">
@@ -76,7 +76,7 @@ const m = useMutation({
     <fieldset v-if="membros.data.value" class="flex flex-col gap-2">
       <legend class="mb-1 text-sm font-medium">Equipe responsável</legend>
       <label v-for="mb in membros.data.value.itens" :key="mb.id" class="flex min-h-11 items-center gap-3">
-        <input v-model="equipeIds" type="checkbox" :value="mb.id" class="size-5" /> {{ mb.nome }} <span class="text-sm text-zinc-500">{{ mb.perfis.join(', ').toLowerCase() }}</span>
+        <input v-model="equipeIds" type="checkbox" :value="mb.id" class="size-5" /> {{ mb.nome }} <span class="text-sm text-secundario">{{ mb.perfis.join(', ').toLowerCase() }}</span>
       </label>
     </fieldset>
     <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">Observação interna (opcional)</span>

@@ -93,7 +93,7 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
   <div class="-m-4 flex h-[calc(100dvh-9rem)] flex-col lg:-m-8 lg:h-dvh">
     <header class="border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
       <h1 class="text-lg font-bold">{{ titulo }}</h1>
-      <p v-if="conversa.data.value" class="text-sm text-zinc-500">{{ conversa.data.value.participantes.map((p) => p.nome).join(', ') }}</p>
+      <p v-if="conversa.data.value" class="text-sm text-secundario">{{ conversa.data.value.participantes.map((p) => p.nome).join(', ') }}</p>
       <div v-if="!sessao.ehPaciente && (acoes.has('ADICIONAR_PARTICIPANTE') || acoes.has('ARQUIVAR') || acoes.has('REABRIR'))" class="mt-2 flex flex-wrap gap-2">
         <RouterLink v-if="conversa.data.value" :to="`/pacientes/${conversa.data.value.paciente.id}`" class="text-sm text-acao underline">Ver paciente</RouterLink>
         <button v-if="acoes.has('ADICIONAR_PARTICIPANTE')" type="button" class="text-sm text-acao underline" @click="gerenciando = true">Participantes</button>
@@ -109,14 +109,14 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
       <button v-if="m.temAnteriores.value" type="button" class="mx-auto mb-3 block text-sm text-acao underline" :disabled="m.carregandoAnteriores.value" @click="m.carregarAnteriores">Ver mensagens anteriores</button>
       <p v-if="m.carregando.value">{{ t('app.carregando') }}</p>
       <template v-for="(msg, i) in m.lista.value" :key="msg.id">
-        <p v-if="novoDia(i)" class="my-3 text-center text-xs text-zinc-500">{{ dataDe(msg.enviadoEm) }}</p>
-        <p v-if="msg.tipo === 'SISTEMA'" class="my-2 text-center text-sm text-zinc-500">{{ msg.texto }}</p>
+        <p v-if="novoDia(i)" class="my-3 text-center text-xs text-secundario">{{ dataDe(msg.enviadoEm) }}</p>
+        <p v-if="msg.tipo === 'SISTEMA'" class="my-2 text-center text-sm text-secundario">{{ msg.texto }}</p>
         <div v-else-if="msg.tipo === 'ORIENTACAO'" class="my-2 rounded-xl border border-marca-200 bg-marca-50 p-3 text-sm dark:border-zinc-600 dark:bg-zinc-800">
           <strong class="block text-marca-700 dark:text-marca-200">Orientação da equipe</strong>{{ msg.texto }}
         </div>
         <div v-else class="my-1 flex" :class="m.minhas(msg) ? 'justify-end' : 'justify-start'">
           <div class="max-w-[80%] rounded-2xl px-4 py-2" :class="m.minhas(msg) ? 'bg-acao text-acao-texto' : 'bg-zinc-100 dark:bg-zinc-800'">
-            <p v-if="!m.minhas(msg)" class="text-xs font-semibold opacity-80">{{ msg.autor?.nome }}</p>
+            <p v-if="!m.minhas(msg)" class="text-xs font-semibold text-secundario">{{ msg.autor?.nome }}</p>
             <RouterLink v-if="msg.tipo === 'CHECKIN' && msg.referencia" :to="`/checkins/${msg.referencia.id}`" class="block underline">
               {{ msg.referencia.resumo }}<span v-if="!sessao.ehPaciente && msg.referencia.temAlerta" class="ml-1 font-bold">⚠</span>
             </RouterLink>
@@ -126,15 +126,15 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
               </a>
             </div>
             <p v-if="msg.texto" class="whitespace-pre-wrap break-words">{{ msg.texto }}</p>
-            <p class="mt-0.5 text-right text-[0.7rem] opacity-70">{{ formatarHora(msg.enviadoEm, app.fuso, app.locale) }}</p>
+            <p class="mt-0.5 text-right text-xs" :class="!m.minhas(msg) && 'text-secundario'">{{ formatarHora(msg.enviadoEm, app.fuso, app.locale) }}</p>
           </div>
         </div>
       </template>
       <div v-for="p in m.pendentes.value" :key="p.idCliente" class="my-1 flex justify-end">
-        <div class="max-w-[80%] rounded-2xl bg-acao/70 px-4 py-2 text-acao-texto">
+        <div class="max-w-[80%] rounded-2xl border-2 border-dashed border-acao-texto/0 bg-acao px-4 py-2 text-acao-texto ring-2 ring-acao ring-offset-2 ring-offset-white dark:ring-offset-zinc-900">
           <p v-if="p.texto" class="whitespace-pre-wrap break-words">{{ p.texto }}</p>
           <p v-if="p.anexosIds.length">📷 Foto</p>
-          <p class="mt-0.5 flex items-center justify-end gap-1 text-[0.7rem]">
+          <p class="mt-0.5 flex items-center justify-end gap-1 text-xs">
             <template v-if="p.estado === 'enviando'"><Clock class="size-3" aria-hidden="true" /> enviando…</template>
             <button v-else type="button" class="flex items-center gap-1 font-semibold underline" @click="m.tentar(p)">
               <RotateCw class="size-3" aria-hidden="true" /> {{ p.erro === 'REDE' ? 'sem conexão — tocar para reenviar' : t(`erros.${p.erro}`, t('erros.DESCONHECIDO')) }}
@@ -145,7 +145,7 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
     </div>
 
     <footer class="border-t border-zinc-200 p-3 dark:border-zinc-700">
-      <p v-if="arquivada" class="flex items-center justify-center gap-2 py-2 text-zinc-500"><Archive class="size-4" aria-hidden="true" /> {{ t('erros.CONVERSA_ARQUIVADA') }}</p>
+      <p v-if="arquivada" class="flex items-center justify-center gap-2 py-2 text-secundario"><Archive class="size-4" aria-hidden="true" /> {{ t('erros.CONVERSA_ARQUIVADA') }}</p>
       <template v-else-if="podeEnviar">
         <Aviso v-if="foraDoHorario" tipo="atencao" class="mb-2"><Clock class="inline size-4" /> Fora do horário de atendimento. A equipe responde assim que possível.</Aviso>
         <p v-if="erroFoto" class="mb-2 text-sm text-erro" role="alert"><TriangleAlert class="inline size-4" /> {{ erroFoto }}</p>
@@ -162,7 +162,7 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
       <Aviso v-if="adicionar.error.value || remover.error.value" tipo="erro" class="mb-2">{{ msgErro(adicionar.error.value ?? remover.error.value)?.texto }}</Aviso>
       <ul class="flex flex-col gap-1">
         <li v-for="p in conversa.data.value?.participantes ?? []" :key="p.usuarioId" class="flex min-h-11 items-center justify-between">
-          <span>{{ p.nome }} <span class="text-sm text-zinc-500">{{ p.perfil.toLowerCase() }}</span></span>
+          <span>{{ p.nome }} <span class="text-sm text-secundario">{{ p.perfil.toLowerCase() }}</span></span>
           <Botao v-if="p.perfil !== 'PACIENTE' && acoes.has('REMOVER_PARTICIPANTE') && p.usuarioId !== eu" variante="fantasma" @click="remover.mutate(p.usuarioId)">Remover</Botao>
         </li>
       </ul>

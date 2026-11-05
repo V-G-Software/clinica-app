@@ -8,6 +8,7 @@ import { useAppStore } from '@/app/store';
 import { caminhoDe } from '@/catalogo/telas';
 import { tempoRelativo } from '@/i18n/datas';
 import Botao from '@/ds/Botao.vue';
+import EstadoConsulta from '@/ds/EstadoConsulta.vue';
 
 const { t } = useI18n();
 const app = useAppStore();
@@ -36,12 +37,11 @@ async function abrir(n: (typeof itens.value)[number]) {
       <h1 class="text-2xl font-bold">Notificações</h1>
       <Botao v-if="itens.some((n) => !n.lidoEm)" variante="fantasma" :carregando="marcar.isPending.value" @click="marcar.mutate({ todas: true })">Marcar todas como lidas</Botao>
     </div>
-    <p v-if="q.isPending.value">{{ t('app.carregando') }}</p>
-    <p v-else-if="!itens.length" class="text-zinc-600">Nenhuma notificação.</p>
+    <EstadoConsulta :carregando="q.isPending.value" :erro="q.error.value" :vazio="!itens.length" texto-vazio="Nenhuma notificação." @tentar="q.refetch()" />
     <button v-for="n in itens" :key="n.id" type="button" class="flex min-h-16 w-full items-start gap-3 rounded-xl border px-4 py-3 text-left" :class="n.lidoEm ? 'border-zinc-200 dark:border-zinc-700' : 'border-acao bg-marca-50 dark:bg-zinc-800'" @click="abrir(n)">
       <span v-if="!n.lidoEm" class="mt-2 size-2.5 shrink-0 rounded-full bg-acao" aria-label="não lida" />
       <span class="flex-1"><strong class="block">{{ n.titulo }}</strong><span class="text-sm text-zinc-600 dark:text-zinc-300">{{ n.texto }}</span></span>
-      <span class="text-xs text-zinc-500">{{ tempoRelativo(n.criadoEm, app.agoraServidor(), app.fuso, app.locale) }}</span>
+      <span class="text-xs text-secundario">{{ tempoRelativo(n.criadoEm, app.agoraServidor(), app.fuso, app.locale) }}</span>
     </button>
     <Botao v-if="q.hasNextPage.value" variante="secundario" :carregando="q.isFetchingNextPage.value" @click="q.fetchNextPage()">Ver mais</Botao>
   </div>
