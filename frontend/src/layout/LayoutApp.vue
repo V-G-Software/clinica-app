@@ -53,11 +53,11 @@ const logo = computed(() => app.config?.tema.logoUrl);
     <nav class="fixed inset-x-0 bottom-0 z-20 flex border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden dark:border-zinc-700 dark:bg-zinc-900" :aria-label="t('nav.menu')">
       <RouterLink v-for="item in sessao.menu.principal" :key="item.id" :to="item.caminho"
         class="relative flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium"
-        :class="ativo(item.caminho) ? 'text-acao' : 'text-zinc-500 dark:text-zinc-400'" :aria-current="ativo(item.caminho) ? 'page' : undefined">
+        :class="ativo(item.caminho) ? 'text-acao' : 'text-secundario dark:text-zinc-400'" :aria-current="ativo(item.caminho) ? 'page' : undefined">
         <Icone :nome="item.icone" class="size-6" /><span class="max-w-full truncate px-1">{{ item.rotulo }}</span>
         <span class="absolute top-1.5 left-1/2 ml-2"><Badge :valor="valor(item.contador)" :rotulo="`${valor(item.contador)}`" /></span>
       </RouterLink>
-      <button v-if="sessao.menu.secundario.length" type="button" class="relative flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium text-zinc-500 dark:text-zinc-400"
+      <button v-if="sessao.menu.secundario.length" type="button" class="relative flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium text-secundario dark:text-zinc-400"
         :aria-expanded="maisAberto" @click="maisAberto = true">
         <Ellipsis class="size-6" aria-hidden="true" /><span>{{ t('app.mais') }}</span>
         <span class="absolute top-1.5 left-1/2 ml-2"><Badge :valor="totalMais" :rotulo="`${totalMais}`" /></span>

@@ -12,6 +12,6 @@ const id = useId();
       class="min-h-12 rounded-xl border-2 border-zinc-300 bg-white px-4 text-base outline-none focus:border-acao dark:border-zinc-600 dark:bg-zinc-800"
       :class="[erro && 'border-erro', classeEntrada]" />
     <p v-if="erro" :id="`${id}-erro`" class="text-sm text-erro dark:text-red-400" role="alert">{{ erro }}</p>
-    <p v-else-if="ajuda" :id="`${id}-ajuda`" class="text-sm text-zinc-500 dark:text-zinc-400">{{ ajuda }}</p>
+    <p v-else-if="ajuda" :id="`${id}-ajuda`" class="text-sm text-secundario dark:text-zinc-400">{{ ajuda }}</p>
   </div>
 </template>

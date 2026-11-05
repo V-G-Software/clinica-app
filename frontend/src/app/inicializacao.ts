@@ -12,10 +12,12 @@ const DIRETORIO = (import.meta.env.VITE_DIRETORIO_URL ?? '/diretorio').replace(/
 const CACHE = 'org:';
 
 const CHAVE_DEV = 'dev:org';
+/** ?org= só em desenvolvimento e em builds de homologação (VITE_PERMITIR_ORG=1); nunca em produção. */
+const PERMITIR_ORG = import.meta.env.DEV || import.meta.env.VITE_PERMITIR_ORG === '1';
 /** Em desenvolvimento, lembra o último ?org= para o slug não se perder ao navegar. */
 function urlComOrgDev(): URL {
   const url = new URL(location.href);
-  if (!import.meta.env.DEV) return url;
+  if (!PERMITIR_ORG) return url;
   try {
     const org = url.searchParams.get('org');
     if (org) localStorage.setItem(CHAVE_DEV, org);
@@ -25,7 +27,7 @@ function urlComOrgDev(): URL {
 }
 
 async function resolverOrganizacao(): Promise<OrganizacaoDiretorio | 'escolher' | null> {
-  const d = descobrirOrganizacao(urlComOrgDev(), { dev: import.meta.env.DEV, dominioPrincipal: import.meta.env.VITE_DOMINIO ?? 'localhost' });
+  const d = descobrirOrganizacao(urlComOrgDev(), { dev: PERMITIR_ORG, dominioPrincipal: import.meta.env.VITE_DOMINIO ?? 'localhost' });
   if (!d) return import.meta.env.DEV ? 'escolher' : null;
   const url = d.tipo === 'slug' ? `${DIRETORIO}/v1/organizacoes/${d.slug}` : `${DIRETORIO}/v1/organizacoes?dominio=${encodeURIComponent(d.dominio)}`;
   const chave = CACHE + (d.tipo === 'slug' ? d.slug : d.dominio);

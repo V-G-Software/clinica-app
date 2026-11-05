@@ -123,7 +123,7 @@ const entrada = 'min-h-11 rounded-lg border-2 border-zinc-300 bg-white px-3 dark
     <!-- Visualização -->
     <template v-else-if="!editando && p">
       <header class="flex flex-wrap items-start justify-between gap-2">
-        <div><h1 class="text-2xl font-bold">{{ p.nome }}</h1><p class="text-sm text-zinc-500">Versão {{ p.versao }} · {{ p.duracaoDias }} dias{{ p.status === 'ARQUIVADO' ? ' · arquivado' : '' }}</p></div>
+        <div><h1 class="text-2xl font-bold">{{ p.nome }}</h1><p class="text-sm text-secundario">Versão {{ p.versao }} · {{ p.duracaoDias }} dias{{ p.status === 'ARQUIVADO' ? ' · arquivado' : '' }}</p></div>
         <div class="flex gap-2">
           <Botao v-if="p.acoesPermitidas.includes('EDITAR')" variante="secundario" @click="editar">Editar</Botao>
           <Botao v-if="p.acoesPermitidas.includes('ARQUIVAR')" variante="fantasma" :carregando="arquivar.isPending.value" @click="arquivar.mutate()">Arquivar</Botao>

@@ -11,7 +11,7 @@ import { capitalizar, contar, nenhum, TERMOS_PADRAO, type Termo } from '@/i18n/t
 import Cartao from '@/ds/Cartao.vue';
 import Aviso from '@/ds/Aviso.vue';
 import Icone from '@/ds/Icone.vue';
-import Botao from '@/ds/Botao.vue';
+import EstadoConsulta from '@/ds/EstadoConsulta.vue';
 
 const { t } = useI18n();
 const sessao = useSessaoStore();
@@ -29,11 +29,10 @@ const primeiroNome = computed(() => sessao.manifesto?.usuario.nomeExibicao.split
 <template>
   <div class="flex flex-col gap-4">
     <h1 class="text-2xl font-bold">Olá, {{ primeiroNome }}</h1>
-    <p v-if="isPending">{{ t('app.carregando') }}</p>
-    <Aviso v-else-if="error" tipo="erro">{{ t('erros.DESCONHECIDO') }} <Botao variante="fantasma" @click="refetch()">{{ t('app.tentarDeNovo') }}</Botao></Aviso>
+    <EstadoConsulta :carregando="isPending" :erro="error" :linhas="4" @tentar="refetch()" />
     <template v-for="s in secoes" :key="s.id">
       <RouterLink v-if="s.tipo === 'ACOMPANHAMENTO_ATUAL'" :to="`/acompanhamentos/${s.dados.acompanhamentoId}`" class="block"><Cartao class="hover:border-acao">
-        <p class="text-sm text-zinc-500">{{ s.titulo ?? capitalizar(termo('acompanhamento').singular) }}</p>
+        <p class="text-sm text-secundario">{{ s.titulo ?? capitalizar(termo('acompanhamento').singular) }}</p>
         <h2 class="text-lg font-bold">{{ s.dados.titulo }}</h2>
         <p v-if="s.dados.diaAtual >= 0">Dia {{ s.dados.diaAtual }} de {{ s.dados.totalDias }}</p>
         <p v-else>Faltam {{ -s.dados.diaAtual }} dia(s) para {{ termo('procedimento').genero === 'F' ? 'a' : 'o' }} {{ termo('procedimento').singular }}</p>
@@ -42,7 +41,7 @@ const primeiroNome = computed(() => sessao.manifesto?.usuario.nomeExibicao.split
       </Cartao></RouterLink>
       <Cartao v-else-if="s.tipo === 'CHECKINS_PENDENTES'">
         <h2 class="font-bold">{{ capitalizar(termo('checkin').plural) }} para responder</h2>
-        <p v-if="!s.dados.itens.length" class="text-zinc-500">{{ capitalizar(nenhum(termo('checkin'))) }} pendente.</p>
+        <p v-if="!s.dados.itens.length" class="text-secundario">{{ capitalizar(nenhum(termo('checkin'))) }} pendente.</p>
         <RouterLink v-for="c in s.dados.itens" :key="c.id" :to="caminhoDe('acompanhamento.checkin', { checkinId: c.id }) ?? '/'" class="mt-2 flex min-h-12 items-center justify-between rounded-lg bg-acao px-4 font-semibold text-acao-texto">
           Responder dia {{ c.dia }} <Icone nome="activity" class="size-5" />
         </RouterLink>
@@ -54,17 +53,17 @@ const primeiroNome = computed(() => sessao.manifesto?.usuario.nomeExibicao.split
       <Cartao v-else-if="s.tipo === 'CHECKINS_DO_DIA'">
         <h2 class="font-bold">{{ capitalizar(termo('checkin').plural) }} de hoje</h2>
         <p>{{ t('inicio.respondidos', s.dados.respondidos) }} · {{ t('inicio.pendentes', s.dados.pendentes) }} · {{ t('inicio.expirados', s.dados.expirados) }}</p>
-        <ul v-if="!sessao.ehPaciente" class="mt-1"><li v-for="c in s.dados.itens" :key="c.id"><RouterLink :to="`/checkins/${c.id}`" class="flex min-h-10 justify-between py-1 text-sm"><span>{{ c.paciente?.nome }} · dia {{ c.dia }}</span><span class="text-zinc-500">{{ c.status === 'RESPONDIDO' ? 'respondido' : c.status === 'EXPIRADO' ? 'não respondido' : 'pendente' }}</span></RouterLink></li></ul>
+        <ul v-if="!sessao.ehPaciente" class="mt-1"><li v-for="c in s.dados.itens" :key="c.id"><RouterLink :to="`/checkins/${c.id}`" class="flex min-h-10 justify-between py-1 text-sm"><span>{{ c.paciente?.nome }} · dia {{ c.dia }}</span><span class="text-secundario">{{ c.status === 'RESPONDIDO' ? 'respondido' : c.status === 'EXPIRADO' ? 'não respondido' : 'pendente' }}</span></RouterLink></li></ul>
       </Cartao>
       <Cartao v-else-if="s.tipo === 'ACOMPANHAMENTOS_ATIVOS'">
         <h2 class="font-bold">{{ capitalizar(termo('acompanhamento').plural) }} em andamento</h2>
         <p>{{ contar(s.dados.total, termo('acompanhamento')) }}</p>
-        <ul class="mt-1"><li v-for="a in s.dados.itens" :key="a.id"><RouterLink :to="`/acompanhamentos/${a.id}`" class="flex min-h-10 justify-between py-1 text-sm"><span>{{ a.paciente.nome }}</span><span class="text-zinc-500">dia {{ a.diaAtual }}/{{ a.totalDias }}</span></RouterLink></li></ul>
+        <ul class="mt-1"><li v-for="a in s.dados.itens" :key="a.id"><RouterLink :to="`/acompanhamentos/${a.id}`" class="flex min-h-10 justify-between py-1 text-sm"><span>{{ a.paciente.nome }}</span><span class="text-secundario">dia {{ a.diaAtual }}/{{ a.totalDias }}</span></RouterLink></li></ul>
         <RouterLink to="/acompanhamentos" class="text-sm text-acao underline">Ver todos</RouterLink>
       </Cartao>
       <Cartao v-else-if="s.tipo === 'CONVERSAS_RECENTES'">
         <h2 class="font-bold">{{ capitalizar(termo('conversa').plural) }}</h2>
-        <p v-if="!s.dados.itens.length" class="text-zinc-500">{{ capitalizar(nenhum(termo('conversa'))) }}.</p>
+        <p v-if="!s.dados.itens.length" class="text-secundario">{{ capitalizar(nenhum(termo('conversa'))) }}.</p>
         <ul class="mt-1"><li v-for="c in s.dados.itens" :key="c.id"><RouterLink :to="`/conversas/${c.id}`" class="flex min-h-11 items-center justify-between py-1"><span>{{ tituloConversa(c) }}</span><span v-if="c.naoLidas" class="font-bold text-acao">{{ c.naoLidas }}</span></RouterLink></li></ul>
       </Cartao>
       <div v-else-if="s.tipo === 'ATALHOS'" class="flex flex-wrap gap-2">

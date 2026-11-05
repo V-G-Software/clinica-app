@@ -72,7 +72,7 @@ async function recarregar() { conflito.value = false; editar.reset(); await q.re
 
 const ICONE = { RESPONDIDO: CircleCheck, DISPONIVEL: PencilLine, EXPIRADO: CircleX, AGENDADO: CalendarClock, CANCELADO: CircleDashed } as Record<string, unknown>;
 const ROTULO: Record<string, string> = { RESPONDIDO: 'Respondido', DISPONIVEL: 'Aguardando resposta', EXPIRADO: 'Não respondido', AGENDADO: 'Agendado', CANCELADO: 'Cancelado' };
-const COR: Record<string, string> = { RESPONDIDO: 'text-sucesso', DISPONIVEL: 'text-acao', EXPIRADO: 'text-zinc-400', AGENDADO: 'text-zinc-400', CANCELADO: 'text-zinc-400' };
+const COR: Record<string, string> = { RESPONDIDO: 'text-sucesso', DISPONIVEL: 'text-acao', EXPIRADO: 'text-esmaecido', AGENDADO: 'text-esmaecido', CANCELADO: 'text-esmaecido' };
 const rotulo = (s: string) => (s === 'DISPONIVEL' && sessao.ehPaciente ? 'Responder agora' : ROTULO[s] ?? s);
 const SEV: Record<string, string> = { ALTA: 'text-erro', MEDIA: 'text-atencao', BAIXA: 'text-zinc-600 dark:text-zinc-300' };
 </script>
@@ -84,7 +84,7 @@ const SEV: Record<string, string> = { ALTA: 'text-erro', MEDIA: 'text-atencao', 
     <template v-else-if="a">
       <header>
         <RouterLink v-if="!sessao.ehPaciente" :to="`/pacientes/${a.paciente.id}`" class="text-sm text-acao underline">{{ a.paciente.nome }}</RouterLink>
-        <p v-else class="text-sm text-zinc-500">{{ a.paciente.nome }}</p>
+        <p v-else class="text-sm text-secundario">{{ a.paciente.nome }}</p>
         <h1 class="text-2xl font-bold">{{ a.protocolo.nome }}</h1>
         <p>{{ capitalizar(termo('procedimento').singular) }} em {{ formatarData(a.dataInicio, app.locale, { dateStyle: 'long' }) }}</p>
         <p v-if="a.status === 'ATIVO'" class="font-semibold">Dia {{ a.diaAtual }} de {{ a.totalDias }}</p>
@@ -104,8 +104,8 @@ const SEV: Record<string, string> = { ALTA: 'text-erro', MEDIA: 'text-atencao', 
         <ul class="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-700">
           <li v-for="al in alertas.data.value.itens" :key="al.id" class="flex flex-wrap items-center gap-2 py-2">
             <strong :class="SEV[al.severidade]">{{ al.severidade }}</strong>
-            <span class="flex-1">{{ al.mensagem }} <span class="text-sm text-zinc-500">· {{ formatarDataHora(al.criadoEm, app.fuso, app.locale) }}</span>
-              <span v-if="al.status === 'RESOLVIDO'" class="block text-sm text-zinc-500">Resolvido por {{ al.resolvidoPor?.nome }}{{ al.nota ? ` — ${al.nota}` : '' }}</span></span>
+            <span class="flex-1">{{ al.mensagem }} <span class="text-sm text-secundario">· {{ formatarDataHora(al.criadoEm, app.fuso, app.locale) }}</span>
+              <span v-if="al.status === 'RESOLVIDO'" class="block text-sm text-secundario">Resolvido por {{ al.resolvidoPor?.nome }}{{ al.nota ? ` — ${al.nota}` : '' }}</span></span>
             <RouterLink v-if="al.checkinId" :to="`/checkins/${al.checkinId}`" class="text-sm text-acao underline">Ver respostas</RouterLink>
             <Botao v-if="al.acoesPermitidas.includes('RESOLVER')" variante="secundario" @click="resolvendo = { id: al.id, mensagem: al.mensagem }">Resolver</Botao>
           </li>
@@ -113,15 +113,15 @@ const SEV: Record<string, string> = { ALTA: 'text-erro', MEDIA: 'text-atencao', 
       </Cartao>
 
       <Cartao v-if="!sessao.ehPaciente && (a.observacao || a.equipe.length)">
-        <p v-if="a.observacao" class="mb-2"><span class="text-sm text-zinc-500">Observação interna:</span> {{ a.observacao }}</p>
-        <p class="text-sm"><span class="text-zinc-500">Equipe:</span> {{ a.equipe.map((e) => e.nome).join(', ') }}</p>
+        <p v-if="a.observacao" class="mb-2"><span class="text-sm text-secundario">Observação interna:</span> {{ a.observacao }}</p>
+        <p class="text-sm"><span class="text-secundario">Equipe:</span> {{ a.equipe.map((e) => e.nome).join(', ') }}</p>
       </Cartao>
 
       <ol class="flex flex-col gap-2" :aria-label="capitalizar(termo('checkin').plural)">
         <li v-for="c in cks.data.value?.itens ?? []" :key="c.id">
           <RouterLink :to="`/checkins/${c.id}`" class="flex min-h-14 items-center gap-3 rounded-xl border border-zinc-200 px-4 dark:border-zinc-700" :class="c.status === 'DISPONIVEL' && sessao.ehPaciente && 'border-2 border-acao'">
             <component :is="ICONE[c.status] ?? CircleDashed" class="size-6 shrink-0" :class="COR[c.status]" aria-hidden="true" />
-            <span class="flex-1"><strong>Dia {{ c.dia }}</strong> <span class="text-sm text-zinc-500">· {{ formatarDataHora(c.disponivelEm, app.fuso, app.locale, { day: '2-digit', month: '2-digit' }) }}</span></span>
+            <span class="flex-1"><strong>Dia {{ c.dia }}</strong> <span class="text-sm text-secundario">· {{ formatarDataHora(c.disponivelEm, app.fuso, app.locale, { day: '2-digit', month: '2-digit' }) }}</span></span>
             <span class="text-sm font-medium" :class="COR[c.status]">{{ rotulo(c.status) }}</span>
           </RouterLink>
         </li>

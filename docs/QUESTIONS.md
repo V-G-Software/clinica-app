@@ -23,7 +23,8 @@ Decisões assumidas na F0 que precisam de confirmação. As decisões de negóci
 | QUESTION-017 | Na tela de login, antes do manifesto, não há `termos` ("Sou paciente" vs "Sou tutor"). | Texto neutro "Sou paciente ou responsável". Proposta: `termos` opcional na configuração pública (aditivo). | Aditivo no contrato. |
 | QUESTION-018 | Padrão de `frontend.versaoMinima` do mock era `1.0.0` e bloqueava o build `0.1.0`. | Mock passou a `0.1.0` (cenário pode subir com `versaoMinimaFrontend`). Definir a política de versão do frontend antes do piloto. | Só operação. |
 | QUESTION-019 | Ao encerrar (ou concluir) um acompanhamento, os alertas ainda abertos continuam abertos? | Continuam (nada é resolvido automaticamente). No cenário vet, a Mel encerrada mantém 3 alertas abertos no início da equipe. Proposta: resolver automaticamente com nota "Acompanhamento encerrado", registrando quem encerrou. | Regra no backend; contrato não muda. |
-| QUESTION-020 | Preferência de densidade `COMPACTA` (equipe) | Salva no perfil, mas a interface ainda não muda de densidade. | Só frontend (FE3). |
+| QUESTION-020 | Preferência de densidade `COMPACTA` (equipe) | **Resolvida na FE3**: a interface da equipe fica mais densa; paciente sempre confortável. | — |
+| QUESTION-021 | Ferramenta de registro de erros do frontend e região dos dados ([DECISÃO 4] do prompt do frontend) | Adaptador neutro: sem `VITE_ERROS_URL`, nada sai do aparelho; com ela, evento já limpo vai por `sendBeacon`. Source maps gerados, mas não publicados (`hidden`), para subir só na ferramenta escolhida. | Configuração. |
 
 ## Adições ao contrato em relação ao prompt (registradas no CHANGELOG)
 

@@ -24,7 +24,7 @@ const marcada = (sim: boolean) => (sim ? 'border-acao bg-marca-50 dark:bg-zinc-8
 <template>
   <fieldset class="flex flex-col gap-3" :aria-describedby="erro ? `${id}-erro` : undefined">
     <legend class="mb-1 font-bold" :class="grande ? 'text-xl' : 'text-base'">
-      {{ c.rotulo }} <span v-if="!c.obrigatorio && c.tipo !== 'INFORMACAO'" class="text-sm font-normal text-zinc-500">(opcional)</span>
+      {{ c.rotulo }} <span v-if="!c.obrigatorio && c.tipo !== 'INFORMACAO'" class="text-sm font-normal text-secundario">(opcional)</span>
     </legend>
     <p v-if="c.ajuda || c.instrucao" class="text-sm text-zinc-600 dark:text-zinc-300">{{ c.ajuda ?? c.instrucao }}</p>
 

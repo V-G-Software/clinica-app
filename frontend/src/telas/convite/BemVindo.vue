@@ -33,7 +33,7 @@ const titulo = computed(() => ({ instalar: 'Instale o app', notificacoes: 'Ative
 </script>
 <template>
   <main class="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-5 px-6 py-10">
-    <p class="text-sm font-medium text-zinc-500">Passo {{ passo === 'instalar' ? 1 : passo === 'notificacoes' ? 2 : 3 }} de 3</p>
+    <p class="text-sm font-medium text-secundario">Passo {{ passo === 'instalar' ? 1 : passo === 'notificacoes' ? 2 : 3 }} de 3</p>
     <h1 class="text-2xl font-bold">{{ titulo }}</h1>
 
     <template v-if="passo === 'instalar'">

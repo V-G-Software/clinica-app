@@ -10,6 +10,7 @@ import { formatarData } from '@/i18n/datas';
 import { capitalizar, nenhum, novo } from '@/i18n/termos';
 import { useTermos } from '@/dados/util';
 import Botao from '@/ds/Botao.vue';
+import EstadoConsulta from '@/ds/EstadoConsulta.vue';
 
 const { t } = useI18n();
 const app = useAppStore();
@@ -41,8 +42,7 @@ const STATUS = [['ATIVO', 'Em andamento'], ['AGENDADO', 'Agendados'], ['CONCLUID
       <label class="flex items-center gap-2"><input v-model="comAlerta" type="checkbox" class="size-5" /> Só com alerta aberto</label>
       <label class="flex items-center gap-2"><input v-model="meus" type="checkbox" class="size-5" /> Só os meus</label>
     </div>
-    <p v-if="q.isPending.value">{{ t('app.carregando') }}</p>
-    <p v-else-if="!itens.length" class="text-zinc-600">{{ capitalizar(nenhum(termo('acompanhamento'))) }} aqui.</p>
+    <EstadoConsulta :carregando="q.isPending.value" :erro="q.error.value" :vazio="!itens.length" :texto-vazio="`${capitalizar(nenhum(termo('acompanhamento')))} aqui.`" @tentar="q.refetch()" />
     <RouterLink v-for="a in itens" :key="a.id" :to="`/acompanhamentos/${a.id}`" class="flex min-h-16 items-center gap-3 rounded-xl border px-4 py-2 hover:border-acao" :class="a.alertasAbertos ? 'border-red-300 dark:border-red-800' : 'border-zinc-200 dark:border-zinc-700'">
       <div class="min-w-0 flex-1">
         <p class="font-semibold">{{ a.paciente.nome }}</p>
@@ -50,7 +50,7 @@ const STATUS = [['ATIVO', 'Em andamento'], ['AGENDADO', 'Agendados'], ['CONCLUID
       </div>
       <div class="text-right text-sm">
         <p v-if="a.status === 'ATIVO'">Dia {{ a.diaAtual }}/{{ a.totalDias }}</p>
-        <p v-if="a.resumoCheckins.pendentes" class="text-zinc-500">{{ a.resumoCheckins.pendentes }} pendente(s)</p>
+        <p v-if="a.resumoCheckins.pendentes" class="text-secundario">{{ a.resumoCheckins.pendentes }} pendente(s)</p>
         <p v-if="a.alertasAbertos" class="font-bold text-erro">{{ a.alertasAbertos }} alerta(s)</p>
       </div>
     </RouterLink>

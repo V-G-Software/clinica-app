@@ -62,7 +62,7 @@ const confirmandoDesligar = ref<Membro | null>(null);
     <p v-if="q.isPending.value">{{ t('app.carregando') }}</p>
     <div v-for="m in membros" :key="m.id" class="flex flex-col gap-2 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <div><p class="font-semibold">{{ m.nome }} <span class="text-sm font-normal text-zinc-500">· {{ STATUS[m.status] ?? m.status }}</span></p>
+        <div><p class="font-semibold">{{ m.nome }} <span class="text-sm font-normal text-secundario">· {{ STATUS[m.status] ?? m.status }}</span></p>
           <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ m.email }}<span v-if="m.profissional"> · {{ m.profissional.conselho }} {{ m.profissional.numero }}/{{ m.profissional.uf }}</span></p></div>
         <div class="flex flex-wrap gap-2">
           <Botao v-if="m.acoesPermitidas.includes('SUSPENDER')" variante="fantasma" @click="editar.mutate({ m, corpo: { status: 'SUSPENSO' } })">Suspender</Botao>
