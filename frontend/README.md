@@ -12,17 +12,36 @@ pnpm --filter frontend build       # build de produção + service worker
 
 Em desenvolvimento, `?org=` escolhe a organização (fica lembrado) e o botão de chave inglesa troca de organização e avança o relógio do mock. Logins de teste: `mock/README.md`.
 
-## Estado: FE0 (esqueleto) concluída
+## Estado
 
+### FE2 · equipe: concluída
 | Critério de saída | Como foi verificado |
 |---|---|
-| As 3 organizações abrem com marca, nome e ícone próprios | E2E: título, `theme-color`, cor de ação e manifest por organização |
-| O manifesto define o menu | E2E: menus diferentes por organização e por perfil (equipe, gestor, tutora) |
-| Testes unitários verdes | 42 testes: descoberta, versões, cor/contraste, termos e plural, datas no fuso, menu, renovação single-flight, middleware 401, manifest |
+| E2E 1: três marcas, claro e escuro | `e2e/fe2.mjs` (capturas por organização e esquema; `modoPadrao` respeitado) |
+| E2E 3: equipe vê o alerta chegar sem recarregar e resolve | `e2e/fe2.mjs` |
+| E2E 7: tutora alterna entre pets e recebe mensagem por polling | `e2e/fe2.mjs` (vet-amigo, intervalo de 15 s) |
+| E2E 8: conflito 412 tratado | `e2e/fe2.mjs` (duas sessões editando o mesmo paciente) |
+| E2E 10: duas abas | `e2e/fe0.mjs` e `e2e/fe2.mjs` |
+| Nenhum `if` por organização | `e2e/fe2.mjs` varre `src/` atrás de slugs e nomes dos cenários |
 
-Também verificado no E2E: sessão restaurada pelo cookie ao recarregar, nenhum token em storage, renovação automática depois de o relógio do mock avançar 1 dia, duas abas renovando juntas, troca de perfil, guarda de rotas.
+Telas: pacientes (lista, busca pelo corpo, cadastro de pessoa ou animal com campos adicionais, detalhe, edição com If-Match, convite com QR), acompanhamentos (lista com filtros, novo com prévia dos dias, alertas e resolução, encerramento, equipe e observação), protocolos (lista, editor que publica nova versão), conversas da equipe (participantes, arquivar, reabrir), equipe (convite, perfis, suspender, desligar) e configurações da organização (marca com prévia e contraste, logo, textos, horário do chat).
 
-**Adiantado da FE1:** login completo por etapas (senha, MFA, configurar MFA com QR, códigos de recuperação, troca de senha, termos e código por e-mail), necessário para validar o manifesto. As demais telas mostram "em construção", com a fase prevista.
+### FE1 · login e paciente: concluída
+| Critério de saída | Como foi verificado |
+|---|---|
+| E2E 2: paciente responde o check-in, vê a confirmação e não vê o alerta | `e2e/fe1.mjs` |
+| E2E 4: relógio +1 dia, renovação sem login, dia 4 aparece | `e2e/fe1.mjs` |
+| E2E 5: convite + onboarding | `e2e/fe1.mjs` (Paulo) |
+| E2E 6: primeiro acesso da equipe | `e2e/fe1.mjs` (Carlos) |
+| E2E 9: mensagem offline reenviada sem duplicar | `e2e/fe1.mjs` |
+| Teste manual em iPhone real instalado (push chegando) | **pendente**: precisa de build publicado em HTTPS e chave VAPID real |
+
+Também no E2E: alerta e mensagem chegam à equipe em tempo real, sem recarregar.
+
+Telas: início do paciente, meus acompanhamentos (com seletor de pet), detalhe com linha do tempo, check-in passo a passo com fotos, conversas (envio otimista, fila offline, fotos, aviso de urgência, fora do horário, leitura), notificações, perfil (tema, densidade, notificações por tipo, push, sair de todos, excluir conta), convite e onboarding. Tempo real com SSE/polling e aba líder.
+
+### FE0 · esqueleto: concluída
+As 3 organizações com marca própria e o menu vindo do manifesto (`e2e/fe0.mjs`).
 
 ## Estrutura
 ```text
@@ -33,6 +52,8 @@ src/catalogo/    catálogo fixo de telas e ícones
 src/i18n/        vue-i18n (textos da UI) + termos do domínio + datas no fuso da organização
 src/ds/          design system base (tokens da marca em runtime)
 src/telas/       telas do catálogo
-src/pwa/         service worker, registro e manifest web
+src/pwa/         service worker, registro, manifest web e push
+src/tempo-real/  SSE/polling, aba líder, evento → invalidação
+src/dados/       cache de consultas, mensagens, envio de arquivos
 borda/           função de borda que serve o manifest por organização em produção
 ```

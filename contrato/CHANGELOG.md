@@ -2,6 +2,11 @@
 
 Versionamento semântico (seção 4.2). Dentro de `1.x`, só mudanças aditivas.
 
+## 1.0.0-rc.2 — 2026-11-05 (FE1)
+
+### Corrigido
+- Listas paginadas: o schema base `Pagina` não declara mais `itens` genérico, e cada lista marca `itens` como obrigatório com o tipo concreto. Antes, os tipos gerados viam `itens` como `unknown`. Sem mudança no JSON trafegado.
+
 ## 1.0.0-rc.1 — 2026-11-05 (F0)
 
 Primeira versão completa da v1, escrita a partir de `docs/PROMPT_BACKEND.md`.

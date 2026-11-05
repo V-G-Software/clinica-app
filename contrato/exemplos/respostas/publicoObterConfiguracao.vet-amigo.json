@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.0.0-rc.1"
+      "versao": "1.0.0-rc.2"
     },
     "status": "ATIVA",
     "mensagemStatus": null,

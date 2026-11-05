@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "vue-tsc --noEmit",
-    "e2e": "node e2e/fe0.mjs"
+    "e2e": "node e2e/fe0.mjs && node e2e/fe1.mjs && node e2e/fe2.mjs"
   },
   "dependencies": {
     "@clinica/contrato-cliente": "workspace:*",

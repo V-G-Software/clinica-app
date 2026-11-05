@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Contrato da API — {{PRODUTO}}
-  version: 1.0.0-rc.1
+  version: 1.0.0-rc.2
   summary: Padrão que todo backend de organização segue para atender o frontend único (PWA).
   description: |
     Fonte da verdade do contrato v1. Spec-first (ADR-0001): tipos, cliente, mock e suíte
@@ -595,6 +595,7 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/Pagina'
                   - type: object
+                    required: [itens]
                     properties:
                       itens: { type: array, items: { $ref: '#/components/schemas/Notificacao' } }
         default: { $ref: '#/components/responses/Erro' }
@@ -958,6 +959,7 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/Pagina'
                   - type: object
+                    required: [itens]
                     properties:
                       itens: { type: array, items: { $ref: '#/components/schemas/Formulario' } }
         default: { $ref: '#/components/responses/Erro' }
@@ -1040,6 +1042,7 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/Pagina'
                   - type: object
+                    required: [itens]
                     properties:
                       itens: { type: array, items: { $ref: '#/components/schemas/Protocolo' } }
         default: { $ref: '#/components/responses/Erro' }
@@ -1146,6 +1149,7 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/Pagina'
                   - type: object
+                    required: [itens]
                     properties:
                       itens: { type: array, items: { $ref: '#/components/schemas/Acompanhamento' } }
         default: { $ref: '#/components/responses/Erro' }
@@ -1284,6 +1288,7 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/Pagina'
                   - type: object
+                    required: [itens]
                     properties:
                       itens: { type: array, items: { $ref: '#/components/schemas/Checkin' } }
         default: { $ref: '#/components/responses/Erro' }
@@ -1359,6 +1364,7 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/Pagina'
                   - type: object
+                    required: [itens]
                     properties:
                       itens: { type: array, items: { $ref: '#/components/schemas/Alerta' } }
         default: { $ref: '#/components/responses/Erro' }
@@ -1653,6 +1659,7 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/Pagina'
                   - type: object
+                    required: [itens]
                     properties:
                       itens: { type: array, items: { $ref: '#/components/schemas/Membro' } }
         default: { $ref: '#/components/responses/Erro' }
@@ -1959,9 +1966,9 @@ components:
           additionalProperties: { type: string }
     Pagina:
       type: object
+      description: Base das listas paginadas; cada lista declara o tipo de `itens` no seu próprio schema.
       required: [itens, proximoCursor]
       properties:
-        itens: { type: array, items: {} }
         proximoCursor:
           type: [string, 'null']
           description: Nulo indica o fim.
@@ -2855,6 +2862,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/Pagina'
         - type: object
+          required: [itens]
           properties:
             itens: { type: array, items: { $ref: '#/components/schemas/Paciente' } }
     Convite:
@@ -3221,6 +3229,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/Pagina'
         - type: object
+          required: [itens]
           properties:
             itens: { type: array, items: { $ref: '#/components/schemas/Conversa' } }
     TipoMensagem:

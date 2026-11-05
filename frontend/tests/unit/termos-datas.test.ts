@@ -29,3 +29,9 @@ describe('plural dos contadores (vue-i18n)', async () => {
   const t = i18n.global.t as unknown as (k: string, n: number) => string;
   it.each([[0, 'nenhum pendente'], [1, '1 pendente'], [3, '3 pendentes']])('%i', (n, esperado) => expect(t('inicio.pendentes', n)).toBe(esperado));
 });
+
+import { formatarTelefone, paraE164 } from '@/i18n/telefone';
+describe('telefone', () => {
+  it.each([['(11) 98888-7777', '+5511988887777'], ['011 3000-0000', '+551130000000'], ['+351 912 345 678', '+351912345678'], ['123', null], ['', null]])('%s → %s', (a, b) => expect(paraE164(a)).toBe(b));
+  it('formata nacional', () => expect(formatarTelefone('+5511988887777')).toBe('(11) 98888-7777'));
+});
