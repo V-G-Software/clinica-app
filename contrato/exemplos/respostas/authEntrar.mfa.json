@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "etapa": "MFA",
-    "desafioId": "dsf_0mw7vddcy0008w",
+    "desafioId": "dsf_0mw7vdddr0008w",
     "metodosMfa": [
       "TOTP",
       "CODIGO_RECUPERACAO"

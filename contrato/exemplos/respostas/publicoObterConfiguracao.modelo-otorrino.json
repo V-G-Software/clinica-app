@@ -9,7 +9,7 @@
     "status": "ATIVA",
     "mensagemStatus": null,
     "frontend": {
-      "versaoMinima": "1.0.0"
+      "versaoMinima": "0.1.0"
     },
     "organizacao": {
       "slug": "modelo-otorrino",

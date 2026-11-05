@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Marca da organização: valores aplicados em runtime por app/tema.ts. Os padrões abaixo só
+   aparecem antes da configuração pública chegar. Cores semânticas são fixas (não mudam com a marca). */
+:root {
+  --marca-50: #f4f4f5; --marca-100: #e4e4e7; --marca-200: #d4d4d8; --marca-300: #a1a1aa; --marca-400: #71717a;
+  --marca-500: #52525b; --marca-600: #3f3f46; --marca-700: #27272a; --marca-800: #18181b; --marca-900: #09090b; --marca-950: #000;
+  --acao: #3f3f46; --acao-texto: #fff; --acao-escuro: #d4d4d8; --acao-escuro-texto: #18181b;
+}
+
+@theme {
+  --color-marca-50: var(--marca-50); --color-marca-100: var(--marca-100); --color-marca-200: var(--marca-200);
+  --color-marca-300: var(--marca-300); --color-marca-400: var(--marca-400); --color-marca-500: var(--marca-500);
+  --color-marca-600: var(--marca-600); --color-marca-700: var(--marca-700); --color-marca-800: var(--marca-800);
+  --color-marca-900: var(--marca-900); --color-marca-950: var(--marca-950);
+  --color-acao: var(--acao-atual); --color-acao-texto: var(--acao-texto-atual);
+  --color-sucesso: #15803d; --color-atencao: #b45309; --color-erro: #b91c1c; --color-informacao: #1d4ed8;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+:root { --acao-atual: var(--acao); --acao-texto-atual: var(--acao-texto); color-scheme: light; }
+:root.dark { --acao-atual: var(--acao-escuro); --acao-texto-atual: var(--acao-escuro-texto); color-scheme: dark; }
+
+html { -webkit-text-size-adjust: 100%; }
+body { @apply bg-white text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 font-sans antialiased; }
+:focus-visible { outline: 3px solid var(--acao-atual); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

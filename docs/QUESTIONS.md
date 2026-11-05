@@ -19,6 +19,9 @@ Decisões assumidas na F0 que precisam de confirmação. As decisões de negóci
 | QUESTION-013 | `Membro.id` é igual ao `usuarioId`? | Sim. | Simplifica o frontend; mudar seria quebra. |
 | QUESTION-014 | Termos de uso mudaram: aceite no próximo login (`ACEITAR_TERMOS`) ou também durante a sessão? | Só no próximo login. Proposta: evento `sessao.manifesto.alterado` + etapa no próximo `renovar`. | Aditivo. |
 | QUESTION-015 | Retenção de conversas, check-ins e fotos (decisão 7, 20 anos se prontuário). | Nada é apagado; `POST /v1/me/exclusao` só remove o acesso. | Jurídico. |
+| QUESTION-016 | Título da conversa para conta com mais de um paciente vinculado (tutora com dois pets): RN-CHA-003 manda mostrar o nome da organização, e as duas conversas ficam iguais. | O frontend mostra o nome do paciente quando há mais de um vinculado. Proposta: o backend devolve `titulo` com o nome do paciente nesse caso. | Regra no backend; frontend já trata. |
+| QUESTION-017 | Na tela de login, antes do manifesto, não há `termos` ("Sou paciente" vs "Sou tutor"). | Texto neutro "Sou paciente ou responsável". Proposta: `termos` opcional na configuração pública (aditivo). | Aditivo no contrato. |
+| QUESTION-018 | Padrão de `frontend.versaoMinima` do mock era `1.0.0` e bloqueava o build `0.1.0`. | Mock passou a `0.1.0` (cenário pode subir com `versaoMinimaFrontend`). Definir a política de versão do frontend antes do piloto. | Só operação. |
 
 ## Adições ao contrato em relação ao prompt (registradas no CHANGELOG)
 

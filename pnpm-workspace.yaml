@@ -2,5 +2,6 @@ packages:
   - pacotes/*
   - mock
   - conformidade
+  - frontend
 onlyBuiltDependencies:
   - esbuild
