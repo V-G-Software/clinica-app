@@ -10,6 +10,8 @@ import { api, ok } from '@/api';
 import { ErroApi } from '@/api/erros';
 import { useAppStore } from '@/app/store';
 import { useSessaoStore } from '@/sessao/store';
+import { useFluxoLoginStore } from '@/sessao/fluxo-login';
+import { onMounted } from 'vue';
 import Botao from '@/ds/Botao.vue';
 import CampoTexto from '@/ds/CampoTexto.vue';
 import Aviso from '@/ds/Aviso.vue';
@@ -81,9 +83,20 @@ async function tratar(r: RespostaEtapa) {
   }
 }
 
+// Etapa vinda do aceite de convite (CODIGO_ENVIADO, TROCAR_SENHA, CONFIGURAR_MFA...).
+const fluxo = useFluxoLoginStore();
+let destinoPendente: string | null = null;
+onMounted(() => {
+  const p = fluxo.consumir();
+  if (!p) return;
+  email.value = p.email;
+  destinoPendente = p.destino;
+  void executar(() => tratar(p.resposta));
+});
+
 async function concluir(tk: { tokenAcesso: string; expiraEm: string }) {
   await sessao.concluirLogin(tk);
-  const voltar = typeof rota.query.voltar === 'string' && rota.query.voltar.startsWith('/') ? rota.query.voltar : '/';
+  const voltar = destinoPendente ?? (typeof rota.query.voltar === 'string' && rota.query.voltar.startsWith('/') ? rota.query.voltar : '/');
   await router.replace(voltar);
 }
 

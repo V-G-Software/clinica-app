@@ -8,6 +8,7 @@ import { useSessaoStore } from '@/sessao/store';
 import TelaCheia from '@/ds/TelaCheia.vue';
 import Botao from '@/ds/Botao.vue';
 import { Loader2, WifiOff } from 'lucide-vue-next';
+import { caminhoDe } from '@/catalogo/telas';
 
 const { t } = useI18n();
 const app = useAppStore();
@@ -17,9 +18,17 @@ const rota = useRoute();
 const EscolherOrganizacao = defineAsyncComponent(() => import('@/telas/sistema/EscolherOrganizacao.vue'));
 const DevFerramentas = import.meta.env.DEV ? defineAsyncComponent(() => import('@/dev/DevFerramentas.vue')) : null;
 
+// Clique em notificação push: o service worker manda o `destino`, traduzido pelo catálogo de telas.
+function irPara(destino: { tela: string; parametros?: Record<string, string> } | null | undefined) {
+  const caminho = destino ? caminhoDe(destino.tela, destino.parametros ?? {}) : null;
+  if (caminho) void router.push(caminho);
+}
 onMounted(async () => {
   window.addEventListener('online', () => (app.online = true));
   window.addEventListener('offline', () => (app.online = false));
+  navigator.serviceWorker?.addEventListener('message', (e) => { if (e.data?.tipo === 'NAVEGAR') irPara(e.data.destino); });
+  const q = new URLSearchParams(location.search).get('destino');
+  if (q) { try { await router.isReady(); irPara(JSON.parse(q)); } catch { /* destino inválido: ignora */ } }
 });
 async function tentarDeNovo() {
   await iniciar();

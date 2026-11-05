@@ -6,6 +6,7 @@ import { ErroApi } from '@/api/erros';
 import type { TokenRenovado } from '@/api/renovacao';
 import { useAppStore } from '@/app/store';
 import { montarMenu } from './navegacao';
+import { clienteConsultas } from '@/dados/consultas';
 
 let temporizador: ReturnType<typeof setTimeout> | undefined;
 
@@ -81,6 +82,7 @@ export const useSessaoStore = defineStore('sessao', {
     },
     limpar() {
       clearTimeout(temporizador);
+      clienteConsultas.clear(); // aparelho compartilhado: nada do usuário anterior fica no cache
       this.token = null; this.expiraEm = null; this.manifesto = null; this.etagManifesto = null;
     },
   },

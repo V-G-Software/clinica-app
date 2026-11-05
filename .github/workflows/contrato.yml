@@ -30,11 +30,14 @@ jobs:
       - name: Frontend — unitários e build
         run: pnpm --filter frontend test && pnpm --filter frontend build
       - name: Frontend — E2E (FE0) contra o mock
+        # Versão fixa: `npx playwright` sem versão quebrou quando a 1.65.0 saiu sem o playwright-core publicado.
+        env: { PLAYWRIGHT_VERSAO: 1.56.1 }
         run: |
-          npx playwright install --with-deps chromium
+          npm install -g playwright@$PLAYWRIGHT_VERSAO
+          npx -y playwright@$PLAYWRIGHT_VERSAO install --with-deps chromium
           pnpm --filter frontend dev > vite.log 2>&1 &
           for i in $(seq 1 30); do curl -sf localhost:5173 >/dev/null && break; sleep 1; done
-          pnpm --filter frontend e2e
+          NODE_PATH=$(npm root -g) pnpm --filter frontend e2e
       - name: Mock sem violações de contrato
         run: '! grep -i "RESPOSTA FORA DO CONTRATO" mock.log'
       - uses: actions/upload-artifact@v4

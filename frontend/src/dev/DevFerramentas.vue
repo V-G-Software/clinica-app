@@ -19,9 +19,9 @@ async function avancar(corpo: Record<string, number>) {
 async function reiniciar() { await fetch(`${mock}/__mock/reiniciar`, { method: 'POST' }); location.reload(); }
 </script>
 <template>
-  <div class="fixed right-3 bottom-24 z-40 lg:bottom-3">
-    <button type="button" class="rounded-full bg-zinc-900 p-3 text-white shadow-lg" aria-label="Ferramentas de desenvolvimento" @click="aberto = !aberto"><Wrench class="size-5" /></button>
-    <div v-if="aberto" class="absolute right-0 bottom-14 flex w-72 flex-col gap-2 rounded-xl bg-zinc-900 p-3 text-sm text-white shadow-xl">
+  <div class="fixed top-2 right-3 z-40 lg:top-auto lg:bottom-3">
+    <button type="button" class="rounded-full bg-zinc-900/80 p-2 text-white shadow-lg" aria-label="Ferramentas de desenvolvimento" @click="aberto = !aberto"><Wrench class="size-5" /></button>
+    <div v-if="aberto" class="absolute right-0 top-14 flex w-72 lg:top-auto lg:bottom-14 flex-col gap-2 rounded-xl bg-zinc-900 p-3 text-sm text-white shadow-xl">
       <strong>Organização</strong>
       <div class="flex flex-wrap gap-1">
         <a v-for="s in ['modelo-otorrino', 'fisio-movimento', 'vet-amigo']" :key="s" :href="`/?org=${s}`" class="rounded bg-zinc-700 px-2 py-1">{{ s }}</a>

@@ -1224,8 +1224,8 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** @description Base das listas paginadas; cada lista declara o tipo de `itens` no seu próprio schema. */
         Pagina: {
-            itens: unknown[];
             /** @description Nulo indica o fim. */
             proximoCursor: string | null;
         };
@@ -1673,7 +1673,7 @@ export interface components {
             acoesPermitidas: ("EDITAR" | "INATIVAR" | "REATIVAR" | "CONVIDAR" | "INICIAR_ACOMPANHAMENTO" | "ABRIR_CONVERSA")[];
         };
         PaginaPacientes: components["schemas"]["Pagina"] & {
-            itens?: components["schemas"]["Paciente"][];
+            itens: components["schemas"]["Paciente"][];
         };
         Convite: {
             id: components["schemas"]["Id"];
@@ -1894,7 +1894,7 @@ export interface components {
             acoesPermitidas: ("ENVIAR" | "ADICIONAR_PARTICIPANTE" | "REMOVER_PARTICIPANTE" | "ARQUIVAR" | "REABRIR")[];
         };
         PaginaConversas: components["schemas"]["Pagina"] & {
-            itens?: components["schemas"]["Conversa"][];
+            itens: components["schemas"]["Conversa"][];
         };
         /** @enum {string} */
         TipoMensagem: "TEXTO" | "ANEXO" | "CHECKIN" | "ORIENTACAO" | "SISTEMA";
@@ -2654,7 +2654,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Pagina"] & {
-                        itens?: components["schemas"]["Notificacao"][];
+                        itens: components["schemas"]["Notificacao"][];
                     };
                 };
             };
@@ -3114,7 +3114,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Pagina"] & {
-                        itens?: components["schemas"]["Formulario"][];
+                        itens: components["schemas"]["Formulario"][];
                     };
                 };
             };
@@ -3225,7 +3225,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Pagina"] & {
-                        itens?: components["schemas"]["Protocolo"][];
+                        itens: components["schemas"]["Protocolo"][];
                     };
                 };
             };
@@ -3362,7 +3362,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Pagina"] & {
-                        itens?: components["schemas"]["Acompanhamento"][];
+                        itens: components["schemas"]["Acompanhamento"][];
                     };
                 };
             };
@@ -3516,7 +3516,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Pagina"] & {
-                        itens?: components["schemas"]["Checkin"][];
+                        itens: components["schemas"]["Checkin"][];
                     };
                 };
             };
@@ -3601,7 +3601,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Pagina"] & {
-                        itens?: components["schemas"]["Alerta"][];
+                        itens: components["schemas"]["Alerta"][];
                     };
                 };
             };
@@ -3965,7 +3965,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Pagina"] & {
-                        itens?: components["schemas"]["Membro"][];
+                        itens: components["schemas"]["Membro"][];
                     };
                 };
             };

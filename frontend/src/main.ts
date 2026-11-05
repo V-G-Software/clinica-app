@@ -6,6 +6,8 @@ import { router } from './router';
 import { i18n } from './i18n';
 import { registrarServiceWorker } from './pwa/registro';
 import { iniciar } from './app/inicializacao';
+import { clienteConsultas } from './dados/consultas';
+import { ligarTempoReal } from './tempo-real/integracao';
 import './estilo.css';
 
 const app = createApp(App).use(createPinia());
@@ -13,7 +15,8 @@ void iniciar(); // diretório → configuração → sessão, antes da primeira 
 app
   .use(router)
   .use(i18n)
-  .use(VueQueryPlugin, { queryClientConfig: { defaultOptions: { queries: { staleTime: 30_000, retry: (n, e: any) => n < 2 && (e?.status === 0 || e?.status >= 500) } } } })
+  .use(VueQueryPlugin, { queryClient: clienteConsultas })
   .mount('#app');
+ligarTempoReal();
 
 registrarServiceWorker();

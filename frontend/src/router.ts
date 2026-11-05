@@ -12,7 +12,8 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/entrar', name: 'entrar', component: () => import('@/telas/auth/Entrar.vue'), meta: { publica: true } },
-    { path: '/convite/:token', name: 'convite', component: () => import('@/telas/comum/EmConstrucao.vue'), meta: { publica: true }, props: { fase: 'FE1' } },
+    { path: '/convite/:token', name: 'convite', component: () => import('@/telas/convite/Convite.vue'), meta: { publica: true, convite: true } },
+    { path: '/bem-vindo', name: 'bem-vindo', component: () => import('@/telas/convite/BemVindo.vue') },
     { path: '/', component: () => import('@/layout/LayoutApp.vue'), children: [
       ...telas,
       { path: '/indisponivel', name: 'indisponivel', component: () => import('@/telas/sistema/Indisponivel.vue') },
@@ -35,7 +36,7 @@ router.beforeEach(async (para) => {
   await aguardarInicializacao();
   if (useAppStore().estado !== 'pronto') return true; // App.vue mostra a tela de estado (manutenção, erro…)
   const s = useSessaoStore();
-  if (para.meta.publica) return para.name === 'entrar' && s.logado ? '/' : true;
+  if (para.meta.publica) return para.name === 'entrar' && s.logado ? '/' : true; // convite é aceito mesmo logado
   if (!s.logado) return { path: '/entrar', query: para.fullPath !== '/' ? { voltar: para.fullPath } : {} };
   const d = para.meta.tela as DefinicaoTela | undefined;
   if (d && !telaPermitida(d, s)) return '/indisponivel';
