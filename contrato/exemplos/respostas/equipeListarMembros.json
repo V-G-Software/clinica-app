@@ -1,0 +1,54 @@
+{
+  "requisicao": "GET /v1/equipe/membros",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "usr_carlos",
+        "nome": "Dr. Carlos Nogueira",
+        "email": "carlos@modelo-otorrino.exemplo",
+        "perfis": [
+          "PROFISSIONAL"
+        ],
+        "status": "ATIVO",
+        "profissional": {
+          "conselho": "CRM",
+          "numero": "654321",
+          "uf": "SP",
+          "especialidade": "Otorrinolaringologia"
+        },
+        "acoesPermitidas": []
+      },
+      {
+        "id": "usr_ana",
+        "nome": "Dra. Ana Lima",
+        "email": "ana@modelo-otorrino.exemplo",
+        "perfis": [
+          "GESTOR",
+          "PROFISSIONAL"
+        ],
+        "status": "ATIVO",
+        "profissional": {
+          "conselho": "CRM",
+          "numero": "123456",
+          "uf": "SP",
+          "especialidade": "Otorrinolaringologia"
+        },
+        "acoesPermitidas": []
+      },
+      {
+        "id": "usr_julia",
+        "nome": "Júlia Ramos",
+        "email": "julia@modelo-otorrino.exemplo",
+        "perfis": [
+          "SECRETARIA"
+        ],
+        "status": "ATIVO",
+        "profissional": null,
+        "acoesPermitidas": []
+      }
+    ],
+    "proximoCursor": null
+  }
+}

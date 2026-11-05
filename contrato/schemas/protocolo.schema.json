@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exemplo.com.br/contrato/v1/protocolo.schema.json",
+  "title": "Protocolo de acompanhamento",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Protocolo (1.0.0-rc.1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "versao",
+    "nome",
+    "descricao",
+    "duracaoDias",
+    "checkins",
+    "orientacoes",
+    "regrasAlerta",
+    "status",
+    "acoesPermitidas"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/Id"
+    },
+    "versao": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nome": {
+      "type": "string"
+    },
+    "descricao": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "duracaoDias": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "checkins": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ProgramacaoCheckin"
+      }
+    },
+    "orientacoes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Orientacao"
+      }
+    },
+    "regrasAlerta": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RegraAlerta"
+      }
+    },
+    "status": {
+      "$ref": "#/$defs/StatusProtocolo"
+    },
+    "acoesPermitidas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "EDITAR",
+          "ARQUIVAR",
+          "INICIAR_ACOMPANHAMENTO"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "description": "Identificador opaco; o frontend nunca interpreta.",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "ProgramacaoCheckin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dias",
+        "horario",
+        "formulario",
+        "expiraAposHoras"
+      ],
+      "properties": {
+        "dias": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365
+          }
+        },
+        "horario": {
+          "$ref": "#/$defs/Hora"
+        },
+        "formulario": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "versao"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/Id"
+            },
+            "versao": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "lembreteAposHoras": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 48
+        },
+        "expiraAposHoras": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 72
+        }
+      }
+    },
+    "Hora": {
+      "type": "string",
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+      "description": "HH:MM no fuso da organização."
+    },
+    "Orientacao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dia",
+        "horario",
+        "texto"
+      ],
+      "properties": {
+        "dia": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 365
+        },
+        "horario": {
+          "$ref": "#/$defs/Hora"
+        },
+        "texto": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "RegraAlerta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tipo",
+        "severidade",
+        "mensagem"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "tipo": {
+          "type": "string",
+          "enum": [
+            "RESPOSTA",
+            "CHECKIN_EXPIRADO"
+          ]
+        },
+        "campo": {
+          "type": "string"
+        },
+        "operador": {
+          "$ref": "#/$defs/Operador"
+        },
+        "valor": {
+          "$ref": "#/$defs/ValorComparacao"
+        },
+        "severidade": {
+          "$ref": "#/$defs/Severidade"
+        },
+        "mensagem": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Descreve o que foi relatado; nunca sugere conduta (RN-ACO-005)."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "RESPOSTA"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "campo",
+              "operador",
+              "valor"
+            ]
+          }
+        }
+      ]
+    },
+    "Operador": {
+      "type": "string",
+      "enum": [
+        "IGUAL",
+        "DIFERENTE",
+        "MAIOR_OU_IGUAL",
+        "MENOR_OU_IGUAL",
+        "CONTEM"
+      ]
+    },
+    "ValorComparacao": {
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "Severidade": {
+      "type": "string",
+      "enum": [
+        "BAIXA",
+        "MEDIA",
+        "ALTA"
+      ]
+    },
+    "StatusProtocolo": {
+      "type": "string",
+      "enum": [
+        "ATIVO",
+        "ARQUIVADO"
+      ]
+    }
+  }
+}

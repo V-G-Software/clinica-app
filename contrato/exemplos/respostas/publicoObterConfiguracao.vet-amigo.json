@@ -1,0 +1,67 @@
+{
+  "requisicao": "GET /v1/publico/configuracao",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "contrato": {
+      "versao": "1.0.0-rc.1"
+    },
+    "status": "ATIVA",
+    "mensagemStatus": null,
+    "frontend": {
+      "versaoMinima": "1.0.0"
+    },
+    "organizacao": {
+      "slug": "vet-amigo",
+      "nome": "Clínica Vet Amigo",
+      "fuso": "America/Sao_Paulo",
+      "locale": "pt-BR"
+    },
+    "tema": {
+      "corMarca": "#C2410C",
+      "logoUrl": "https://cdn.exemplo/vet-amigo/logo.svg",
+      "logoEscuroUrl": "https://cdn.exemplo/vet-amigo/logo-escuro.svg",
+      "modoPadrao": "SISTEMA"
+    },
+    "pwa": {
+      "nome": "Clínica Vet Amigo",
+      "nomeCurto": "Vet Amigo",
+      "corTema": "#C2410C",
+      "icones": [
+        {
+          "src": "https://cdn.exemplo/vet-amigo/icone-192.png",
+          "tamanho": "192x192"
+        },
+        {
+          "src": "https://cdn.exemplo/vet-amigo/icone-512.png",
+          "tamanho": "512x512",
+          "proposito": "maskable"
+        }
+      ]
+    },
+    "autenticacao": {
+      "metodos": [
+        {
+          "tipo": "CODIGO_EMAIL",
+          "publico": "PACIENTE"
+        },
+        {
+          "tipo": "SENHA",
+          "publico": "EQUIPE",
+          "mfa": "OBRIGATORIO"
+        }
+      ],
+      "cadastroPaciente": "SOMENTE_CONVITE",
+      "termosVersao": "2026-09-01"
+    },
+    "textos": {
+      "boasVindasTitulo": "A recuperação do seu pet, acompanhada de perto",
+      "boasVindasTexto": "Responda o check-in diário e mande fotos da ferida para a equipe."
+    },
+    "links": {
+      "termosDeUso": "https://vet-amigo.exemplo/termos",
+      "privacidade": "https://vet-amigo.exemplo/privacidade",
+      "suporte": "mailto:contato@vet-amigo.exemplo"
+    }
+  }
+}

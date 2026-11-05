@@ -1,0 +1,34 @@
+name: contrato
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  contrato-mock-conformidade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      # Lint do contrato, exemplos válidos, artefatos gerados em dia e typecheck.
+      - run: pnpm verificar
+      - name: Sobe o mock
+        run: |
+          pnpm mock > mock.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:4010/o/modelo-otorrino/v1/publico/saude && break; sleep 1; done
+      - name: Conformidade — modelo-otorrino
+        run: pnpm conformidade
+      - name: Conformidade — fisio-movimento
+        run: pnpm conformidade
+        env: { CONF_SLUG: fisio-movimento, CONF_GESTOR_EMAIL: pedro@fisio-movimento.exemplo, CONF_PACIENTE_EMAIL: fernanda@exemplo.com, CONF_PRIMEIRO_ACESSO_EMAIL: '' }
+      - name: Conformidade — vet-amigo
+        run: pnpm conformidade
+        env: { CONF_SLUG: vet-amigo, CONF_GESTOR_EMAIL: renata@vet-amigo.exemplo, CONF_PACIENTE_EMAIL: laura@exemplo.com, CONF_PRIMEIRO_ACESSO_EMAIL: '' }
+      - name: Mock sem violações de contrato
+        run: '! grep -i "RESPOSTA FORA DO CONTRATO" mock.log'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: conformidade, path: "conformidade/relatorio.*\nmock.log" }

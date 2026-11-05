@@ -1,0 +1,14 @@
+{
+  "name": "@clinica/contrato-cliente",
+  "version": "1.0.0-rc.1",
+  "private": true,
+  "type": "module",
+  "types": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json" },
+  "dependencies": {
+    "@clinica/contrato-tipos": "workspace:*",
+    "openapi-fetch": "^0.14.0"
+  },
+  "devDependencies": { "typescript": "^5.8.0" }
+}

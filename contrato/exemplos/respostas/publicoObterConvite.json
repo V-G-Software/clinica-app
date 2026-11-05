@@ -1,0 +1,15 @@
+{
+  "requisicao": "GET /v1/publico/convites/convite-paulo-otorrino-0001",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "tipo": "PACIENTE",
+    "organizacao": {
+      "slug": "modelo-otorrino",
+      "nome": "Clínica Modelo Otorrino"
+    },
+    "nomeParcial": "Paulo T.",
+    "emailMascarado": "p***@exemplo.com",
+    "expiraEm": "2026-11-14T17:00:00Z"
+  }
+}

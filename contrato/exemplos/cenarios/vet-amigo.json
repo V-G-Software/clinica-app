@@ -1,0 +1,174 @@
+{
+  "$comentario": "Cenário de exemplo. Pacientes do tipo ANIMAL com tutor, tutora com dois pets, protocolo de castração de 10 dias com foto da ferida e tempo real em modo POLLING. Valores \"@foto\" nas respostas geram uma imagem de exemplo já DISPONIVEL.",
+  "organizacao": {
+    "id": "org_vet",
+    "slug": "vet-amigo",
+    "nome": "Clínica Vet Amigo",
+    "fuso": "America/Sao_Paulo",
+    "locale": "pt-BR",
+    "status": "ATIVA",
+    "mensagemStatus": null,
+    "dominios": ["vet-amigo.localhost"],
+    "contato": {
+      "telefone": "+554130002222",
+      "email": "contato@vet-amigo.exemplo",
+      "endereco": "Rua dos Pinheiros, 800 — Curitiba/PR"
+    },
+    "mapaUrl": "https://maps.exemplo/vet-amigo",
+    "tema": {
+      "corMarca": "#C2410C",
+      "logoUrl": "https://cdn.exemplo/vet-amigo/logo.svg",
+      "logoEscuroUrl": "https://cdn.exemplo/vet-amigo/logo-escuro.svg",
+      "modoPadrao": "SISTEMA"
+    },
+    "pwa": {
+      "nome": "Clínica Vet Amigo",
+      "nomeCurto": "Vet Amigo",
+      "corTema": "#C2410C",
+      "icones": [
+        { "src": "https://cdn.exemplo/vet-amigo/icone-192.png", "tamanho": "192x192" },
+        { "src": "https://cdn.exemplo/vet-amigo/icone-512.png", "tamanho": "512x512", "proposito": "maskable" }
+      ]
+    },
+    "autenticacao": {
+      "metodos": [
+        { "tipo": "CODIGO_EMAIL", "publico": "PACIENTE" },
+        { "tipo": "SENHA", "publico": "EQUIPE", "mfa": "OBRIGATORIO" }
+      ],
+      "cadastroPaciente": "SOMENTE_CONVITE",
+      "termosVersao": "2026-09-01"
+    },
+    "textos": {
+      "boasVindasTitulo": "A recuperação do seu pet, acompanhada de perto",
+      "boasVindasTexto": "Responda o check-in diário e mande fotos da ferida para a equipe."
+    },
+    "links": {
+      "termosDeUso": "https://vet-amigo.exemplo/termos",
+      "privacidade": "https://vet-amigo.exemplo/privacidade",
+      "suporte": "mailto:contato@vet-amigo.exemplo"
+    }
+  },
+  "termos": {
+    "organizacao": { "singular": "clínica", "plural": "clínicas", "genero": "F" },
+    "paciente": { "singular": "pet", "plural": "pets", "genero": "M" },
+    "responsavel": { "singular": "tutor", "plural": "tutores", "genero": "M" },
+    "profissional": { "singular": "veterinário", "plural": "veterinários", "genero": "M" },
+    "acompanhamento": { "singular": "recuperação", "plural": "recuperações", "genero": "F" },
+    "protocolo": { "singular": "protocolo", "plural": "protocolos", "genero": "M" },
+    "procedimento": { "singular": "cirurgia", "plural": "cirurgias", "genero": "F" },
+    "checkin": { "singular": "check-in", "plural": "check-ins", "genero": "M" },
+    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" }
+  },
+  "modulos": [
+    { "id": "pacientes", "versao": "1.0", "config": { "formularioCadastroId": "frm_cadastro_pet", "relacoesPermitidas": ["ANIMAL"] } },
+    { "id": "acompanhamento", "versao": "1.0", "config": { "publicarCheckinNaConversa": true } },
+    {
+      "id": "chat",
+      "versao": "1.0",
+      "config": {
+        "pacientePodeIniciar": false,
+        "anexosPermitidos": true,
+        "horarioAtendimento": [
+          { "diaSemana": 1, "inicio": "08:00", "fim": "19:00" },
+          { "diaSemana": 2, "inicio": "08:00", "fim": "19:00" },
+          { "diaSemana": 3, "inicio": "08:00", "fim": "19:00" },
+          { "diaSemana": 4, "inicio": "08:00", "fim": "19:00" },
+          { "diaSemana": 5, "inicio": "08:00", "fim": "19:00" },
+          { "diaSemana": 6, "inicio": "08:00", "fim": "13:00" }
+        ],
+        "mensagemForaDoHorario": "Recebemos sua mensagem. Respondemos no próximo horário de atendimento.",
+        "avisoUrgencia": "Sangramento, pontos abertos, vômitos repetidos ou apatia: procure o plantão veterinário 24 h."
+      }
+    },
+    { "id": "equipe", "versao": "1.0", "config": {} }
+  ],
+  "capacidades": {
+    "tempoReal": { "modo": "POLLING", "intervaloPollingSegundos": 15 },
+    "push": { "modo": "WEB_PUSH", "chavePublicaVapid": "BExemploDeChavePublicaVapidEmBase64Url" },
+    "upload": { "tamanhoMaximoBytes": 15728640, "tiposPermitidos": ["image/jpeg", "image/png", "image/webp"] }
+  },
+  "usuarios": [
+    {
+      "id": "usr_renata", "nome": "Renata Campos", "nomeExibicao": "Dra. Renata Campos", "email": "renata@vet-amigo.exemplo",
+      "senha": "Senha@12345", "perfis": ["GESTOR", "PROFISSIONAL"], "mfaSegredo": "JBSWY3DPEHPK3PXP",
+      "rotulosPerfis": { "PROFISSIONAL": "Veterinária", "GESTOR": "Gestão da clínica" },
+      "profissional": { "conselho": "CRMV", "numero": "9876", "uf": "PR", "especialidade": "Cirurgia de pequenos animais" }
+    },
+    {
+      "id": "usr_diego", "nome": "Diego Martins", "nomeExibicao": "Diego Martins", "email": "diego@vet-amigo.exemplo",
+      "senha": "Senha@12345", "perfis": ["SECRETARIA"], "mfaSegredo": "KRSXG5CTMVRXEZLU"
+    },
+    { "id": "usr_laura", "nome": "Laura Martins", "email": "laura@exemplo.com", "perfis": ["PACIENTE"], "push": true,
+      "vinculos": [{ "pacienteId": "pac_thor", "relacao": "ANIMAL" }, { "pacienteId": "pac_mel", "relacao": "ANIMAL" }],
+      "$comentario": "Tutora com dois pets: uma conta, dois pacientes vinculados." },
+    { "id": "usr_caio", "nome": "Caio Almeida", "email": "caio@exemplo.com", "perfis": ["PACIENTE"], "push": false,
+      "vinculos": [{ "pacienteId": "pac_nina", "relacao": "ANIMAL" }] }
+  ],
+  "formularios": [
+    {
+      "id": "frm_cadastro_pet", "versao": 1, "titulo": "Dados do pet", "finalidade": "CADASTRO",
+      "campos": [
+        { "id": "especie", "tipo": "ESCOLHA_UNICA", "rotulo": "Espécie", "obrigatorio": true,
+          "opcoes": [{ "valor": "CAO", "rotulo": "Cão" }, { "valor": "GATO", "rotulo": "Gato" }, { "valor": "OUTRO", "rotulo": "Outro" }] },
+        { "id": "raca", "tipo": "TEXTO", "rotulo": "Raça", "obrigatorio": false },
+        { "id": "peso", "tipo": "NUMERO", "rotulo": "Peso", "unidade": "kg", "min": 0, "max": 120, "casasDecimais": 1, "obrigatorio": false }
+      ]
+    },
+    {
+      "id": "frm_castracao_diario", "versao": 1, "titulo": "Como o seu pet está hoje?", "finalidade": "CHECKIN",
+      "campos": [
+        { "id": "apetite", "tipo": "ESCOLHA_UNICA", "rotulo": "Como está o apetite?", "obrigatorio": true,
+          "opcoes": [{ "valor": "NORMAL", "rotulo": "Normal" }, { "valor": "POUCO", "rotulo": "Comendo pouco" }, { "valor": "NADA", "rotulo": "Não comeu" }] },
+        { "id": "lambendo", "tipo": "SIM_NAO", "rotulo": "Está lambendo ou mordendo a ferida?", "obrigatorio": true },
+        { "id": "aspectoFerida", "tipo": "ESCOLHA_UNICA", "rotulo": "Como está a ferida?", "obrigatorio": true,
+          "opcoes": [{ "valor": "NORMAL", "rotulo": "Normal" }, { "valor": "VERMELHA", "rotulo": "Vermelha ou inchada" }, { "valor": "SECRECAO", "rotulo": "Com secreção" }, { "valor": "ABERTA", "rotulo": "Pontos abertos" }] },
+        { "id": "fotoFerida", "tipo": "FOTO", "rotulo": "Foto da ferida", "instrucao": "De perto, com boa luz.", "maximo": 2, "obrigatorio": true },
+        { "id": "observacao", "tipo": "TEXTO_LONGO", "rotulo": "Algo mais?", "obrigatorio": false }
+      ]
+    }
+  ],
+  "protocolos": [
+    {
+      "id": "prt_castracao10", "versao": 1, "nome": "Castração — 10 dias",
+      "descricao": "Acompanhamento da ferida até a retirada dos pontos.", "duracaoDias": 10, "status": "ATIVO",
+      "checkins": [{ "dias": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "horario": "10:00", "formulario": { "id": "frm_castracao_diario", "versao": 1 }, "lembreteAposHoras": 3, "expiraAposHoras": 12 }],
+      "orientacoes": [
+        { "dia": 0, "horario": "17:00", "texto": "Mantenha o colar elizabetano o tempo todo e ofereça água à vontade." },
+        { "dia": 10, "horario": "09:00", "texto": "Hoje é o dia da retirada dos pontos. Confirme o horário com a recepção." }
+      ],
+      "regrasAlerta": [
+        { "id": "pontos_abertos", "tipo": "RESPOSTA", "campo": "aspectoFerida", "operador": "IGUAL", "valor": "ABERTA", "severidade": "ALTA", "mensagem": "Pontos abertos relatados" },
+        { "id": "secrecao", "tipo": "RESPOSTA", "campo": "aspectoFerida", "operador": "IGUAL", "valor": "SECRECAO", "severidade": "MEDIA", "mensagem": "Secreção na ferida relatada" },
+        { "id": "sem_apetite", "tipo": "RESPOSTA", "campo": "apetite", "operador": "IGUAL", "valor": "NADA", "severidade": "MEDIA", "mensagem": "Pet não comeu" },
+        { "id": "sem_resposta", "tipo": "CHECKIN_EXPIRADO", "severidade": "BAIXA", "mensagem": "Check-in não respondido" }
+      ]
+    }
+  ],
+  "pacientes": [
+    { "id": "pac_thor", "tipo": "ANIMAL", "nome": "Thor", "dataNascimento": "2023-05-10",
+      "contato": { "email": null, "celular": null }, "criadoEm": "2026-10-01T14:00:00Z",
+      "camposAdicionais": { "especie": "CAO", "raca": "Labrador", "peso": 28.5 },
+      "responsaveis": [{ "nome": "Laura Martins", "parentesco": "Tutora", "contato": { "email": "laura@exemplo.com", "celular": "+5541988881111" } }] },
+    { "id": "pac_mel", "tipo": "ANIMAL", "nome": "Mel", "dataNascimento": "2021-02-01",
+      "contato": { "email": null, "celular": null }, "criadoEm": "2026-10-01T14:05:00Z",
+      "camposAdicionais": { "especie": "CAO", "raca": "SRD", "peso": 12 },
+      "responsaveis": [{ "nome": "Laura Martins", "parentesco": "Tutora", "contato": { "email": "laura@exemplo.com", "celular": "+5541988881111" } }] },
+    { "id": "pac_nina", "tipo": "ANIMAL", "nome": "Nina", "dataNascimento": "2024-08-15",
+      "contato": { "email": null, "celular": null }, "criadoEm": "2026-10-20T14:00:00Z",
+      "camposAdicionais": { "especie": "GATO", "raca": "Siamês", "peso": 3.4 },
+      "responsaveis": [{ "nome": "Caio Almeida", "parentesco": "Tutor", "contato": { "email": "caio@exemplo.com", "celular": null } }] }
+  ],
+  "acompanhamentos": [
+    { "id": "acp_thor", "pacienteId": "pac_thor", "protocoloId": "prt_castracao10", "dataInicio": "2026-11-06",
+      "equipeIds": ["usr_renata", "usr_diego"], "criadoPor": "usr_renata", "criadoEm": "2026-11-06T15:00:00Z", "observacao": null,
+      "respostas": {
+        "1": { "aposMinutos": 50, "respostas": { "apetite": "POUCO", "lambendo": false, "aspectoFerida": "NORMAL", "fotoFerida": ["@foto"] } },
+        "2": { "aposMinutos": 25, "respostas": { "apetite": "NORMAL", "lambendo": true, "aspectoFerida": "VERMELHA", "fotoFerida": ["@foto", "@foto"], "observacao": "Tirou o colar à noite." } }
+      } },
+    { "id": "acp_mel", "pacienteId": "pac_mel", "protocoloId": "prt_castracao10", "dataInicio": "2026-10-10",
+      "equipeIds": ["usr_renata"], "criadoPor": "usr_renata", "criadoEm": "2026-10-10T15:00:00Z", "observacao": null,
+      "encerrar": { "em": "2026-10-14T15:00:00Z", "por": "usr_renata", "motivo": "Tutora preferiu acompanhamento presencial diário." } },
+    { "id": "acp_nina", "pacienteId": "pac_nina", "protocoloId": "prt_castracao10", "dataInicio": "2026-11-07",
+      "equipeIds": ["usr_renata", "usr_diego"], "criadoPor": "usr_diego", "criadoEm": "2026-11-07T14:00:00Z", "observacao": null }
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "requisicao": "GET /v1/inicio",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "secoes": [
+      {
+        "id": "acompanhamento-atual-acp_thor",
+        "tipo": "ACOMPANHAMENTO_ATUAL",
+        "titulo": "Thor",
+        "dados": {
+          "acompanhamentoId": "acp_thor",
+          "pacienteId": "pac_thor",
+          "titulo": "Castração — 10 dias",
+          "diaAtual": 2,
+          "totalDias": 10,
+          "status": "ATIVO",
+          "proximoCheckin": {
+            "id": "chk_0mw53peo00005p",
+            "acompanhamentoId": "acp_thor",
+            "paciente": {
+              "id": "pac_thor",
+              "nome": "Thor"
+            },
+            "dia": 3,
+            "status": "AGENDADO",
+            "disponivelEm": "2026-11-09T13:00:00Z",
+            "expiraEm": "2026-11-10T01:00:00Z"
+          },
+          "orientacaoDoDia": null
+        }
+      },
+      {
+        "id": "checkins-pendentes",
+        "tipo": "CHECKINS_PENDENTES",
+        "dados": {
+          "itens": []
+        }
+      },
+      {
+        "id": "conversas-recentes",
+        "tipo": "CONVERSAS_RECENTES",
+        "dados": {
+          "itens": [
+            {
+              "id": "cnv_0mw53peo00005x",
+              "titulo": "Clínica Vet Amigo",
+              "paciente": {
+                "id": "pac_thor",
+                "nome": "Thor"
+              },
+              "acompanhamentoAtivoId": "acp_thor",
+              "status": "ATIVA",
+              "participantes": [
+                {
+                  "usuarioId": "usr_renata",
+                  "nome": "Dra. Renata Campos",
+                  "perfil": "PROFISSIONAL",
+                  "lidoAte": null
+                },
+                {
+                  "usuarioId": "usr_diego",
+                  "nome": "Diego Martins",
+                  "perfil": "SECRETARIA",
+                  "lidoAte": null
+                },
+                {
+                  "usuarioId": "usr_laura",
+                  "nome": "Laura Martins",
+                  "perfil": "PACIENTE",
+                  "lidoAte": "msg_0mw7v6xuo0008m"
+                }
+              ],
+              "ultimaMensagem": {
+                "id": "msg_0mw7v6xuo0008m",
+                "resumo": "Dia 2 · apetite normal · aspecto ferida vermelha ou inchada",
+                "autorNome": "Laura Martins",
+                "enviadoEm": "2026-11-08T13:25:00Z"
+              },
+              "naoLidas": 0,
+              "criadoEm": "2026-11-06T15:00:00Z",
+              "acoesPermitidas": [
+                "ENVIAR"
+              ]
+            },
+            {
+              "id": "cnv_0mv2iteo00000b",
+              "titulo": "Clínica Vet Amigo",
+              "paciente": {
+                "id": "pac_mel",
+                "nome": "Mel"
+              },
+              "acompanhamentoAtivoId": null,
+              "status": "ATIVA",
+              "participantes": [
+                {
+                  "usuarioId": "usr_renata",
+                  "nome": "Dra. Renata Campos",
+                  "perfil": "PROFISSIONAL",
+                  "lidoAte": null
+                },
+                {
+                  "usuarioId": "usr_laura",
+                  "nome": "Laura Martins",
+                  "perfil": "PACIENTE",
+                  "lidoAte": null
+                }
+              ],
+              "ultimaMensagem": {
+                "id": "msg_0mv88ktc000017",
+                "resumo": "Recuperação encerrada pela equipe.",
+                "autorNome": null,
+                "enviadoEm": "2026-10-14T15:00:00Z"
+              },
+              "naoLidas": 3,
+              "criadoEm": "2026-10-10T15:00:00Z",
+              "acoesPermitidas": [
+                "ENVIAR"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "contato",
+        "tipo": "CONTATO_ORGANIZACAO",
+        "dados": {
+          "telefone": "+554130002222",
+          "endereco": "Rua dos Pinheiros, 800 — Curitiba/PR",
+          "mapaUrl": "https://maps.exemplo/vet-amigo"
+        }
+      }
+    ]
+  }
+}

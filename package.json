@@ -1,0 +1,29 @@
+{
+  "name": "clinica-app",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "contrato:lint": "spectral lint contrato/openapi.yaml --ruleset contrato/spectral.yaml --fail-severity warn && node contrato/scripts/validar-exemplos.mjs",
+    "contrato:gerar": "node contrato/scripts/gerar-schemas.mjs && openapi-typescript contrato/openapi.yaml -o pacotes/contrato-tipos/src/openapi.d.ts",
+    "contrato:exemplos": "node contrato/scripts/capturar-exemplos.mjs",
+    "contrato:docs": "redocly build-docs contrato/openapi.yaml -o contrato/dist/index.html",
+    "mock": "pnpm --filter @clinica/mock start",
+    "conformidade": "pnpm --filter @clinica/conformidade test",
+    "typecheck": "pnpm -r typecheck",
+    "verificar": "pnpm contrato:lint && pnpm contrato:gerar && git diff --exit-code -- contrato/schemas pacotes/contrato-tipos && pnpm typecheck"
+  },
+  "devDependencies": {
+    "@clinica/contrato-validador": "workspace:*",
+    "@redocly/cli": "^1.34.0",
+    "@stoplight/spectral-cli": "^6.15.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "openapi-typescript": "^7.8.0",
+    "typescript": "^5.8.0",
+    "yaml": "^2.8.0"
+  }
+}

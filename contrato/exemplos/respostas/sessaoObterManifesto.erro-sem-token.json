@@ -1,0 +1,14 @@
+{
+  "requisicao": "GET /v1/sessao",
+  "status": 401,
+  "contentType": "application/problem+json",
+  "corpo": {
+    "type": "https://exemplo.com.br/erros/sessao-expirada",
+    "title": "Sessão expirada",
+    "status": 401,
+    "detail": "Renove o token de acesso.",
+    "instance": "http://localhost:4010/o/modelo-otorrino/v1/sessao",
+    "codigo": "SESSAO_EXPIRADA",
+    "requestId": "req_0mw7vddcu0008u"
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exemplo.com.br/contrato/v1/formulario.schema.json",
+  "title": "Formulário (check-in e cadastro)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Formulario (1.0.0-rc.1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "versao",
+    "titulo",
+    "campos"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/Id"
+    },
+    "versao": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "titulo": {
+      "type": "string"
+    },
+    "finalidade": {
+      "type": "string",
+      "enum": [
+        "CHECKIN",
+        "CADASTRO"
+      ]
+    },
+    "campos": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/CampoFormulario"
+      }
+    },
+    "publicadoEm": {
+      "$ref": "#/$defs/DataHora"
+    },
+    "acoesPermitidas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "EDITAR"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "description": "Identificador opaco; o frontend nunca interpreta.",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "CampoFormulario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tipo",
+        "rotulo"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9]*$"
+        },
+        "tipo": {
+          "$ref": "#/$defs/TipoCampo"
+        },
+        "rotulo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "ajuda": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "obrigatorio": {
+          "type": "boolean",
+          "default": false
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "unidade": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "casasDecimais": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "rotuloMin": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "rotuloMax": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "maximo": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "FOTO: quantidade máxima"
+        },
+        "instrucao": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "opcoes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "valor",
+              "rotulo"
+            ],
+            "properties": {
+              "valor": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9_]*$"
+              },
+              "rotulo": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "visivelSe": {
+          "$ref": "#/$defs/CondicaoVisibilidade"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "enum": [
+                  "ESCOLHA_UNICA",
+                  "ESCOLHA_MULTIPLA"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "opcoes"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "ESCALA"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "min",
+              "max"
+            ]
+          }
+        }
+      ]
+    },
+    "TipoCampo": {
+      "type": "string",
+      "enum": [
+        "TEXTO",
+        "TEXTO_LONGO",
+        "NUMERO",
+        "ESCALA",
+        "SIM_NAO",
+        "ESCOLHA_UNICA",
+        "ESCOLHA_MULTIPLA",
+        "DATA",
+        "HORA",
+        "FOTO",
+        "INFORMACAO"
+      ]
+    },
+    "CondicaoVisibilidade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "campo",
+        "operador",
+        "valor"
+      ],
+      "properties": {
+        "campo": {
+          "type": "string"
+        },
+        "operador": {
+          "$ref": "#/$defs/Operador"
+        },
+        "valor": {
+          "$ref": "#/$defs/ValorComparacao"
+        }
+      }
+    },
+    "Operador": {
+      "type": "string",
+      "enum": [
+        "IGUAL",
+        "DIFERENTE",
+        "MAIOR_OU_IGUAL",
+        "MENOR_OU_IGUAL",
+        "CONTEM"
+      ]
+    },
+    "ValorComparacao": {
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "DataHora": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 em UTC.",
+      "pattern": "Z$"
+    }
+  }
+}

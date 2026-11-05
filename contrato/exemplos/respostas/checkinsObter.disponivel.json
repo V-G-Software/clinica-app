@@ -1,0 +1,118 @@
+{
+  "requisicao": "GET /v1/checkins/chk_0mw28tpc000046",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "chk_0mw28tpc000046",
+    "acompanhamentoId": "acp_marcos",
+    "paciente": {
+      "id": "pac_marcos",
+      "nome": "Marcos Souza"
+    },
+    "dia": 3,
+    "status": "DISPONIVEL",
+    "disponivelEm": "2026-11-08T12:00:00Z",
+    "expiraEm": "2026-11-09T02:00:00Z",
+    "respondidoEm": null,
+    "formulario": {
+      "id": "frm_pos_op_diario",
+      "versao": 1,
+      "titulo": "Como você está hoje?",
+      "finalidade": "CHECKIN",
+      "campos": [
+        {
+          "id": "dor",
+          "tipo": "ESCALA",
+          "rotulo": "Qual o seu nível de dor agora?",
+          "min": 0,
+          "max": 10,
+          "rotuloMin": "Sem dor",
+          "rotuloMax": "Pior dor imaginável",
+          "obrigatorio": true
+        },
+        {
+          "id": "noite",
+          "tipo": "ESCOLHA_UNICA",
+          "rotulo": "Como foi a noite?",
+          "obrigatorio": true,
+          "opcoes": [
+            {
+              "valor": "BEM",
+              "rotulo": "Dormi bem"
+            },
+            {
+              "valor": "REGULAR",
+              "rotulo": "Regular"
+            },
+            {
+              "valor": "MAL",
+              "rotulo": "Dormi mal"
+            }
+          ]
+        },
+        {
+          "id": "sangramento",
+          "tipo": "ESCOLHA_UNICA",
+          "rotulo": "Teve sangramento?",
+          "obrigatorio": true,
+          "opcoes": [
+            {
+              "valor": "NENHUM",
+              "rotulo": "Não"
+            },
+            {
+              "valor": "LEVE",
+              "rotulo": "Leve"
+            },
+            {
+              "valor": "INTENSO",
+              "rotulo": "Intenso"
+            }
+          ]
+        },
+        {
+          "id": "mediuTemperatura",
+          "tipo": "SIM_NAO",
+          "rotulo": "Mediu a temperatura hoje?",
+          "obrigatorio": true
+        },
+        {
+          "id": "temperatura",
+          "tipo": "NUMERO",
+          "rotulo": "Qual foi a temperatura?",
+          "unidade": "°C",
+          "min": 34,
+          "max": 43,
+          "casasDecimais": 1,
+          "obrigatorio": true,
+          "visivelSe": {
+            "campo": "mediuTemperatura",
+            "operador": "IGUAL",
+            "valor": true
+          }
+        },
+        {
+          "id": "foto",
+          "tipo": "FOTO",
+          "rotulo": "Envie uma foto de frente",
+          "instrucao": "Com boa luz e sem filtro.",
+          "maximo": 2,
+          "obrigatorio": false
+        },
+        {
+          "id": "observacao",
+          "tipo": "TEXTO_LONGO",
+          "rotulo": "Quer contar mais alguma coisa para a equipe?",
+          "obrigatorio": false
+        }
+      ],
+      "publicadoEm": "2026-10-01T12:00:00Z"
+    },
+    "anexos": [],
+    "respostas": null,
+    "alertas": [],
+    "acoesPermitidas": [
+      "RESPONDER"
+    ]
+  }
+}

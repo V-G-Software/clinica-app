@@ -1,0 +1,142 @@
+{
+  "requisicao": "GET /v1/conversas?limite=3",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "cnv_0mw28tpc00004b",
+        "titulo": "Marcos Souza",
+        "paciente": {
+          "id": "pac_marcos",
+          "nome": "Marcos Souza"
+        },
+        "acompanhamentoAtivoId": "acp_marcos",
+        "status": "ATIVA",
+        "participantes": [
+          {
+            "usuarioId": "usr_ana",
+            "nome": "Dra. Ana Lima",
+            "perfil": "PROFISSIONAL",
+            "lidoAte": "msg_0mw6fxio00006x"
+          },
+          {
+            "usuarioId": "usr_julia",
+            "nome": "Júlia Ramos",
+            "perfil": "SECRETARIA",
+            "lidoAte": "msg_0mw6f1d9c0006v"
+          },
+          {
+            "usuarioId": "usr_marcos",
+            "nome": "Marcos Souza",
+            "perfil": "PACIENTE",
+            "lidoAte": "msg_0mw6gcy800006z"
+          }
+        ],
+        "ultimaMensagem": {
+          "id": "msg_0mw7s5mo000088",
+          "resumo": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
+          "autorNome": null,
+          "enviadoEm": "2026-11-08T12:00:00Z"
+        },
+        "naoLidas": 2,
+        "criadoEm": "2026-11-04T15:00:00Z",
+        "acoesPermitidas": [
+          "ENVIAR",
+          "ADICIONAR_PARTICIPANTE",
+          "REMOVER_PARTICIPANTE",
+          "ARQUIVAR"
+        ]
+      },
+      {
+        "id": "cnv_0mw53peo00005j",
+        "titulo": "Rafael Mendes",
+        "paciente": {
+          "id": "pac_rafael",
+          "nome": "Rafael Mendes"
+        },
+        "acompanhamentoAtivoId": "acp_rafael",
+        "status": "ATIVA",
+        "participantes": [
+          {
+            "usuarioId": "usr_ana",
+            "nome": "Dra. Ana Lima",
+            "perfil": "PROFISSIONAL",
+            "lidoAte": null
+          },
+          {
+            "usuarioId": "usr_julia",
+            "nome": "Júlia Ramos",
+            "perfil": "SECRETARIA",
+            "lidoAte": null
+          },
+          {
+            "usuarioId": "usr_rafael",
+            "nome": "Rafael Mendes",
+            "perfil": "PACIENTE",
+            "lidoAte": null
+          }
+        ],
+        "ultimaMensagem": {
+          "id": "msg_0mw6w08000007r",
+          "resumo": "Mantenha a cabeceira elevada e evite assoar o nariz.",
+          "autorNome": null,
+          "enviadoEm": "2026-11-07T21:00:00Z"
+        },
+        "naoLidas": 2,
+        "criadoEm": "2026-11-06T15:00:00Z",
+        "acoesPermitidas": [
+          "ENVIAR",
+          "ADICIONAR_PARTICIPANTE",
+          "REMOVER_PARTICIPANTE",
+          "ARQUIVAR"
+        ]
+      },
+      {
+        "id": "cnv_0mw3o9k000004m",
+        "titulo": "Sônia Ribeiro",
+        "paciente": {
+          "id": "pac_sonia",
+          "nome": "Sônia Ribeiro"
+        },
+        "acompanhamentoAtivoId": "acp_sonia",
+        "status": "ATIVA",
+        "participantes": [
+          {
+            "usuarioId": "usr_ana",
+            "nome": "Dra. Ana Lima",
+            "perfil": "PROFISSIONAL",
+            "lidoAte": null
+          },
+          {
+            "usuarioId": "usr_julia",
+            "nome": "Júlia Ramos",
+            "perfil": "SECRETARIA",
+            "lidoAte": null
+          },
+          {
+            "usuarioId": "usr_sonia",
+            "nome": "Sônia Ribeiro",
+            "perfil": "PACIENTE",
+            "lidoAte": "msg_0mw6h03k00007h"
+          }
+        ],
+        "ultimaMensagem": {
+          "id": "msg_0mw6h03k00007h",
+          "resumo": "Dia 1 · dor 4 · noite regular · sangramento não",
+          "autorNome": "Sônia Ribeiro",
+          "enviadoEm": "2026-11-07T14:00:00Z"
+        },
+        "naoLidas": 3,
+        "criadoEm": "2026-11-05T15:00:00Z",
+        "acoesPermitidas": [
+          "ENVIAR",
+          "ADICIONAR_PARTICIPANTE",
+          "REMOVER_PARTICIPANTE",
+          "ARQUIVAR"
+        ]
+      }
+    ],
+    "proximoCursor": "eyJvIjozfQ"
+  }
+}

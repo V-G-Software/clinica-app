@@ -1,0 +1,31 @@
+{
+  "requisicao": "GET /v1/alertas?status=ABERTO",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "alr_0mw6e57uo0006l",
+        "acompanhamentoId": "acp_marcos",
+        "checkinId": "chk_0mw28tpc000045",
+        "paciente": {
+          "id": "pac_marcos",
+          "nome": "Marcos Souza"
+        },
+        "regraId": "dor_alta",
+        "severidade": "ALTA",
+        "mensagem": "Dor 8 ou mais relatada",
+        "status": "ABERTO",
+        "criadoEm": "2026-11-07T12:40:00Z",
+        "resolvidoEm": null,
+        "resolvidoPor": null,
+        "nota": null,
+        "acoesPermitidas": [
+          "RESOLVER",
+          "ABRIR_CONVERSA"
+        ]
+      }
+    ],
+    "proximoCursor": null
+  }
+}

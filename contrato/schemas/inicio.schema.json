@@ -1,0 +1,981 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exemplo.com.br/contrato/v1/inicio.schema.json",
+  "title": "Tela inicial (GET /v1/inicio)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Inicio (1.0.0-rc.1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "secoes"
+  ],
+  "properties": {
+    "secoes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Secao"
+      }
+    }
+  },
+  "$defs": {
+    "Secao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tipo",
+        "dados"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tipo": {
+          "$ref": "#/$defs/TipoSecao"
+        },
+        "titulo": {
+          "type": "string",
+          "description": "Opcional; o frontend tem um título padrão por tipo."
+        },
+        "dados": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "ACOMPANHAMENTO_ATUAL"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "acompanhamentoId",
+                  "titulo",
+                  "diaAtual",
+                  "totalDias",
+                  "proximoCheckin",
+                  "orientacaoDoDia"
+                ],
+                "properties": {
+                  "acompanhamentoId": {
+                    "$ref": "#/$defs/Id"
+                  },
+                  "pacienteId": {
+                    "$ref": "#/$defs/Id"
+                  },
+                  "titulo": {
+                    "type": "string"
+                  },
+                  "diaAtual": {
+                    "type": "integer"
+                  },
+                  "totalDias": {
+                    "type": "integer"
+                  },
+                  "status": {
+                    "$ref": "#/$defs/StatusAcompanhamento"
+                  },
+                  "proximoCheckin": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/CheckinResumo"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "orientacaoDoDia": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "CHECKINS_PENDENTES"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "itens"
+                ],
+                "properties": {
+                  "itens": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/CheckinResumo"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "ALERTAS_ABERTOS"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "total",
+                  "itens"
+                ],
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "itens": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Alerta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "CHECKINS_DO_DIA"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "data",
+                  "respondidos",
+                  "pendentes",
+                  "expirados",
+                  "itens"
+                ],
+                "properties": {
+                  "data": {
+                    "$ref": "#/$defs/Data"
+                  },
+                  "respondidos": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "pendentes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "expirados": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "itens": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/CheckinResumo"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "ACOMPANHAMENTOS_ATIVOS"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "total",
+                  "itens"
+                ],
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "itens": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Acompanhamento"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "CONVERSAS_RECENTES"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "itens"
+                ],
+                "properties": {
+                  "itens": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Conversa"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "ATALHOS"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "itens"
+                ],
+                "properties": {
+                  "itens": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "rotulo",
+                        "icone",
+                        "destino"
+                      ],
+                      "properties": {
+                        "rotulo": {
+                          "type": "string"
+                        },
+                        "icone": {
+                          "$ref": "#/$defs/Icone"
+                        },
+                        "destino": {
+                          "$ref": "#/$defs/Destino"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "AVISO"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "titulo",
+                  "texto",
+                  "severidade"
+                ],
+                "properties": {
+                  "titulo": {
+                    "type": "string"
+                  },
+                  "texto": {
+                    "type": "string"
+                  },
+                  "severidade": {
+                    "type": "string",
+                    "enum": [
+                      "INFORMACAO",
+                      "ATENCAO",
+                      "URGENTE"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "CONTATO_ORGANIZACAO"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "telefone",
+                  "endereco",
+                  "mapaUrl"
+                ],
+                "properties": {
+                  "telefone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "endereco": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "mapaUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "TipoSecao": {
+      "type": "string",
+      "enum": [
+        "ACOMPANHAMENTO_ATUAL",
+        "CHECKINS_PENDENTES",
+        "ALERTAS_ABERTOS",
+        "CHECKINS_DO_DIA",
+        "ACOMPANHAMENTOS_ATIVOS",
+        "CONVERSAS_RECENTES",
+        "ATALHOS",
+        "AVISO",
+        "CONTATO_ORGANIZACAO"
+      ]
+    },
+    "Id": {
+      "type": "string",
+      "description": "Identificador opaco; o frontend nunca interpreta.",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "StatusAcompanhamento": {
+      "type": "string",
+      "enum": [
+        "AGENDADO",
+        "ATIVO",
+        "CONCLUIDO",
+        "ENCERRADO"
+      ]
+    },
+    "CheckinResumo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "acompanhamentoId": {
+          "$ref": "#/$defs/Id"
+        },
+        "paciente": {
+          "$ref": "#/$defs/Referencia"
+        },
+        "dia": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "$ref": "#/$defs/StatusCheckin"
+        },
+        "disponivelEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "expiraEm": {
+          "$ref": "#/$defs/DataHora"
+        }
+      }
+    },
+    "Referencia": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "nome"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "nome": {
+          "type": "string"
+        }
+      }
+    },
+    "StatusCheckin": {
+      "type": "string",
+      "enum": [
+        "AGENDADO",
+        "DISPONIVEL",
+        "RESPONDIDO",
+        "EXPIRADO",
+        "CANCELADO"
+      ]
+    },
+    "DataHora": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 em UTC.",
+      "pattern": "Z$"
+    },
+    "Alerta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "acompanhamentoId",
+        "checkinId",
+        "paciente",
+        "regraId",
+        "severidade",
+        "mensagem",
+        "status",
+        "criadoEm",
+        "resolvidoEm",
+        "resolvidoPor",
+        "nota",
+        "acoesPermitidas"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "acompanhamentoId": {
+          "$ref": "#/$defs/Id"
+        },
+        "checkinId": {
+          "$ref": "#/$defs/IdOuNulo"
+        },
+        "paciente": {
+          "$ref": "#/$defs/Referencia"
+        },
+        "regraId": {
+          "type": "string"
+        },
+        "severidade": {
+          "$ref": "#/$defs/Severidade"
+        },
+        "mensagem": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/StatusAlerta"
+        },
+        "criadoEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "resolvidoEm": {
+          "$ref": "#/$defs/DataHoraOuNulo"
+        },
+        "resolvidoPor": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "usuarioId",
+                "nome"
+              ],
+              "properties": {
+                "usuarioId": {
+                  "$ref": "#/$defs/Id"
+                },
+                "nome": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nota": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "acoesPermitidas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "RESOLVER",
+              "ABRIR_CONVERSA"
+            ]
+          }
+        }
+      }
+    },
+    "IdOuNulo": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Severidade": {
+      "type": "string",
+      "enum": [
+        "BAIXA",
+        "MEDIA",
+        "ALTA"
+      ]
+    },
+    "StatusAlerta": {
+      "type": "string",
+      "enum": [
+        "ABERTO",
+        "RESOLVIDO"
+      ]
+    },
+    "DataHoraOuNulo": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/DataHora"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "Data": {
+      "type": "string",
+      "format": "date",
+      "description": "AAAA-MM-DD."
+    },
+    "Acompanhamento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "paciente",
+        "protocolo",
+        "dataInicio",
+        "diaAtual",
+        "totalDias",
+        "status",
+        "equipe",
+        "conversaId",
+        "resumoCheckins",
+        "alertasAbertos",
+        "proximoCheckin",
+        "observacao",
+        "motivoEncerramento",
+        "criadoEm",
+        "acoesPermitidas"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "paciente": {
+          "$ref": "#/$defs/Referencia"
+        },
+        "protocolo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "versao",
+            "nome"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/Id"
+            },
+            "versao": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "nome": {
+              "type": "string"
+            }
+          }
+        },
+        "dataInicio": {
+          "$ref": "#/$defs/Data"
+        },
+        "diaAtual": {
+          "type": "integer",
+          "description": "Dias desde `dataInicio` no fuso da organização; negativo antes do procedimento."
+        },
+        "totalDias": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "$ref": "#/$defs/StatusAcompanhamento"
+        },
+        "equipe": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReferenciaUsuario"
+          }
+        },
+        "conversaId": {
+          "$ref": "#/$defs/IdOuNulo"
+        },
+        "resumoCheckins": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "respondidos",
+            "pendentes",
+            "expirados",
+            "agendados"
+          ],
+          "properties": {
+            "respondidos": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pendentes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "expirados": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "agendados": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "alertasAbertos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proximoCheckin": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/CheckinResumo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observacao": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "motivoEncerramento": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "criadoEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "acoesPermitidas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "EDITAR",
+              "ENCERRAR",
+              "ABRIR_CONVERSA"
+            ]
+          }
+        }
+      }
+    },
+    "ReferenciaUsuario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "usuarioId",
+        "nome",
+        "perfil"
+      ],
+      "properties": {
+        "usuarioId": {
+          "$ref": "#/$defs/Id"
+        },
+        "nome": {
+          "type": "string"
+        },
+        "perfil": {
+          "$ref": "#/$defs/Perfil"
+        }
+      }
+    },
+    "Perfil": {
+      "type": "string",
+      "enum": [
+        "GESTOR",
+        "PROFISSIONAL",
+        "SECRETARIA",
+        "PACIENTE"
+      ]
+    },
+    "Conversa": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "titulo",
+        "paciente",
+        "acompanhamentoAtivoId",
+        "status",
+        "participantes",
+        "ultimaMensagem",
+        "naoLidas",
+        "criadoEm",
+        "acoesPermitidas"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "titulo": {
+          "type": "string",
+          "description": "Calculado para quem vê (RN-CHA-003)."
+        },
+        "paciente": {
+          "$ref": "#/$defs/Referencia"
+        },
+        "acompanhamentoAtivoId": {
+          "$ref": "#/$defs/IdOuNulo"
+        },
+        "status": {
+          "$ref": "#/$defs/StatusConversa"
+        },
+        "participantes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Participante"
+          }
+        },
+        "ultimaMensagem": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "resumo",
+                "autorNome",
+                "enviadoEm"
+              ],
+              "properties": {
+                "id": {
+                  "$ref": "#/$defs/Id"
+                },
+                "resumo": {
+                  "type": "string"
+                },
+                "autorNome": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "enviadoEm": {
+                  "$ref": "#/$defs/DataHora"
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "naoLidas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "criadoEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "acoesPermitidas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "ENVIAR",
+              "ADICIONAR_PARTICIPANTE",
+              "REMOVER_PARTICIPANTE",
+              "ARQUIVAR",
+              "REABRIR"
+            ]
+          }
+        }
+      }
+    },
+    "StatusConversa": {
+      "type": "string",
+      "enum": [
+        "ATIVA",
+        "ARQUIVADA"
+      ]
+    },
+    "Participante": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "usuarioId",
+        "nome",
+        "perfil",
+        "lidoAte"
+      ],
+      "properties": {
+        "usuarioId": {
+          "$ref": "#/$defs/Id"
+        },
+        "nome": {
+          "type": "string"
+        },
+        "perfil": {
+          "$ref": "#/$defs/Perfil"
+        },
+        "lidoAte": {
+          "$ref": "#/$defs/IdOuNulo"
+        }
+      }
+    },
+    "Icone": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "description": "Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.",
+      "enum": [
+        "house",
+        "users",
+        "user",
+        "user-plus",
+        "activity",
+        "heart-pulse",
+        "message-circle",
+        "bell",
+        "settings",
+        "clipboard-list",
+        "calendar",
+        "stethoscope",
+        "paw-print",
+        "circle-alert",
+        "file-text",
+        "camera",
+        "credit-card",
+        "circle-help",
+        "log-out"
+      ]
+    },
+    "Destino": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tela"
+      ],
+      "properties": {
+        "tela": {
+          "$ref": "#/$defs/Tela"
+        },
+        "parametros": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Tela": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "enum": [
+        "inicio",
+        "notificacoes",
+        "perfil",
+        "pacientes.lista",
+        "pacientes.detalhe",
+        "pacientes.novo",
+        "acompanhamento.lista",
+        "acompanhamento.meus",
+        "acompanhamento.detalhe",
+        "acompanhamento.novo",
+        "acompanhamento.protocolos",
+        "acompanhamento.protocolo",
+        "acompanhamento.checkin",
+        "chat.lista",
+        "chat.conversa",
+        "equipe.lista",
+        "organizacao.configuracao"
+      ]
+    }
+  }
+}

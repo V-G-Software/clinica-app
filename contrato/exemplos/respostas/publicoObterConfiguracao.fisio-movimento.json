@@ -1,0 +1,67 @@
+{
+  "requisicao": "GET /v1/publico/configuracao",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "contrato": {
+      "versao": "1.0.0-rc.1"
+    },
+    "status": "ATIVA",
+    "mensagemStatus": null,
+    "frontend": {
+      "versaoMinima": "1.0.0"
+    },
+    "organizacao": {
+      "slug": "fisio-movimento",
+      "nome": "Fisio Movimento",
+      "fuso": "America/Sao_Paulo",
+      "locale": "pt-BR"
+    },
+    "tema": {
+      "corMarca": "#047857",
+      "logoUrl": "https://cdn.exemplo/fisio-movimento/logo.svg",
+      "logoEscuroUrl": null,
+      "modoPadrao": "CLARO"
+    },
+    "pwa": {
+      "nome": "Fisio Movimento",
+      "nomeCurto": "Movimento",
+      "corTema": "#047857",
+      "icones": [
+        {
+          "src": "https://cdn.exemplo/fisio-movimento/icone-192.png",
+          "tamanho": "192x192"
+        },
+        {
+          "src": "https://cdn.exemplo/fisio-movimento/icone-512.png",
+          "tamanho": "512x512",
+          "proposito": "maskable"
+        }
+      ]
+    },
+    "autenticacao": {
+      "metodos": [
+        {
+          "tipo": "CODIGO_EMAIL",
+          "publico": "PACIENTE"
+        },
+        {
+          "tipo": "SENHA",
+          "publico": "EQUIPE",
+          "mfa": "OBRIGATORIO"
+        }
+      ],
+      "cadastroPaciente": "SOMENTE_CONVITE",
+      "termosVersao": "2026-10-15"
+    },
+    "textos": {
+      "boasVindasTitulo": "Seu tratamento continua em casa",
+      "boasVindasTexto": "Registre seus exercícios todos os dias e fale com o seu fisioterapeuta."
+    },
+    "links": {
+      "termosDeUso": "https://fisio-movimento.exemplo/termos",
+      "privacidade": "https://fisio-movimento.exemplo/privacidade",
+      "suporte": "mailto:contato@fisio-movimento.exemplo"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "requisicao": "POST /v1/auth/mfa/verificar",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "etapa": "CONCLUIDO",
+    "tokenAcesso": "ac.04OKKxMqIu3toBZtg1TC_SlsY1xV4tPquofAQgh9ss0",
+    "expiraEm": "2026-11-08T13:45:00Z",
+    "tokenRenovacao": "rn.T11zIy83Rb_ExWV0KYQnYg4NyArvyHmNNXT4bGR_MK0"
+  }
+}

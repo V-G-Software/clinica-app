@@ -1,0 +1,61 @@
+{
+  "requisicao": "GET /v1/acompanhamentos/acp_marcos",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "acp_marcos",
+    "paciente": {
+      "id": "pac_marcos",
+      "nome": "Marcos Souza"
+    },
+    "protocolo": {
+      "id": "prt_septo7",
+      "versao": 3,
+      "nome": "Septoplastia — 7 dias"
+    },
+    "dataInicio": "2026-11-05",
+    "diaAtual": 3,
+    "totalDias": 7,
+    "status": "ATIVO",
+    "equipe": [
+      {
+        "usuarioId": "usr_ana",
+        "nome": "Dra. Ana Lima",
+        "perfil": "PROFISSIONAL"
+      },
+      {
+        "usuarioId": "usr_julia",
+        "nome": "Júlia Ramos",
+        "perfil": "SECRETARIA"
+      }
+    ],
+    "conversaId": "cnv_0mw28tpc00004b",
+    "resumoCheckins": {
+      "respondidos": 2,
+      "pendentes": 1,
+      "expirados": 0,
+      "agendados": 4
+    },
+    "alertasAbertos": 1,
+    "proximoCheckin": {
+      "id": "chk_0mw28tpc000046",
+      "acompanhamentoId": "acp_marcos",
+      "paciente": {
+        "id": "pac_marcos",
+        "nome": "Marcos Souza"
+      },
+      "dia": 3,
+      "status": "DISPONIVEL",
+      "disponivelEm": "2026-11-08T12:00:00Z",
+      "expiraEm": "2026-11-09T02:00:00Z"
+    },
+    "observacao": "Septo com desvio importante à esquerda.",
+    "motivoEncerramento": null,
+    "criadoEm": "2026-11-04T15:00:00Z",
+    "acoesPermitidas": [
+      "EDITAR",
+      "ENCERRAR",
+      "ABRIR_CONVERSA"
+    ]
+  }
+}

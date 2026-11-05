@@ -1,0 +1,3352 @@
+openapi: 3.1.0
+info:
+  title: Contrato da API — {{PRODUTO}}
+  version: 1.0.0-rc.1
+  summary: Padrão que todo backend de organização segue para atender o frontend único (PWA).
+  description: |
+    Fonte da verdade do contrato v1. Spec-first (ADR-0001): tipos, cliente, mock e suíte
+    de conformidade são derivados deste arquivo.
+
+    **Regras gerais** (detalhes em `docs/PROMPT_BACKEND.md`, seção 4):
+    - JSON em camelCase, português sem acento; enums em MAIUSCULAS_COM_SUBLINHADO;
+      campos de data e hora terminam em `Em`.
+    - Erros sempre em `application/problem+json` (RFC 9457) com `codigo` estável.
+    - Recurso de outra organização ou invisível ao usuário devolve **404**, nunca 403.
+    - Listas: `{ itens, proximoCursor }`, com `cursor` opaco e `limite` (padrão 20, máximo 100).
+    - Operações marcadas `x-idempotente: true` exigem `Idempotency-Key` (janela de 24 h).
+    - Recursos com `ETag` exigem `If-Match` na edição; versão desatualizada recebe 412 `CONFLITO_VERSAO`.
+    - **Compatível para frente:** o frontend ignora campos, valores de enum, telas, seções,
+      ícones e eventos que não conhece. Dentro da 1.x o contrato só cresce.
+    - Nada de dado clínico ou nome de paciente em URL, query string, push, evento ou log.
+  license:
+    name: Proprietário
+    identifier: LicenseRef-Proprietario
+servers:
+  - url: '{urlApi}'
+    description: Backend da organização (valor de `urlApi` resolvido no diretório)
+    variables:
+      urlApi:
+        default: http://localhost:4010/o/modelo-otorrino
+tags:
+  - name: diretorio
+    description: Serviço central que resolve a organização para o seu backend. Não guarda dado de paciente.
+  - name: publico
+    description: Rotas sem autenticação, usadas antes do login.
+  - name: auth
+    description: Login, MFA, renovação e saída (seção 5).
+  - name: sessao
+    description: Manifesto, conta e tela inicial (seções 7 e 8.1).
+  - name: notificacoes
+    description: Central de notificações e Web Push (seção 8.2).
+  - name: arquivos
+    description: Envio e leitura de arquivos (seção 8.3).
+  - name: eventos
+    description: Tempo real por SSE ou polling (seção 8.4).
+  - name: pacientes
+    description: Módulo `pacientes` (seção 9.1).
+  - name: formularios
+    description: Formulários de check-in e cadastro (seção 9.2).
+  - name: acompanhamento
+    description: Módulo `acompanhamento` — protocolos, acompanhamentos, check-ins e alertas (seção 9.3).
+  - name: chat
+    description: Módulo `chat` — conversa por paciente (seção 9.4).
+  - name: equipe
+    description: Módulo `equipe` e configuração da organização (seção 9.5).
+security:
+  - bearer: []
+
+paths:
+  # ───────────────────────────── Diretório ─────────────────────────────
+  /v1/organizacoes/{slug}:
+    servers:
+      - url: https://diretorio.{dominio}
+        variables:
+          dominio: { default: exemplo.com.br, description: '{{DOMINIO}}' }
+      - url: http://localhost:4010/diretorio
+    get:
+      operationId: diretorioObterOrganizacao
+      tags: [diretorio]
+      summary: Resolve a organização pelo slug
+      description: Organização desconhecida devolve 404.
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/Slug' }
+      responses:
+        '200':
+          description: Organização resolvida
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrganizacaoDiretorio' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/organizacoes:
+    servers:
+      - url: https://diretorio.{dominio}
+        variables:
+          dominio: { default: exemplo.com.br, description: '{{DOMINIO}}' }
+      - url: http://localhost:4010/diretorio
+    get:
+      operationId: diretorioResolverDominio
+      tags: [diretorio]
+      summary: Resolve a organização por domínio próprio
+      description: Domínio desconhecido devolve 404.
+      security: []
+      parameters:
+        - name: dominio
+          in: query
+          required: true
+          schema: { type: string, minLength: 3, maxLength: 253 }
+      responses:
+        '200':
+          description: Organização resolvida
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrganizacaoDiretorio' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Público ─────────────────────────────
+  /v1/publico/configuracao:
+    get:
+      operationId: publicoObterConfiguracao
+      tags: [publico]
+      summary: Configuração pública (marca, login e textos)
+      description: Responde com `ETag` e `Cache-Control max-age=300`; revalida com `If-None-Match`.
+      security: []
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Configuração pública
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConfiguracaoPublica' }
+        '304': { description: Configuração não mudou }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/publico/convites/{token}:
+    get:
+      operationId: publicoObterConvite
+      tags: [publico]
+      summary: Dados mínimos de um convite
+      description: Convite inválido devolve 404 `CONVITE_INVALIDO`; expirado devolve 410 `CONVITE_EXPIRADO`.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/TokenConvite'
+      responses:
+        '200':
+          description: Resumo do convite
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConvitePublico' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/publico/saude:
+    get:
+      operationId: publicoObterSaude
+      tags: [publico]
+      summary: Status e versão do contrato
+      security: []
+      responses:
+        '200':
+          description: Backend saudável
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Saude' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Auth ─────────────────────────────
+  /v1/auth/entrar:
+    post:
+      operationId: authEntrar
+      tags: [auth]
+      summary: Login da equipe por e-mail e senha
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email, senha]
+              properties:
+                email: { $ref: '#/components/schemas/Email' }
+                senha: { type: string, minLength: 1, maxLength: 200 }
+      responses:
+        '200': { $ref: '#/components/responses/Etapa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/codigo/solicitar:
+    post:
+      operationId: authSolicitarCodigo
+      tags: [auth]
+      summary: Envia código de 6 dígitos por e-mail (paciente)
+      description: Sempre 202, sem revelar se o e-mail existe. Código vale 10 minutos, até 5 tentativas.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email]
+              properties:
+                email: { $ref: '#/components/schemas/Email' }
+      responses:
+        '202': { description: Pedido aceito }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/codigo/verificar:
+    post:
+      operationId: authVerificarCodigo
+      tags: [auth]
+      summary: Confirma o código enviado por e-mail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email, codigo]
+              properties:
+                email: { $ref: '#/components/schemas/Email' }
+                codigo: { $ref: '#/components/schemas/CodigoNumerico' }
+                desafioId: { $ref: '#/components/schemas/Id' }
+      responses:
+        '200': { $ref: '#/components/responses/Etapa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/convites/{token}/aceitar:
+    post:
+      operationId: authAceitarConvite
+      tags: [auth]
+      summary: Aceita um convite (paciente ou membro da equipe)
+      description: |
+        Cria a conta (ou vincula a uma conta existente com o mesmo e-mail) e faz o vínculo.
+        Devolve `CONCLUIDO`, `CODIGO_ENVIADO` (para confirmar um e-mail diferente do convite) ou,
+        para membro da equipe, `TROCAR_SENHA`/`CONFIGURAR_MFA`.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/TokenConvite'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email, termosVersao]
+              properties:
+                email: { $ref: '#/components/schemas/Email' }
+                termosVersao: { type: string, minLength: 1, maxLength: 40 }
+      responses:
+        '200': { $ref: '#/components/responses/Etapa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/mfa/verificar:
+    post:
+      operationId: authVerificarMfa
+      tags: [auth]
+      summary: Confirma o código TOTP ou um código de recuperação
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [desafioId, codigo]
+              properties:
+                desafioId: { $ref: '#/components/schemas/Id' }
+                codigo: { type: string, minLength: 6, maxLength: 20 }
+      responses:
+        '200': { $ref: '#/components/responses/Etapa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/mfa/totp/iniciar:
+    post:
+      operationId: authIniciarTotp
+      tags: [auth]
+      summary: Gera o segredo TOTP para a etapa CONFIGURAR_MFA
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EntradaDesafio' }
+      responses:
+        '200':
+          description: Segredo TOTP
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [uriOtpauth, segredo]
+                properties:
+                  uriOtpauth: { type: string, pattern: '^otpauth://totp/' }
+                  segredo: { type: string, pattern: '^[A-Z2-7]+=*$' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/mfa/totp/confirmar:
+    post:
+      operationId: authConfirmarTotp
+      tags: [auth]
+      summary: Confirma o TOTP recém-configurado
+      description: Devolve a próxima etapa e os códigos de recuperação, mostrados uma única vez.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [desafioId, codigo]
+              properties:
+                desafioId: { $ref: '#/components/schemas/Id' }
+                codigo: { $ref: '#/components/schemas/CodigoNumerico' }
+      responses:
+        '200': { $ref: '#/components/responses/Etapa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/senha/trocar:
+    post:
+      operationId: authTrocarSenha
+      tags: [auth]
+      summary: Define nova senha na etapa TROCAR_SENHA
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [desafioId, novaSenha]
+              properties:
+                desafioId: { $ref: '#/components/schemas/Id' }
+                novaSenha: { $ref: '#/components/schemas/NovaSenha' }
+      responses:
+        '200': { $ref: '#/components/responses/Etapa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/termos/aceitar:
+    post:
+      operationId: authAceitarTermos
+      tags: [auth]
+      summary: Registra o aceite dos termos vigentes
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [desafioId, termosVersao]
+              properties:
+                desafioId: { $ref: '#/components/schemas/Id' }
+                termosVersao: { type: string, minLength: 1, maxLength: 40 }
+      responses:
+        '200': { $ref: '#/components/responses/Etapa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/senha/esqueci:
+    post:
+      operationId: authEsqueciSenha
+      tags: [auth]
+      summary: Envia link de redefinição de senha
+      description: Sempre 202, sem revelar se o e-mail existe.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email]
+              properties:
+                email: { $ref: '#/components/schemas/Email' }
+      responses:
+        '202': { description: Pedido aceito }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/senha/redefinir:
+    post:
+      operationId: authRedefinirSenha
+      tags: [auth]
+      summary: Redefine a senha com o token recebido por e-mail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [token, novaSenha]
+              properties:
+                token: { type: string, minLength: 16, maxLength: 200 }
+                novaSenha: { $ref: '#/components/schemas/NovaSenha' }
+      responses:
+        '204': { description: Senha redefinida }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/renovar:
+    post:
+      operationId: authRenovar
+      tags: [auth]
+      summary: Renova o token de acesso
+      description: |
+        Web: o token de renovação vem no cookie `HttpOnly; Secure; SameSite=Strict` (caminho `/v1/auth`),
+        e um novo cookie é emitido. Nativo (`X-Cliente: NATIVO`): vem e volta no corpo.
+        Token de renovação reusado revoga a sessão inteira (401 `SESSAO_REVOGADA`).
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/XCliente'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                tokenRenovacao: { type: string, minLength: 16, maxLength: 512 }
+      responses:
+        '200':
+          description: Novo token de acesso
+          headers:
+            Set-Cookie:
+              description: Novo token de renovação (somente web)
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenAcesso' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/auth/sair:
+    post:
+      operationId: authSair
+      tags: [auth]
+      summary: Encerra a sessão
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                todas: { type: boolean, default: false, description: Encerra todos os aparelhos }
+      responses:
+        '204': { description: Sessão encerrada }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Sessão e conta ─────────────────────────────
+  /v1/sessao:
+    get:
+      operationId: sessaoObterManifesto
+      tags: [sessao]
+      summary: Manifesto da sessão para o perfil ativo
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Manifesto
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Manifesto' }
+        '304': { description: Manifesto não mudou }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/sessao/perfil-ativo:
+    put:
+      operationId: sessaoTrocarPerfil
+      tags: [sessao]
+      summary: Troca o perfil ativo
+      description: Devolve novo token; o frontend busca o manifesto de novo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [perfil]
+              properties:
+                perfil: { $ref: '#/components/schemas/Perfil' }
+      responses:
+        '200':
+          description: Novo token de acesso
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenAcesso' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/contadores:
+    get:
+      operationId: sessaoObterContadores
+      tags: [sessao]
+      summary: Contadores atuais
+      responses:
+        '200':
+          description: Contadores
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Contadores' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/me:
+    get:
+      operationId: contaObter
+      tags: [sessao]
+      summary: Dados da conta
+      responses:
+        '200':
+          description: Conta
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conta' }
+        default: { $ref: '#/components/responses/Erro' }
+    patch:
+      operationId: contaEditar
+      tags: [sessao]
+      summary: Edita nome de exibição, foto e preferências
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                nomeExibicao: { type: string, minLength: 1, maxLength: 120 }
+                fotoArquivoId: { $ref: '#/components/schemas/IdOuNulo' }
+                preferencias: { $ref: '#/components/schemas/PreferenciasUsuario' }
+      responses:
+        '200':
+          description: Conta atualizada
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conta' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/me/exclusao:
+    post:
+      operationId: contaSolicitarExclusao
+      tags: [sessao]
+      summary: Pede a exclusão da conta
+      description: Remove o acesso e explica o que a organização precisa guardar por lei.
+      responses:
+        '202':
+          description: Pedido registrado
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [mensagem, dadosRetidos]
+                properties:
+                  mensagem: { type: string }
+                  dadosRetidos:
+                    type: array
+                    items: { type: string }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/inicio:
+    get:
+      operationId: inicioObter
+      tags: [sessao]
+      summary: Seções da tela inicial, já com dados
+      responses:
+        '200':
+          description: Tela inicial
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Inicio' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Notificações ─────────────────────────────
+  /v1/notificacoes:
+    get:
+      operationId: notificacoesListar
+      tags: [notificacoes]
+      summary: Central de notificações
+      parameters:
+        - name: naoLidas
+          in: query
+          required: false
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Notificações, da mais recente para a mais antiga
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/Notificacao' } }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/notificacoes/leitura:
+    post:
+      operationId: notificacoesMarcarLidas
+      tags: [notificacoes]
+      summary: Marca notificações como lidas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items: { $ref: '#/components/schemas/Id' }
+                todas: { type: boolean }
+      responses:
+        '204': { description: Marcadas }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/notificacoes/preferencias:
+    get:
+      operationId: notificacoesObterPreferencias
+      tags: [notificacoes]
+      summary: Canais por tipo de notificação
+      responses:
+        '200':
+          description: Preferências
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PreferenciasNotificacao' }
+        default: { $ref: '#/components/responses/Erro' }
+    put:
+      operationId: notificacoesSalvarPreferencias
+      tags: [notificacoes]
+      summary: Salva os canais por tipo de notificação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PreferenciasNotificacao' }
+      responses:
+        '200':
+          description: Preferências salvas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PreferenciasNotificacao' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/notificacoes/push/inscricoes:
+    post:
+      operationId: pushInscrever
+      tags: [notificacoes]
+      summary: Registra o aparelho para Web Push
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [inscricao]
+              properties:
+                inscricao:
+                  description: Objeto `PushSubscription` do navegador, como ele vem.
+                  type: object
+                  required: [endpoint, keys]
+                  properties:
+                    endpoint: { type: string, format: uri }
+                    expirationTime: { type: [number, 'null'] }
+                    keys:
+                      type: object
+                      required: [p256dh, auth]
+                      properties:
+                        p256dh: { type: string }
+                        auth: { type: string }
+                dispositivo: { type: string, maxLength: 200 }
+      responses:
+        '201':
+          description: Inscrição criada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InscricaoPush' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/notificacoes/push/inscricoes/{inscricaoId}:
+    delete:
+      operationId: pushRemoverInscricao
+      tags: [notificacoes]
+      summary: Remove o aparelho
+      parameters:
+        - name: inscricaoId
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/Id' }
+      responses:
+        '204': { description: Removida }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Arquivos ─────────────────────────────
+  /v1/arquivos:
+    post:
+      operationId: arquivosIniciarEnvio
+      tags: [arquivos]
+      summary: Inicia o envio de um arquivo
+      description: |
+        Devolve as instruções de envio. O frontend envia os bytes para `envio.url` com o método e
+        os cabeçalhos indicados e depois chama `/concluir`. No MVP, só JPEG, PNG e WebP.
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [nome, tipo, tamanhoBytes, finalidade]
+              properties:
+                nome: { type: string, minLength: 1, maxLength: 200 }
+                tipo: { type: string, minLength: 3, maxLength: 100, description: MIME type }
+                tamanhoBytes: { type: integer, minimum: 1 }
+                finalidade: { $ref: '#/components/schemas/FinalidadeArquivo' }
+      responses:
+        '201':
+          description: Instruções de envio
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EnvioArquivo' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/arquivos/{arquivoId}/concluir:
+    post:
+      operationId: arquivosConcluirEnvio
+      tags: [arquivos]
+      summary: Avisa que os bytes foram enviados
+      description: O status vai a `PROCESSANDO` e depois a `DISPONIVEL` ou `REJEITADO` (evento `arquivo.processado`).
+      parameters:
+        - $ref: '#/components/parameters/ArquivoId'
+      responses:
+        '200':
+          description: Arquivo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Arquivo' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/arquivos/{arquivoId}:
+    get:
+      operationId: arquivosObter
+      tags: [arquivos]
+      summary: Metadados e URLs de visualização (validade de até 5 minutos)
+      parameters:
+        - $ref: '#/components/parameters/ArquivoId'
+      responses:
+        '200':
+          description: Arquivo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Arquivo' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Eventos ─────────────────────────────
+  /v1/eventos/stream:
+    get:
+      operationId: eventosStream
+      tags: [eventos]
+      summary: Fluxo SSE do usuário logado
+      description: |
+        Cada mensagem: `id`, `event` (tipo) e `data` (o `Evento` em JSON). Comentário `: ping`
+        a cada 25 s. A reconexão envia `Last-Event-ID`. Eventos ficam guardados por 24 h.
+      parameters:
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+      responses:
+        '200':
+          description: Fluxo de eventos
+          content:
+            text/event-stream:
+              schema: { type: string }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/eventos:
+    get:
+      operationId: eventosListar
+      tags: [eventos]
+      summary: Eventos perdidos ou modo POLLING
+      description: |
+        Sem `depois`, devolve lista vazia e o `ultimoEventoId` atual (ponto de partida).
+        Cursor mais antigo que 24 h devolve 410 `CURSOR_EXPIRADO`.
+      parameters:
+        - name: depois
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: limite
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 100 }
+      responses:
+        '200':
+          description: Eventos em ordem cronológica
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [itens, ultimoEventoId]
+                properties:
+                  itens: { type: array, items: { $ref: '#/components/schemas/Evento' } }
+                  ultimoEventoId: { $ref: '#/components/schemas/IdOuNulo' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Pacientes ─────────────────────────────
+  /v1/pacientes:
+    get:
+      operationId: pacientesListar
+      tags: [pacientes]
+      summary: Pacientes da organização (equipe) ou vinculados à conta (paciente)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusPaciente' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Pacientes, por nome
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaPacientes' }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: pacientesCriar
+      tags: [pacientes]
+      summary: Cadastra paciente
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PacienteEntrada' }
+      responses:
+        '201':
+          description: Paciente criado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Paciente' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/pacientes/busca:
+    post:
+      operationId: pacientesBuscar
+      tags: [pacientes]
+      summary: Busca por nome, e-mail ou celular (texto no corpo)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Busca' }
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaPacientes' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/pacientes/{pacienteId}:
+    get:
+      operationId: pacientesObter
+      tags: [pacientes]
+      summary: Detalhe do paciente
+      parameters:
+        - $ref: '#/components/parameters/PacienteId'
+      responses:
+        '200':
+          description: Paciente
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Paciente' }
+        default: { $ref: '#/components/responses/Erro' }
+    patch:
+      operationId: pacientesEditar
+      tags: [pacientes]
+      summary: Edita o paciente; `status INATIVO` inativa
+      parameters:
+        - $ref: '#/components/parameters/PacienteId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PacienteEdicao' }
+      responses:
+        '200':
+          description: Paciente atualizado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Paciente' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/pacientes/{pacienteId}/convites:
+    post:
+      operationId: pacientesConvidar
+      tags: [pacientes]
+      summary: Gera convite para o app (link e QR code)
+      description: Uso único; expira em 7 dias. Gerar um novo convite invalida o anterior.
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/PacienteId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                email:
+                  $ref: '#/components/schemas/Email'
+                  description: Opcional; padrão é o e-mail do paciente ou do primeiro responsável.
+                enviarEmail: { type: boolean, default: false }
+      responses:
+        '201':
+          description: Convite
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Convite' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Formulários ─────────────────────────────
+  /v1/formularios:
+    get:
+      operationId: formulariosListar
+      tags: [formularios]
+      summary: Formulários da organização (última versão)
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Formulários
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/Formulario' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: formulariosCriar
+      tags: [formularios]
+      summary: Cria formulário (versão 1)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FormularioEntrada' }
+      responses:
+        '201':
+          description: Formulário criado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Formulario' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/formularios/{formularioId}:
+    get:
+      operationId: formulariosObter
+      tags: [formularios]
+      summary: Detalhe (última versão ou `versao` pedida)
+      parameters:
+        - $ref: '#/components/parameters/FormularioId'
+        - $ref: '#/components/parameters/Versao'
+      responses:
+        '200':
+          description: Formulário
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Formulario' }
+        default: { $ref: '#/components/responses/Erro' }
+    put:
+      operationId: formulariosPublicarVersao
+      tags: [formularios]
+      summary: Publica nova versão (RN-FRM-001)
+      parameters:
+        - $ref: '#/components/parameters/FormularioId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FormularioEntrada' }
+      responses:
+        '200':
+          description: Nova versão publicada
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Formulario' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Acompanhamento ─────────────────────────────
+  /v1/protocolos:
+    get:
+      operationId: protocolosListar
+      tags: [acompanhamento]
+      summary: Protocolos (última versão)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusProtocolo' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Protocolos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/Protocolo' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: protocolosCriar
+      tags: [acompanhamento]
+      summary: Cria protocolo (versão 1)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProtocoloEntrada' }
+      responses:
+        '201':
+          description: Protocolo criado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Protocolo' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/protocolos/{protocoloId}:
+    get:
+      operationId: protocolosObter
+      tags: [acompanhamento]
+      summary: Detalhe (última versão ou `versao` pedida)
+      parameters:
+        - $ref: '#/components/parameters/ProtocoloId'
+        - $ref: '#/components/parameters/Versao'
+      responses:
+        '200':
+          description: Protocolo
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Protocolo' }
+        default: { $ref: '#/components/responses/Erro' }
+    put:
+      operationId: protocolosPublicarVersao
+      tags: [acompanhamento]
+      summary: Publica nova versão (não afeta acompanhamentos em andamento — RN-ACO-003)
+      parameters:
+        - $ref: '#/components/parameters/ProtocoloId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProtocoloEntrada' }
+      responses:
+        '200':
+          description: Nova versão publicada
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Protocolo' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/protocolos/{protocoloId}/arquivar:
+    post:
+      operationId: protocolosArquivar
+      tags: [acompanhamento]
+      summary: Deixa de aparecer para novos acompanhamentos
+      parameters:
+        - $ref: '#/components/parameters/ProtocoloId'
+      responses:
+        '200':
+          description: Protocolo arquivado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Protocolo' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/acompanhamentos:
+    get:
+      operationId: acompanhamentosListar
+      tags: [acompanhamento]
+      summary: Acompanhamentos (paciente vê só os seus)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusAcompanhamento' }
+        - name: pacienteId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: profissionalId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: comAlertaAberto
+          in: query
+          required: false
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Acompanhamentos, do início mais recente para o mais antigo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/Acompanhamento' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: acompanhamentosCriar
+      tags: [acompanhamento]
+      summary: Inicia acompanhamento (RN-ACO-002)
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [pacienteId, protocoloId, dataInicio]
+              properties:
+                pacienteId: { $ref: '#/components/schemas/Id' }
+                protocoloId: { $ref: '#/components/schemas/Id' }
+                dataInicio: { $ref: '#/components/schemas/Data' }
+                equipeIds:
+                  type: array
+                  maxItems: 20
+                  items: { $ref: '#/components/schemas/Id' }
+                  description: Padrão é o usuário que cria.
+                observacao: { type: [string, 'null'], maxLength: 2000 }
+      responses:
+        '201':
+          description: Acompanhamento criado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Acompanhamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/acompanhamentos/{acompanhamentoId}:
+    get:
+      operationId: acompanhamentosObter
+      tags: [acompanhamento]
+      summary: Detalhe, com resumo dos check-ins
+      parameters:
+        - $ref: '#/components/parameters/AcompanhamentoId'
+      responses:
+        '200':
+          description: Acompanhamento
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Acompanhamento' }
+        default: { $ref: '#/components/responses/Erro' }
+    patch:
+      operationId: acompanhamentosEditar
+      tags: [acompanhamento]
+      summary: Ajusta equipe ou observação
+      parameters:
+        - $ref: '#/components/parameters/AcompanhamentoId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                equipeIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 20
+                  items: { $ref: '#/components/schemas/Id' }
+                observacao: { type: [string, 'null'], maxLength: 2000 }
+      responses:
+        '200':
+          description: Acompanhamento atualizado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Acompanhamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/acompanhamentos/{acompanhamentoId}/encerrar:
+    post:
+      operationId: acompanhamentosEncerrar
+      tags: [acompanhamento]
+      summary: Encerra manualmente (RN-ACO-008)
+      parameters:
+        - $ref: '#/components/parameters/AcompanhamentoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [motivo]
+              properties:
+                motivo: { type: string, minLength: 3, maxLength: 1000 }
+      responses:
+        '200':
+          description: Acompanhamento encerrado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Acompanhamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/checkins:
+    get:
+      operationId: checkinsListar
+      tags: [acompanhamento]
+      summary: Check-ins (sem formulário e respostas na lista)
+      parameters:
+        - name: acompanhamentoId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusCheckin' }
+        - name: data
+          in: query
+          required: false
+          description: Dia local (fuso da organização) em que o check-in fica disponível.
+          schema: { $ref: '#/components/schemas/Data' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Check-ins por `disponivelEm`
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/Checkin' } }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/checkins/{checkinId}:
+    get:
+      operationId: checkinsObter
+      tags: [acompanhamento]
+      summary: Detalhe, com formulário e respostas
+      parameters:
+        - $ref: '#/components/parameters/CheckinId'
+      responses:
+        '200':
+          description: Check-in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Checkin' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/checkins/{checkinId}/respostas:
+    post:
+      operationId: checkinsResponder
+      tags: [acompanhamento]
+      summary: Responde o check-in (RN-ACO-004, RN-ACO-005)
+      description: |
+        Validação contra a versão do formulário (RN-FRM-003). Não disponível: 409
+        `CHECKIN_INDISPONIVEL`; já respondido: 409 `CHECKIN_JA_RESPONDIDO`.
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/CheckinId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [respostas]
+              properties:
+                respostas: { $ref: '#/components/schemas/Respostas' }
+      responses:
+        '201':
+          description: Check-in respondido, com alertas gerados
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Checkin' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/alertas:
+    get:
+      operationId: alertasListar
+      tags: [acompanhamento]
+      summary: Alertas (do mais grave e mais recente)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusAlerta' }
+        - name: acompanhamentoId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: severidade
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Severidade' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Alertas
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/Alerta' } }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/alertas/{alertaId}/resolver:
+    post:
+      operationId: alertasResolver
+      tags: [acompanhamento]
+      summary: Resolve o alerta
+      parameters:
+        - name: alertaId
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/Id' }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                nota: { type: [string, 'null'], maxLength: 2000 }
+      responses:
+        '200':
+          description: Alerta resolvido
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alerta' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Chat ─────────────────────────────
+  /v1/conversas:
+    get:
+      operationId: conversasListar
+      tags: [chat]
+      summary: Conversas em que o usuário participa (mais recentes primeiro)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusConversa' }
+        - name: pacienteId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: naoLidas
+          in: query
+          required: false
+          schema: { type: boolean }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Conversas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaConversas' }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: conversasCriar
+      tags: [chat]
+      summary: Cria a conversa do paciente
+      description: Se o paciente já tem conversa ativa, devolve a existente com 200 (RN-CHA-001).
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [pacienteId]
+              properties:
+                pacienteId: { $ref: '#/components/schemas/Id' }
+                participantesIds:
+                  type: array
+                  maxItems: 20
+                  items: { $ref: '#/components/schemas/Id' }
+      responses:
+        '200':
+          description: Conversa ativa já existente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversa' }
+        '201':
+          description: Conversa criada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/conversas/busca:
+    post:
+      operationId: conversasBuscar
+      tags: [chat]
+      summary: Busca por texto (nome do paciente), no corpo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Busca' }
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaConversas' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/conversas/{conversaId}:
+    get:
+      operationId: conversasObter
+      tags: [chat]
+      summary: Detalhe da conversa
+      parameters:
+        - $ref: '#/components/parameters/ConversaId'
+      responses:
+        '200':
+          description: Conversa
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/conversas/{conversaId}/mensagens:
+    get:
+      operationId: mensagensListar
+      tags: [chat]
+      summary: Mensagens em ordem cronológica
+      description: Sem `antesDe`/`depoisDe`, devolve as mais recentes. `temMais` indica se há mais na direção pedida.
+      parameters:
+        - $ref: '#/components/parameters/ConversaId'
+        - name: antesDe
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: depoisDe
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Mensagens
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [itens, temMais]
+                properties:
+                  itens: { type: array, items: { $ref: '#/components/schemas/Mensagem' } }
+                  temMais: { type: boolean }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: mensagensEnviar
+      tags: [chat]
+      summary: Envia mensagem (RN-CHA-005..008)
+      description: Conversa arquivada devolve 409 `CONVERSA_ARQUIVADA`. `idCliente` repetido devolve a mesma mensagem.
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/ConversaId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [idCliente, tipo]
+              properties:
+                idCliente: { type: string, format: uuid }
+                tipo: { type: string, enum: [TEXTO, ANEXO] }
+                texto: { type: [string, 'null'], maxLength: 4000 }
+                anexosIds:
+                  type: array
+                  maxItems: 10
+                  items: { $ref: '#/components/schemas/Id' }
+      responses:
+        '201':
+          description: Mensagem registrada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensagem' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/conversas/{conversaId}/leitura:
+    post:
+      operationId: conversasMarcarLida
+      tags: [chat]
+      summary: Marca como lida até uma mensagem
+      parameters:
+        - $ref: '#/components/parameters/ConversaId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [ateMensagemId]
+              properties:
+                ateMensagemId: { $ref: '#/components/schemas/Id' }
+      responses:
+        '204': { description: Leitura registrada }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/conversas/{conversaId}/participantes:
+    post:
+      operationId: conversasAdicionarParticipante
+      tags: [chat]
+      summary: Adiciona membro da equipe
+      parameters:
+        - $ref: '#/components/parameters/ConversaId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [usuarioId]
+              properties:
+                usuarioId: { $ref: '#/components/schemas/Id' }
+      responses:
+        '200':
+          description: Conversa atualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/conversas/{conversaId}/participantes/{usuarioId}:
+    delete:
+      operationId: conversasRemoverParticipante
+      tags: [chat]
+      summary: Remove participante (o histórico fica — RN-CHA-004)
+      parameters:
+        - $ref: '#/components/parameters/ConversaId'
+        - name: usuarioId
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/Id' }
+      responses:
+        '204': { description: Removido }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/conversas/{conversaId}/arquivar:
+    post:
+      operationId: conversasArquivar
+      tags: [chat]
+      summary: Arquiva (bloqueia novas mensagens, nunca apaga — RN-CHA-005)
+      parameters:
+        - $ref: '#/components/parameters/ConversaId'
+      responses:
+        '200':
+          description: Conversa arquivada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversa' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/conversas/{conversaId}/reabrir:
+    post:
+      operationId: conversasReabrir
+      tags: [chat]
+      summary: Reabre conversa arquivada
+      parameters:
+        - $ref: '#/components/parameters/ConversaId'
+      responses:
+        '200':
+          description: Conversa reaberta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversa' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ───────────────────────────── Equipe e organização ─────────────────────────────
+  /v1/equipe/membros:
+    get:
+      operationId: equipeListarMembros
+      tags: [equipe]
+      summary: Membros da equipe
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusMembro' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Membros, por nome
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/Membro' } }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/equipe/membros/{membroId}:
+    get:
+      operationId: equipeObterMembro
+      tags: [equipe]
+      summary: Detalhe do membro
+      parameters:
+        - $ref: '#/components/parameters/MembroId'
+      responses:
+        '200':
+          description: Membro
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Membro' }
+        default: { $ref: '#/components/responses/Erro' }
+    patch:
+      operationId: equipeEditarMembro
+      tags: [equipe]
+      summary: Perfis e status (RN-EQP-001, RN-EQP-002)
+      parameters:
+        - $ref: '#/components/parameters/MembroId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                perfis:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items: { $ref: '#/components/schemas/PerfilEquipe' }
+                status: { $ref: '#/components/schemas/StatusMembro' }
+      responses:
+        '200':
+          description: Membro atualizado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Membro' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/equipe/convites:
+    post:
+      operationId: equipeConvidar
+      tags: [equipe]
+      summary: Convida membro (expira em 72 horas)
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [nome, email, perfis]
+              properties:
+                nome: { type: string, minLength: 2, maxLength: 120 }
+                email: { $ref: '#/components/schemas/Email' }
+                perfis:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items: { $ref: '#/components/schemas/PerfilEquipe' }
+      responses:
+        '201':
+          description: Convite enviado por e-mail
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Convite' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/organizacao:
+    get:
+      operationId: organizacaoObter
+      tags: [equipe]
+      summary: Configurações que o gestor pode editar
+      responses:
+        '200':
+          description: Configuração
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrganizacaoConfiguracao' }
+        default: { $ref: '#/components/responses/Erro' }
+    patch:
+      operationId: organizacaoEditar
+      tags: [equipe]
+      summary: Edita nome, contato, marca, textos e regras do chat
+      description: Mudança que afeta o manifesto emite `sessao.manifesto.alterado` (RN-EQP-004).
+      parameters:
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrganizacaoEdicao' }
+      responses:
+        '200':
+          description: Configuração atualizada
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrganizacaoConfiguracao' }
+        default: { $ref: '#/components/responses/Erro' }
+
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      description: '`tokenAcesso` de 10 a 15 minutos, mantido só em memória pelo frontend.'
+
+  headers:
+    ETag:
+      description: Versão do recurso; enviar em `If-Match` na edição.
+      schema: { type: string }
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Cursor opaco devolvido em `proximoCursor`.
+      schema: { type: string, maxLength: 500 }
+    Limite:
+      name: limite
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Versao:
+      name: versao
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Chave única por operação lógica; repetir devolve a mesma resposta por 24 h.
+      schema: { type: string, minLength: 8, maxLength: 200 }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Valor do `ETag` lido. Desatualizado devolve 412 `CONFLITO_VERSAO`.
+      schema: { type: string, minLength: 1 }
+    XCliente:
+      name: X-Cliente
+      in: header
+      required: false
+      schema: { type: string, enum: [WEB, NATIVO], default: WEB }
+    TokenConvite:
+      name: token
+      in: path
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 200 }
+    PacienteId:
+      name: pacienteId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    ArquivoId:
+      name: arquivoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    FormularioId:
+      name: formularioId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    ProtocoloId:
+      name: protocoloId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    AcompanhamentoId:
+      name: acompanhamentoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    CheckinId:
+      name: checkinId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    ConversaId:
+      name: conversaId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    MembroId:
+      name: membroId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+
+  responses:
+    Erro:
+      description: Erro no formato RFC 9457
+      headers:
+        Retry-After:
+          description: Em respostas 429 e 503
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    Etapa:
+      description: Próxima etapa do login
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/RespostaEtapa' }
+
+  schemas:
+    # ─────────── Tipos básicos ───────────
+    Id:
+      type: string
+      description: Identificador opaco; o frontend nunca interpreta.
+      minLength: 1
+      maxLength: 64
+      pattern: '^[A-Za-z0-9_-]+$'
+    IdOuNulo:
+      oneOf:
+        - $ref: '#/components/schemas/Id'
+        - type: 'null'
+    Slug:
+      type: string
+      pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+      maxLength: 63
+    DataHora:
+      type: string
+      format: date-time
+      description: ISO 8601 em UTC.
+      pattern: 'Z$'
+    DataHoraOuNulo:
+      oneOf:
+        - $ref: '#/components/schemas/DataHora'
+        - type: 'null'
+    Data:
+      type: string
+      format: date
+      description: AAAA-MM-DD.
+    Hora:
+      type: string
+      pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+      description: HH:MM no fuso da organização.
+    Email:
+      type: string
+      format: email
+      maxLength: 254
+      pattern: '^[^A-Z]+$'
+      description: Sempre em minúsculas.
+    Telefone:
+      type: string
+      pattern: '^\+[1-9][0-9]{7,14}$'
+      description: E.164.
+    Cor:
+      type: string
+      pattern: '^#[0-9A-Fa-f]{6}$'
+    CodigoNumerico:
+      type: string
+      pattern: '^[0-9]{6}$'
+    NovaSenha:
+      type: string
+      minLength: 10
+      maxLength: 200
+    Versao:
+      type: string
+      pattern: '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'
+    Contrato:
+      type: object
+      additionalProperties: false
+      required: [versao]
+      properties:
+        versao: { $ref: '#/components/schemas/Versao' }
+    Termo:
+      type: object
+      additionalProperties: false
+      required: [singular, plural, genero]
+      properties:
+        singular: { type: string, minLength: 1, maxLength: 60 }
+        plural: { type: string, minLength: 1, maxLength: 60 }
+        genero: { type: string, enum: [M, F] }
+    Destino:
+      type: object
+      additionalProperties: false
+      required: [tela]
+      properties:
+        tela: { $ref: '#/components/schemas/Tela' }
+        parametros:
+          type: object
+          additionalProperties: { type: string }
+    Pagina:
+      type: object
+      required: [itens, proximoCursor]
+      properties:
+        itens: { type: array, items: {} }
+        proximoCursor:
+          type: [string, 'null']
+          description: Nulo indica o fim.
+    Busca:
+      type: object
+      additionalProperties: false
+      required: [texto]
+      properties:
+        texto: { type: string, minLength: 2, maxLength: 120 }
+        cursor: { type: string, maxLength: 500 }
+        limite: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Referencia:
+      type: object
+      additionalProperties: false
+      required: [id, nome]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nome: { type: string }
+    ReferenciaUsuario:
+      type: object
+      additionalProperties: false
+      required: [usuarioId, nome, perfil]
+      properties:
+        usuarioId: { $ref: '#/components/schemas/Id' }
+        nome: { type: string }
+        perfil: { $ref: '#/components/schemas/Perfil' }
+
+    # ─────────── Catálogos (v1) ───────────
+    Perfil:
+      type: string
+      enum: [GESTOR, PROFISSIONAL, SECRETARIA, PACIENTE]
+    PerfilEquipe:
+      type: string
+      enum: [GESTOR, PROFISSIONAL, SECRETARIA]
+    ModuloId:
+      type: string
+      x-catalogo-nomes: true
+      enum: [pacientes, acompanhamento, chat, equipe]
+    Tela:
+      type: string
+      x-catalogo-nomes: true
+      enum:
+        - inicio
+        - notificacoes
+        - perfil
+        - pacientes.lista
+        - pacientes.detalhe
+        - pacientes.novo
+        - acompanhamento.lista
+        - acompanhamento.meus
+        - acompanhamento.detalhe
+        - acompanhamento.novo
+        - acompanhamento.protocolos
+        - acompanhamento.protocolo
+        - acompanhamento.checkin
+        - chat.lista
+        - chat.conversa
+        - equipe.lista
+        - organizacao.configuracao
+    TermoChave:
+      type: string
+      x-catalogo-nomes: true
+      enum: [organizacao, paciente, responsavel, profissional, acompanhamento, protocolo, procedimento, checkin, conversa]
+    ContadorChave:
+      type: string
+      x-catalogo-nomes: true
+      enum: [chat.naoLidas, notificacoes.naoLidas, acompanhamento.alertasAbertos, acompanhamento.checkinsPendentes]
+    Icone:
+      type: string
+      x-catalogo-nomes: true
+      description: Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.
+      enum: [house, users, user, user-plus, activity, heart-pulse, message-circle, bell, settings, clipboard-list, calendar, stethoscope, paw-print, circle-alert, file-text, camera, credit-card, circle-help, log-out]
+    CodigoErro:
+      type: string
+      enum:
+        - AUTENTICACAO_INVALIDA
+        - CODIGO_INVALIDO
+        - CODIGO_EXPIRADO
+        - MUITAS_TENTATIVAS
+        - SESSAO_EXPIRADA
+        - SESSAO_REVOGADA
+        - PERMISSAO_NEGADA
+        - RECURSO_NAO_ENCONTRADO
+        - VALIDACAO_FALHOU
+        - CONFLITO_VERSAO
+        - LIMITE_EXCEDIDO
+        - CONVITE_INVALIDO
+        - CONVITE_EXPIRADO
+        - MODULO_NAO_CONTRATADO
+        - ORGANIZACAO_SUSPENSA
+        - CHECKIN_INDISPONIVEL
+        - CHECKIN_JA_RESPONDIDO
+        - CONVERSA_ARQUIVADA
+        - ARQUIVO_MUITO_GRANDE
+        - TIPO_ARQUIVO_NAO_PERMITIDO
+        - ARQUIVO_REJEITADO
+        - CURSOR_EXPIRADO
+        - ULTIMO_GESTOR
+        - INDISPONIVEL_TEMPORARIAMENTE
+    TipoNotificacao:
+      type: string
+      enum: [CHAT_MENSAGEM, CHECKIN_DISPONIVEL, CHECKIN_LEMBRETE, ALERTA_CRIADO, ACOMPANHAMENTO_INICIADO, ACOMPANHAMENTO_CONCLUIDO, CONVITE_ACEITO, SISTEMA]
+    TipoEvento:
+      type: string
+      x-catalogo-nomes: true
+      enum:
+        - chat.mensagem.criada
+        - chat.conversa.atualizada
+        - acompanhamento.checkin.disponivel
+        - acompanhamento.checkin.respondido
+        - acompanhamento.alerta.criado
+        - acompanhamento.alerta.resolvido
+        - acompanhamento.acompanhamento.atualizado
+        - notificacao.criada
+        - contadores.alterados
+        - arquivo.processado
+        - sessao.manifesto.alterado
+        - sessao.encerrada
+    TipoSecao:
+      type: string
+      enum: [ACOMPANHAMENTO_ATUAL, CHECKINS_PENDENTES, ALERTAS_ABERTOS, CHECKINS_DO_DIA, ACOMPANHAMENTOS_ATIVOS, CONVERSAS_RECENTES, ATALHOS, AVISO, CONTATO_ORGANIZACAO]
+    Severidade:
+      type: string
+      enum: [BAIXA, MEDIA, ALTA]
+    StatusOrganizacao:
+      type: string
+      enum: [ATIVA, MANUTENCAO, SUSPENSA]
+
+    # ─────────── Erros ───────────
+    Problema:
+      type: object
+      description: RFC 9457. Nunca stack trace, SQL ou nome de tabela.
+      required: [type, title, status, codigo, requestId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string }
+        codigo: { $ref: '#/components/schemas/CodigoErro' }
+        requestId: { type: string }
+        campos:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [campo, codigo, mensagem]
+            properties:
+              campo: { type: string }
+              codigo: { type: string, pattern: '^[A-Z][A-Z0-9_]*$' }
+              mensagem: { type: string }
+        estadoAtual:
+          description: Em 412 `CONFLITO_VERSAO`, o recurso na versão atual.
+          type: object
+
+    # ─────────── Diretório e público ───────────
+    OrganizacaoDiretorio:
+      type: object
+      additionalProperties: false
+      required: [slug, nome, urlApi, contratoVersao, status]
+      properties:
+        slug: { $ref: '#/components/schemas/Slug' }
+        nome: { type: string }
+        urlApi: { type: string, format: uri }
+        contratoVersao: { $ref: '#/components/schemas/Versao' }
+        status: { $ref: '#/components/schemas/StatusOrganizacao' }
+    ConfiguracaoPublica:
+      type: object
+      additionalProperties: false
+      required: [contrato, status, mensagemStatus, frontend, organizacao, tema, pwa, autenticacao, textos, links]
+      properties:
+        contrato: { $ref: '#/components/schemas/Contrato' }
+        status: { $ref: '#/components/schemas/StatusOrganizacao' }
+        mensagemStatus: { type: [string, 'null'] }
+        frontend:
+          type: object
+          additionalProperties: false
+          required: [versaoMinima]
+          properties:
+            versaoMinima: { $ref: '#/components/schemas/Versao' }
+        organizacao:
+          type: object
+          additionalProperties: false
+          required: [slug, nome, fuso, locale]
+          properties:
+            slug: { $ref: '#/components/schemas/Slug' }
+            nome: { type: string }
+            fuso: { type: string, description: IANA, examples: [America/Sao_Paulo] }
+            locale: { type: string, examples: [pt-BR] }
+        tema: { $ref: '#/components/schemas/Tema' }
+        pwa:
+          type: object
+          additionalProperties: false
+          required: [nome, nomeCurto, corTema, icones]
+          properties:
+            nome: { type: string }
+            nomeCurto: { type: string, maxLength: 12 }
+            corTema: { $ref: '#/components/schemas/Cor' }
+            icones:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                additionalProperties: false
+                required: [src, tamanho]
+                properties:
+                  src: { type: string, format: uri }
+                  tamanho: { type: string, pattern: '^[0-9]+x[0-9]+$' }
+                  proposito: { type: string, enum: [any, maskable], x-catalogo-nomes: true }
+        autenticacao:
+          type: object
+          additionalProperties: false
+          required: [metodos, cadastroPaciente, termosVersao]
+          properties:
+            metodos:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                additionalProperties: false
+                required: [tipo, publico]
+                properties:
+                  tipo: { type: string, enum: [SENHA, CODIGO_EMAIL] }
+                  publico: { type: string, enum: [EQUIPE, PACIENTE] }
+                  mfa: { type: string, enum: [OBRIGATORIO, OPCIONAL] }
+            cadastroPaciente: { type: string, enum: [SOMENTE_CONVITE, ABERTO] }
+            termosVersao: { type: string, description: Versão vigente dos termos, enviada no aceite. }
+        textos:
+          type: object
+          additionalProperties: false
+          required: [boasVindasTitulo, boasVindasTexto]
+          properties:
+            boasVindasTitulo: { type: string }
+            boasVindasTexto: { type: string }
+        links:
+          type: object
+          additionalProperties: false
+          required: [termosDeUso, privacidade, suporte]
+          properties:
+            termosDeUso: { type: string, format: uri }
+            privacidade: { type: string, format: uri }
+            suporte: { type: string, format: uri }
+    Tema:
+      type: object
+      additionalProperties: false
+      required: [corMarca, logoUrl, logoEscuroUrl, modoPadrao]
+      properties:
+        corMarca: { $ref: '#/components/schemas/Cor' }
+        logoUrl: { type: [string, 'null'], format: uri }
+        logoEscuroUrl: { type: [string, 'null'], format: uri }
+        modoPadrao: { type: string, enum: [CLARO, ESCURO, SISTEMA] }
+    ConvitePublico:
+      type: object
+      additionalProperties: false
+      required: [tipo, organizacao, nomeParcial, emailMascarado, expiraEm]
+      properties:
+        tipo: { type: string, enum: [PACIENTE, EQUIPE] }
+        organizacao:
+          type: object
+          additionalProperties: false
+          required: [slug, nome]
+          properties:
+            slug: { $ref: '#/components/schemas/Slug' }
+            nome: { type: string }
+        nomeParcial: { type: string, description: 'Ex.: "Marcos S."' }
+        emailMascarado: { type: [string, 'null'], description: 'Ex.: "m***@exemplo.com"' }
+        expiraEm: { $ref: '#/components/schemas/DataHora' }
+    Saude:
+      type: object
+      additionalProperties: false
+      required: [status, contrato, agora]
+      properties:
+        status: { type: string, enum: [OK, DEGRADADO] }
+        contrato: { $ref: '#/components/schemas/Contrato' }
+        agora:
+          $ref: '#/components/schemas/DataHora'
+          description: Relógio do backend. Usado pela suíte de conformidade para datas relativas.
+
+    # ─────────── Auth ───────────
+    EntradaDesafio:
+      type: object
+      additionalProperties: false
+      required: [desafioId]
+      properties:
+        desafioId: { $ref: '#/components/schemas/Id' }
+    Etapa:
+      type: string
+      enum: [CONCLUIDO, MFA, CONFIGURAR_MFA, CODIGO_ENVIADO, TROCAR_SENHA, ACEITAR_TERMOS]
+    RespostaEtapa:
+      type: object
+      additionalProperties: false
+      required: [etapa]
+      properties:
+        etapa: { $ref: '#/components/schemas/Etapa' }
+        desafioId: { $ref: '#/components/schemas/Id' }
+        tokenAcesso: { type: string }
+        expiraEm: { $ref: '#/components/schemas/DataHora' }
+        tokenRenovacao: { type: string, description: Somente com `X-Cliente NATIVO`. }
+        metodosMfa:
+          type: array
+          items: { type: string, enum: [TOTP, CODIGO_RECUPERACAO] }
+        codigosRecuperacao:
+          type: array
+          items: { type: string }
+          description: Vem uma única vez, ao confirmar o TOTP.
+        emailMascarado: { type: string, description: Em CODIGO_ENVIADO. }
+        termos:
+          type: object
+          additionalProperties: false
+          required: [versao, url]
+          properties:
+            versao: { type: string }
+            url: { type: string, format: uri }
+      allOf:
+        - if:
+            properties: { etapa: { const: CONCLUIDO } }
+          then:
+            required: [tokenAcesso, expiraEm]
+          else:
+            required: [desafioId]
+        - if:
+            properties: { etapa: { const: MFA } }
+          then:
+            required: [metodosMfa]
+        - if:
+            properties: { etapa: { const: ACEITAR_TERMOS } }
+          then:
+            required: [termos]
+    TokenAcesso:
+      type: object
+      additionalProperties: false
+      required: [tokenAcesso, expiraEm]
+      properties:
+        tokenAcesso: { type: string }
+        expiraEm: { $ref: '#/components/schemas/DataHora' }
+        tokenRenovacao: { type: string, description: Somente com `X-Cliente NATIVO`. }
+
+    # ─────────── Sessão ───────────
+    Contadores:
+      type: object
+      description: Chaves do catálogo `ContadorChave`; chave desconhecida é ignorada.
+      propertyNames: { $ref: '#/components/schemas/ContadorChave' }
+      additionalProperties: { type: integer, minimum: 0 }
+    PreferenciasUsuario:
+      type: object
+      additionalProperties: false
+      properties:
+        tema: { type: string, enum: [CLARO, ESCURO, SISTEMA] }
+        densidade: { type: string, enum: [CONFORTAVEL, COMPACTA] }
+    PacienteVinculado:
+      type: object
+      additionalProperties: false
+      required: [id, nome, tipo, relacao]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nome: { type: string }
+        tipo: { $ref: '#/components/schemas/TipoPaciente' }
+        relacao: { $ref: '#/components/schemas/RelacaoVinculo' }
+    Usuario:
+      type: object
+      additionalProperties: false
+      required: [id, nome, nomeExibicao, email, fotoUrl, preferencias]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nome: { type: string }
+        nomeExibicao: { type: string }
+        email: { $ref: '#/components/schemas/Email' }
+        fotoUrl: { type: [string, 'null'], format: uri }
+        preferencias: { $ref: '#/components/schemas/PreferenciasUsuario' }
+    Conta:
+      type: object
+      additionalProperties: false
+      required: [id, nome, nomeExibicao, email, fotoUrl, preferencias, perfis, pacientesVinculados]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nome: { type: string }
+        nomeExibicao: { type: string }
+        email: { $ref: '#/components/schemas/Email' }
+        fotoUrl: { type: [string, 'null'], format: uri }
+        preferencias: { $ref: '#/components/schemas/PreferenciasUsuario' }
+        perfis:
+          type: array
+          items: { $ref: '#/components/schemas/Perfil' }
+        pacientesVinculados:
+          type: array
+          items: { $ref: '#/components/schemas/PacienteVinculado' }
+    Modulo:
+      type: object
+      additionalProperties: false
+      required: [id, versao, config]
+      properties:
+        id: { $ref: '#/components/schemas/ModuloId' }
+        versao: { type: string, pattern: '^[0-9]+\.[0-9]+$' }
+        config: { type: object }
+      allOf:
+        - if: { properties: { id: { const: pacientes } } }
+          then: { properties: { config: { $ref: '#/components/schemas/ConfigPacientes' } } }
+        - if: { properties: { id: { const: acompanhamento } } }
+          then: { properties: { config: { $ref: '#/components/schemas/ConfigAcompanhamento' } } }
+        - if: { properties: { id: { const: chat } } }
+          then: { properties: { config: { $ref: '#/components/schemas/ConfigChat' } } }
+    ConfigPacientes:
+      type: object
+      additionalProperties: false
+      required: [formularioCadastroId, relacoesPermitidas]
+      properties:
+        formularioCadastroId: { $ref: '#/components/schemas/IdOuNulo' }
+        relacoesPermitidas:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/RelacaoVinculo' }
+    ConfigAcompanhamento:
+      type: object
+      additionalProperties: false
+      required: [publicarCheckinNaConversa]
+      properties:
+        publicarCheckinNaConversa: { type: boolean }
+    HorarioAtendimento:
+      type: object
+      additionalProperties: false
+      required: [diaSemana, inicio, fim]
+      properties:
+        diaSemana: { type: integer, minimum: 0, maximum: 6, description: 0 = domingo }
+        inicio: { $ref: '#/components/schemas/Hora' }
+        fim: { $ref: '#/components/schemas/Hora' }
+    ConfigChat:
+      type: object
+      additionalProperties: false
+      required: [pacientePodeIniciar, anexosPermitidos, horarioAtendimento, mensagemForaDoHorario, avisoUrgencia]
+      properties:
+        pacientePodeIniciar: { type: boolean }
+        anexosPermitidos: { type: boolean }
+        horarioAtendimento:
+          type: array
+          items: { $ref: '#/components/schemas/HorarioAtendimento' }
+        mensagemForaDoHorario: { type: [string, 'null'], maxLength: 500 }
+        avisoUrgencia: { type: [string, 'null'], maxLength: 500 }
+    ItemNavegacao:
+      type: object
+      additionalProperties: false
+      required: [id, rotulo, icone, grupo, destino]
+      properties:
+        id: { type: string, pattern: '^[a-z][a-z0-9-]*$' }
+        rotulo: { type: string }
+        icone: { $ref: '#/components/schemas/Icone' }
+        grupo: { type: string, enum: [PRINCIPAL, SECUNDARIO] }
+        destino: { $ref: '#/components/schemas/Destino' }
+        contador: { $ref: '#/components/schemas/ContadorChave' }
+    Manifesto:
+      type: object
+      additionalProperties: false
+      required: [contrato, organizacao, usuario, perfilAtivo, perfisDisponiveis, termos, modulos, navegacao, permissoes, capacidades, contadores]
+      properties:
+        contrato: { $ref: '#/components/schemas/Contrato' }
+        organizacao:
+          type: object
+          additionalProperties: false
+          required: [id, slug, nome, fuso, locale, contato]
+          properties:
+            id: { $ref: '#/components/schemas/Id' }
+            slug: { $ref: '#/components/schemas/Slug' }
+            nome: { type: string }
+            fuso: { type: string }
+            locale: { type: string }
+            contato: { $ref: '#/components/schemas/ContatoOrganizacao' }
+        usuario: { $ref: '#/components/schemas/Usuario' }
+        perfilAtivo: { $ref: '#/components/schemas/Perfil' }
+        perfisDisponiveis:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, rotulo]
+            properties:
+              id: { $ref: '#/components/schemas/Perfil' }
+              rotulo: { type: string }
+        termos:
+          type: object
+          description: Todos os termos do catálogo, em minúsculas.
+          propertyNames: { $ref: '#/components/schemas/TermoChave' }
+          additionalProperties: { $ref: '#/components/schemas/Termo' }
+          required: [organizacao, paciente, responsavel, profissional, acompanhamento, protocolo, procedimento, checkin, conversa]
+        modulos:
+          type: array
+          items: { $ref: '#/components/schemas/Modulo' }
+        navegacao:
+          type: array
+          items: { $ref: '#/components/schemas/ItemNavegacao' }
+        permissoes:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/Permissao' }
+        capacidades: { $ref: '#/components/schemas/Capacidades' }
+        contadores: { $ref: '#/components/schemas/Contadores' }
+        pacientesVinculados:
+          type: array
+          description: Somente no perfil PACIENTE.
+          items: { $ref: '#/components/schemas/PacienteVinculado' }
+    Permissao:
+      type: string
+      x-catalogo-nomes: true
+      enum:
+        - pacientes.paciente.ler
+        - pacientes.paciente.criar
+        - pacientes.paciente.editar
+        - pacientes.paciente.convidar
+        - acompanhamento.protocolo.ler
+        - acompanhamento.protocolo.gerenciar
+        - acompanhamento.acompanhamento.ler
+        - acompanhamento.acompanhamento.criar
+        - acompanhamento.acompanhamento.encerrar
+        - acompanhamento.checkin.ler
+        - acompanhamento.checkin.responder
+        - acompanhamento.alerta.ler
+        - acompanhamento.alerta.resolver
+        - chat.conversa.ler
+        - chat.conversa.criar
+        - chat.conversa.gerenciar
+        - chat.mensagem.enviar
+        - equipe.membro.ler
+        - equipe.membro.gerenciar
+        - organizacao.configuracao.editar
+    Capacidades:
+      type: object
+      additionalProperties: false
+      required: [tempoReal, push, upload]
+      properties:
+        tempoReal:
+          type: object
+          additionalProperties: false
+          required: [modo, intervaloPollingSegundos]
+          properties:
+            modo: { type: string, enum: [SSE, POLLING] }
+            intervaloPollingSegundos: { type: integer, minimum: 5, maximum: 300 }
+        push:
+          type: object
+          additionalProperties: false
+          required: [modo]
+          properties:
+            modo: { type: string, enum: [WEB_PUSH, NENHUM] }
+            chavePublicaVapid: { type: string }
+        upload:
+          type: object
+          additionalProperties: false
+          required: [tamanhoMaximoBytes, tiposPermitidos]
+          properties:
+            tamanhoMaximoBytes: { type: integer, minimum: 1 }
+            tiposPermitidos:
+              type: array
+              items: { type: string }
+    ContatoOrganizacao:
+      type: object
+      additionalProperties: false
+      required: [telefone, email, endereco]
+      properties:
+        telefone: { oneOf: [{ $ref: '#/components/schemas/Telefone' }, { type: 'null' }] }
+        email: { oneOf: [{ $ref: '#/components/schemas/Email' }, { type: 'null' }] }
+        endereco: { type: [string, 'null'] }
+
+    # ─────────── Tela inicial ───────────
+    Inicio:
+      type: object
+      additionalProperties: false
+      required: [secoes]
+      properties:
+        secoes:
+          type: array
+          items: { $ref: '#/components/schemas/Secao' }
+    Secao:
+      type: object
+      additionalProperties: false
+      required: [id, tipo, dados]
+      properties:
+        id: { type: string }
+        tipo: { $ref: '#/components/schemas/TipoSecao' }
+        titulo: { type: string, description: Opcional; o frontend tem um título padrão por tipo. }
+        dados: { type: object }
+      allOf:
+        - if: { properties: { tipo: { const: ACOMPANHAMENTO_ATUAL } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [acompanhamentoId, titulo, diaAtual, totalDias, proximoCheckin, orientacaoDoDia]
+                properties:
+                  acompanhamentoId: { $ref: '#/components/schemas/Id' }
+                  pacienteId: { $ref: '#/components/schemas/Id' }
+                  titulo: { type: string }
+                  diaAtual: { type: integer }
+                  totalDias: { type: integer }
+                  status: { $ref: '#/components/schemas/StatusAcompanhamento' }
+                  proximoCheckin:
+                    oneOf:
+                      - $ref: '#/components/schemas/CheckinResumo'
+                      - type: 'null'
+                  orientacaoDoDia: { type: [string, 'null'] }
+        - if: { properties: { tipo: { const: CHECKINS_PENDENTES } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [itens]
+                properties:
+                  itens: { type: array, items: { $ref: '#/components/schemas/CheckinResumo' } }
+        - if: { properties: { tipo: { const: ALERTAS_ABERTOS } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [total, itens]
+                properties:
+                  total: { type: integer, minimum: 0 }
+                  itens: { type: array, items: { $ref: '#/components/schemas/Alerta' } }
+        - if: { properties: { tipo: { const: CHECKINS_DO_DIA } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [data, respondidos, pendentes, expirados, itens]
+                properties:
+                  data: { $ref: '#/components/schemas/Data' }
+                  respondidos: { type: integer, minimum: 0 }
+                  pendentes: { type: integer, minimum: 0 }
+                  expirados: { type: integer, minimum: 0 }
+                  itens: { type: array, items: { $ref: '#/components/schemas/CheckinResumo' } }
+        - if: { properties: { tipo: { const: ACOMPANHAMENTOS_ATIVOS } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [total, itens]
+                properties:
+                  total: { type: integer, minimum: 0 }
+                  itens: { type: array, items: { $ref: '#/components/schemas/Acompanhamento' } }
+        - if: { properties: { tipo: { const: CONVERSAS_RECENTES } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [itens]
+                properties:
+                  itens: { type: array, items: { $ref: '#/components/schemas/Conversa' } }
+        - if: { properties: { tipo: { const: ATALHOS } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [itens]
+                properties:
+                  itens:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [rotulo, icone, destino]
+                      properties:
+                        rotulo: { type: string }
+                        icone: { $ref: '#/components/schemas/Icone' }
+                        destino: { $ref: '#/components/schemas/Destino' }
+        - if: { properties: { tipo: { const: AVISO } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [titulo, texto, severidade]
+                properties:
+                  titulo: { type: string }
+                  texto: { type: string }
+                  severidade: { type: string, enum: [INFORMACAO, ATENCAO, URGENTE] }
+        - if: { properties: { tipo: { const: CONTATO_ORGANIZACAO } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [telefone, endereco, mapaUrl]
+                properties:
+                  telefone: { type: [string, 'null'] }
+                  endereco: { type: [string, 'null'] }
+                  mapaUrl: { type: [string, 'null'], format: uri }
+
+    # ─────────── Notificações ───────────
+    Notificacao:
+      type: object
+      additionalProperties: false
+      required: [id, tipo, titulo, texto, criadoEm, lidoEm, destino]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        tipo: { $ref: '#/components/schemas/TipoNotificacao' }
+        titulo: { type: string }
+        texto: { type: string }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        lidoEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+        destino:
+          oneOf:
+            - $ref: '#/components/schemas/Destino'
+            - type: 'null'
+    PreferenciasNotificacao:
+      type: object
+      additionalProperties: false
+      required: [itens]
+      properties:
+        itens:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [tipo, push, email]
+            properties:
+              tipo: { $ref: '#/components/schemas/TipoNotificacao' }
+              push: { type: boolean }
+              email: { type: boolean }
+    InscricaoPush:
+      type: object
+      additionalProperties: false
+      required: [id, dispositivo, criadoEm]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        dispositivo: { type: [string, 'null'] }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+
+    # ─────────── Arquivos ───────────
+    FinalidadeArquivo:
+      type: string
+      enum: [CHECKIN, CHAT, PERFIL, ORGANIZACAO]
+    EnvioArquivo:
+      type: object
+      additionalProperties: false
+      required: [arquivoId, envio, expiraEm]
+      properties:
+        arquivoId: { $ref: '#/components/schemas/Id' }
+        envio:
+          type: object
+          additionalProperties: false
+          required: [url, metodo, cabecalhos]
+          properties:
+            url: { type: string, format: uri }
+            metodo: { type: string, enum: [PUT, POST] }
+            cabecalhos:
+              type: object
+              additionalProperties: { type: string }
+        expiraEm: { $ref: '#/components/schemas/DataHora' }
+    Arquivo:
+      type: object
+      additionalProperties: false
+      required: [id, nome, tipo, tamanhoBytes, finalidade, status, motivoRejeicao, urlVisualizacao, urlMiniatura, urlsExpiramEm, criadoEm]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nome: { type: string }
+        tipo: { type: string }
+        tamanhoBytes: { type: integer, minimum: 0 }
+        finalidade: { $ref: '#/components/schemas/FinalidadeArquivo' }
+        status: { type: string, enum: [AGUARDANDO_ENVIO, PROCESSANDO, DISPONIVEL, REJEITADO] }
+        motivoRejeicao: { type: [string, 'null'] }
+        urlVisualizacao: { type: [string, 'null'], format: uri }
+        urlMiniatura: { type: [string, 'null'], format: uri }
+        urlsExpiramEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+    ArquivoResumo:
+      type: object
+      additionalProperties: false
+      required: [id, status, urlVisualizacao, urlMiniatura, urlsExpiramEm]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        status: { type: string, enum: [AGUARDANDO_ENVIO, PROCESSANDO, DISPONIVEL, REJEITADO] }
+        urlVisualizacao: { type: [string, 'null'], format: uri }
+        urlMiniatura: { type: [string, 'null'], format: uri }
+        urlsExpiramEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+
+    # ─────────── Eventos ───────────
+    Evento:
+      type: object
+      additionalProperties: false
+      required: [id, tipo, ocorridoEm, dados]
+      description: Leva só identificadores; o conteúdo é buscado pela API REST.
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        tipo: { $ref: '#/components/schemas/TipoEvento' }
+        ocorridoEm: { $ref: '#/components/schemas/DataHora' }
+        dados: { type: object }
+      allOf:
+        - if: { properties: { tipo: { const: chat.mensagem.criada } } }
+          then: { properties: { dados: { required: [conversaId, mensagemId] } } }
+        - if: { properties: { tipo: { const: chat.conversa.atualizada } } }
+          then: { properties: { dados: { required: [conversaId] } } }
+        - if: { properties: { tipo: { anyOf: [{ const: acompanhamento.checkin.disponivel }, { const: acompanhamento.checkin.respondido }] } } }
+          then: { properties: { dados: { required: [checkinId, acompanhamentoId] } } }
+        - if: { properties: { tipo: { const: acompanhamento.alerta.criado } } }
+          then: { properties: { dados: { required: [alertaId, acompanhamentoId] } } }
+        - if: { properties: { tipo: { const: acompanhamento.alerta.resolvido } } }
+          then: { properties: { dados: { required: [alertaId] } } }
+        - if: { properties: { tipo: { const: acompanhamento.acompanhamento.atualizado } } }
+          then: { properties: { dados: { required: [acompanhamentoId] } } }
+        - if: { properties: { tipo: { const: notificacao.criada } } }
+          then: { properties: { dados: { required: [notificacaoId] } } }
+        - if: { properties: { tipo: { const: contadores.alterados } } }
+          then: { properties: { dados: { $ref: '#/components/schemas/Contadores' } } }
+        - if: { properties: { tipo: { const: arquivo.processado } } }
+          then: { properties: { dados: { required: [arquivoId, status] } } }
+        - if: { properties: { tipo: { const: sessao.encerrada } } }
+          then: { properties: { dados: { required: [motivo] } } }
+
+    # ─────────── Pacientes ───────────
+    TipoPaciente:
+      type: string
+      enum: [PESSOA, ANIMAL]
+    RelacaoVinculo:
+      type: string
+      enum: [PROPRIO, DEPENDENTE, ANIMAL]
+    StatusPaciente:
+      type: string
+      enum: [ATIVO, INATIVO]
+    ContatoPaciente:
+      type: object
+      additionalProperties: false
+      properties:
+        email: { oneOf: [{ $ref: '#/components/schemas/Email' }, { type: 'null' }] }
+        celular: { oneOf: [{ $ref: '#/components/schemas/Telefone' }, { type: 'null' }] }
+    Responsavel:
+      type: object
+      additionalProperties: false
+      required: [nome, contato]
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 120 }
+        parentesco: { type: [string, 'null'], maxLength: 60 }
+        contato: { $ref: '#/components/schemas/ContatoPaciente' }
+    CamposAdicionais:
+      type: object
+      description: Respostas ao formulário de cadastro da organização (`pacientes.config.formularioCadastroId`).
+    PacienteEntrada:
+      type: object
+      additionalProperties: false
+      required: [tipo, nome, contato]
+      properties:
+        tipo: { $ref: '#/components/schemas/TipoPaciente' }
+        nome: { type: string, minLength: 2, maxLength: 120 }
+        nomeSocial: { type: [string, 'null'], maxLength: 120 }
+        dataNascimento: { oneOf: [{ $ref: '#/components/schemas/Data' }, { type: 'null' }] }
+        contato: { $ref: '#/components/schemas/ContatoPaciente' }
+        camposAdicionais: { $ref: '#/components/schemas/CamposAdicionais' }
+        responsaveis:
+          type: array
+          maxItems: 5
+          items: { $ref: '#/components/schemas/Responsavel' }
+    PacienteEdicao:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 120 }
+        nomeSocial: { type: [string, 'null'], maxLength: 120 }
+        dataNascimento: { oneOf: [{ $ref: '#/components/schemas/Data' }, { type: 'null' }] }
+        contato: { $ref: '#/components/schemas/ContatoPaciente' }
+        camposAdicionais: { $ref: '#/components/schemas/CamposAdicionais' }
+        responsaveis:
+          type: array
+          maxItems: 5
+          items: { $ref: '#/components/schemas/Responsavel' }
+        status: { $ref: '#/components/schemas/StatusPaciente' }
+    Paciente:
+      type: object
+      additionalProperties: false
+      required: [id, tipo, nome, nomeSocial, dataNascimento, contato, camposAdicionais, responsaveis, status, acessoApp, acompanhamentosAtivos, conversaAtivaId, criadoEm, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        tipo: { $ref: '#/components/schemas/TipoPaciente' }
+        nome: { type: string }
+        nomeSocial: { type: [string, 'null'] }
+        dataNascimento: { oneOf: [{ $ref: '#/components/schemas/Data' }, { type: 'null' }] }
+        contato: { $ref: '#/components/schemas/ContatoPaciente' }
+        camposAdicionais: { $ref: '#/components/schemas/CamposAdicionais' }
+        responsaveis:
+          type: array
+          items: { $ref: '#/components/schemas/Responsavel' }
+        status: { $ref: '#/components/schemas/StatusPaciente' }
+        acessoApp:
+          type: object
+          additionalProperties: false
+          required: [status, ultimoAcessoEm, notificacoes]
+          properties:
+            status: { type: string, enum: [ATIVO, CONVITE_PENDENTE, SEM_ACESSO] }
+            ultimoAcessoEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+            notificacoes: { type: string, enum: [PUSH, EMAIL, NENHUMA] }
+        acompanhamentosAtivos: { type: integer, minimum: 0 }
+        conversaAtivaId: { $ref: '#/components/schemas/IdOuNulo' }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR, INATIVAR, REATIVAR, CONVIDAR, INICIAR_ACOMPANHAMENTO, ABRIR_CONVERSA] }
+    PaginaPacientes:
+      allOf:
+        - $ref: '#/components/schemas/Pagina'
+        - type: object
+          properties:
+            itens: { type: array, items: { $ref: '#/components/schemas/Paciente' } }
+    Convite:
+      type: object
+      additionalProperties: false
+      required: [id, token, link, conteudoQr, expiraEm, emailEnviado]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        token: { type: string, description: 'Token de uso único, o mesmo de `/v1/auth/convites/{token}/aceitar`.' }
+        link: { type: string, format: uri }
+        conteudoQr: { type: string, description: Texto a codificar no QR code (o próprio link). }
+        expiraEm: { $ref: '#/components/schemas/DataHora' }
+        emailEnviado: { type: boolean }
+
+    # ─────────── Formulários ───────────
+    TipoCampo:
+      type: string
+      enum: [TEXTO, TEXTO_LONGO, NUMERO, ESCALA, SIM_NAO, ESCOLHA_UNICA, ESCOLHA_MULTIPLA, DATA, HORA, FOTO, INFORMACAO]
+    CondicaoVisibilidade:
+      type: object
+      additionalProperties: false
+      required: [campo, operador, valor]
+      properties:
+        campo: { type: string }
+        operador: { $ref: '#/components/schemas/Operador' }
+        valor: { $ref: '#/components/schemas/ValorComparacao' }
+    Operador:
+      type: string
+      enum: [IGUAL, DIFERENTE, MAIOR_OU_IGUAL, MENOR_OU_IGUAL, CONTEM]
+    ValorComparacao:
+      type: [string, number, boolean]
+    CampoFormulario:
+      type: object
+      additionalProperties: false
+      required: [id, tipo, rotulo]
+      properties:
+        id: { type: string, pattern: '^[a-z][A-Za-z0-9]*$' }
+        tipo: { $ref: '#/components/schemas/TipoCampo' }
+        rotulo: { type: string, minLength: 1, maxLength: 300 }
+        ajuda: { type: string, maxLength: 500 }
+        obrigatorio: { type: boolean, default: false }
+        min: { type: number }
+        max: { type: number }
+        unidade: { type: string, maxLength: 20 }
+        casasDecimais: { type: integer, minimum: 0, maximum: 4 }
+        rotuloMin: { type: string, maxLength: 60 }
+        rotuloMax: { type: string, maxLength: 60 }
+        maximo: { type: integer, minimum: 1, maximum: 10, description: 'FOTO: quantidade máxima' }
+        instrucao: { type: string, maxLength: 300 }
+        opcoes:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            additionalProperties: false
+            required: [valor, rotulo]
+            properties:
+              valor: { type: string, pattern: '^[A-Z][A-Z0-9_]*$' }
+              rotulo: { type: string }
+        visivelSe: { $ref: '#/components/schemas/CondicaoVisibilidade' }
+      allOf:
+        - if: { properties: { tipo: { enum: [ESCOLHA_UNICA, ESCOLHA_MULTIPLA] } } }
+          then: { required: [opcoes] }
+        - if: { properties: { tipo: { const: ESCALA } } }
+          then: { required: [min, max] }
+    FormularioEntrada:
+      type: object
+      additionalProperties: false
+      required: [titulo, campos]
+      properties:
+        titulo: { type: string, minLength: 1, maxLength: 200 }
+        finalidade: { type: string, enum: [CHECKIN, CADASTRO], default: CHECKIN }
+        campos:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: '#/components/schemas/CampoFormulario' }
+    Formulario:
+      type: object
+      additionalProperties: false
+      required: [id, versao, titulo, campos]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        versao: { type: integer, minimum: 1 }
+        titulo: { type: string }
+        finalidade: { type: string, enum: [CHECKIN, CADASTRO] }
+        campos:
+          type: array
+          items: { $ref: '#/components/schemas/CampoFormulario' }
+        publicadoEm: { $ref: '#/components/schemas/DataHora' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR] }
+    Respostas:
+      type: object
+      description: Mapa `campo.id` → valor no formato do tipo do campo (seção 9.2).
+      propertyNames: { pattern: '^[a-z][A-Za-z0-9]*$' }
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: number
+          - type: boolean
+          - type: array
+            items: { type: string }
+
+    # ─────────── Acompanhamento ───────────
+    StatusProtocolo:
+      type: string
+      enum: [ATIVO, ARQUIVADO]
+    StatusAcompanhamento:
+      type: string
+      enum: [AGENDADO, ATIVO, CONCLUIDO, ENCERRADO]
+    StatusCheckin:
+      type: string
+      enum: [AGENDADO, DISPONIVEL, RESPONDIDO, EXPIRADO, CANCELADO]
+    StatusAlerta:
+      type: string
+      enum: [ABERTO, RESOLVIDO]
+    ProgramacaoCheckin:
+      type: object
+      additionalProperties: false
+      required: [dias, horario, formulario, expiraAposHoras]
+      properties:
+        dias:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { type: integer, minimum: 0, maximum: 365 }
+        horario: { $ref: '#/components/schemas/Hora' }
+        formulario:
+          type: object
+          additionalProperties: false
+          required: [id, versao]
+          properties:
+            id: { $ref: '#/components/schemas/Id' }
+            versao: { type: integer, minimum: 1 }
+        lembreteAposHoras: { type: [integer, 'null'], minimum: 1, maximum: 48 }
+        expiraAposHoras: { type: integer, minimum: 1, maximum: 72 }
+    Orientacao:
+      type: object
+      additionalProperties: false
+      required: [dia, horario, texto]
+      properties:
+        dia: { type: integer, minimum: 0, maximum: 365 }
+        horario: { $ref: '#/components/schemas/Hora' }
+        texto: { type: string, minLength: 1, maxLength: 1000 }
+    RegraAlerta:
+      type: object
+      additionalProperties: false
+      required: [id, tipo, severidade, mensagem]
+      properties:
+        id: { type: string, pattern: '^[a-z][a-z0-9_]*$' }
+        tipo: { type: string, enum: [RESPOSTA, CHECKIN_EXPIRADO] }
+        campo: { type: string }
+        operador: { $ref: '#/components/schemas/Operador' }
+        valor: { $ref: '#/components/schemas/ValorComparacao' }
+        severidade: { $ref: '#/components/schemas/Severidade' }
+        mensagem:
+          type: string
+          maxLength: 200
+          description: Descreve o que foi relatado; nunca sugere conduta (RN-ACO-005).
+      allOf:
+        - if: { properties: { tipo: { const: RESPOSTA } } }
+          then: { required: [campo, operador, valor] }
+    ProtocoloEntrada:
+      type: object
+      additionalProperties: false
+      required: [nome, duracaoDias, checkins]
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 120 }
+        descricao: { type: [string, 'null'], maxLength: 1000 }
+        duracaoDias: { type: integer, minimum: 1, maximum: 365 }
+        checkins:
+          type: array
+          items: { $ref: '#/components/schemas/ProgramacaoCheckin' }
+        orientacoes:
+          type: array
+          items: { $ref: '#/components/schemas/Orientacao' }
+        regrasAlerta:
+          type: array
+          items: { $ref: '#/components/schemas/RegraAlerta' }
+    Protocolo:
+      type: object
+      additionalProperties: false
+      required: [id, versao, nome, descricao, duracaoDias, checkins, orientacoes, regrasAlerta, status, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        versao: { type: integer, minimum: 1 }
+        nome: { type: string }
+        descricao: { type: [string, 'null'] }
+        duracaoDias: { type: integer, minimum: 1 }
+        checkins:
+          type: array
+          items: { $ref: '#/components/schemas/ProgramacaoCheckin' }
+        orientacoes:
+          type: array
+          items: { $ref: '#/components/schemas/Orientacao' }
+        regrasAlerta:
+          type: array
+          items: { $ref: '#/components/schemas/RegraAlerta' }
+        status: { $ref: '#/components/schemas/StatusProtocolo' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR, ARQUIVAR, INICIAR_ACOMPANHAMENTO] }
+    CheckinResumo:
+      type: object
+      additionalProperties: false
+      required: [id, status]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        acompanhamentoId: { $ref: '#/components/schemas/Id' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        dia: { type: integer, minimum: 0 }
+        status: { $ref: '#/components/schemas/StatusCheckin' }
+        disponivelEm: { $ref: '#/components/schemas/DataHora' }
+        expiraEm: { $ref: '#/components/schemas/DataHora' }
+    Acompanhamento:
+      type: object
+      additionalProperties: false
+      required: [id, paciente, protocolo, dataInicio, diaAtual, totalDias, status, equipe, conversaId, resumoCheckins, alertasAbertos, proximoCheckin, observacao, motivoEncerramento, criadoEm, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        protocolo:
+          type: object
+          additionalProperties: false
+          required: [id, versao, nome]
+          properties:
+            id: { $ref: '#/components/schemas/Id' }
+            versao: { type: integer, minimum: 1 }
+            nome: { type: string }
+        dataInicio: { $ref: '#/components/schemas/Data' }
+        diaAtual:
+          type: integer
+          description: Dias desde `dataInicio` no fuso da organização; negativo antes do procedimento.
+        totalDias: { type: integer, minimum: 1 }
+        status: { $ref: '#/components/schemas/StatusAcompanhamento' }
+        equipe:
+          type: array
+          items: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        conversaId: { $ref: '#/components/schemas/IdOuNulo' }
+        resumoCheckins:
+          type: object
+          additionalProperties: false
+          required: [respondidos, pendentes, expirados, agendados]
+          properties:
+            respondidos: { type: integer, minimum: 0 }
+            pendentes: { type: integer, minimum: 0 }
+            expirados: { type: integer, minimum: 0 }
+            agendados: { type: integer, minimum: 0 }
+        alertasAbertos: { type: integer, minimum: 0 }
+        proximoCheckin:
+          oneOf:
+            - $ref: '#/components/schemas/CheckinResumo'
+            - type: 'null'
+        observacao: { type: [string, 'null'] }
+        motivoEncerramento: { type: [string, 'null'] }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR, ENCERRAR, ABRIR_CONVERSA] }
+    Checkin:
+      type: object
+      additionalProperties: false
+      required: [id, acompanhamentoId, paciente, dia, status, disponivelEm, expiraEm, respondidoEm, respostas, alertas, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        acompanhamentoId: { $ref: '#/components/schemas/Id' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        dia: { type: integer, minimum: 0 }
+        status: { $ref: '#/components/schemas/StatusCheckin' }
+        disponivelEm: { $ref: '#/components/schemas/DataHora' }
+        expiraEm: { $ref: '#/components/schemas/DataHora' }
+        respondidoEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+        formulario:
+          $ref: '#/components/schemas/Formulario'
+          description: Somente no detalhe.
+        respostas:
+          oneOf:
+            - $ref: '#/components/schemas/Respostas'
+            - type: 'null'
+        anexos:
+          type: array
+          description: Fotos das respostas, com URLs de visualização (somente no detalhe).
+          items: { $ref: '#/components/schemas/ArquivoResumo' }
+        alertas:
+          type: array
+          items: { $ref: '#/components/schemas/Alerta' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [RESPONDER] }
+    Alerta:
+      type: object
+      additionalProperties: false
+      required: [id, acompanhamentoId, checkinId, paciente, regraId, severidade, mensagem, status, criadoEm, resolvidoEm, resolvidoPor, nota, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        acompanhamentoId: { $ref: '#/components/schemas/Id' }
+        checkinId: { $ref: '#/components/schemas/IdOuNulo' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        regraId: { type: string }
+        severidade: { $ref: '#/components/schemas/Severidade' }
+        mensagem: { type: string }
+        status: { $ref: '#/components/schemas/StatusAlerta' }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        resolvidoEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+        resolvidoPor:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [usuarioId, nome]
+              properties:
+                usuarioId: { $ref: '#/components/schemas/Id' }
+                nome: { type: string }
+            - type: 'null'
+        nota: { type: [string, 'null'] }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [RESOLVER, ABRIR_CONVERSA] }
+
+    # ─────────── Chat ───────────
+    StatusConversa:
+      type: string
+      enum: [ATIVA, ARQUIVADA]
+    Participante:
+      type: object
+      additionalProperties: false
+      required: [usuarioId, nome, perfil, lidoAte]
+      properties:
+        usuarioId: { $ref: '#/components/schemas/Id' }
+        nome: { type: string }
+        perfil: { $ref: '#/components/schemas/Perfil' }
+        lidoAte: { $ref: '#/components/schemas/IdOuNulo' }
+    Conversa:
+      type: object
+      additionalProperties: false
+      required: [id, titulo, paciente, acompanhamentoAtivoId, status, participantes, ultimaMensagem, naoLidas, criadoEm, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        titulo: { type: string, description: Calculado para quem vê (RN-CHA-003). }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        acompanhamentoAtivoId: { $ref: '#/components/schemas/IdOuNulo' }
+        status: { $ref: '#/components/schemas/StatusConversa' }
+        participantes:
+          type: array
+          items: { $ref: '#/components/schemas/Participante' }
+        ultimaMensagem:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [id, resumo, autorNome, enviadoEm]
+              properties:
+                id: { $ref: '#/components/schemas/Id' }
+                resumo: { type: string }
+                autorNome: { type: [string, 'null'] }
+                enviadoEm: { $ref: '#/components/schemas/DataHora' }
+            - type: 'null'
+        naoLidas: { type: integer, minimum: 0 }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [ENVIAR, ADICIONAR_PARTICIPANTE, REMOVER_PARTICIPANTE, ARQUIVAR, REABRIR] }
+    PaginaConversas:
+      allOf:
+        - $ref: '#/components/schemas/Pagina'
+        - type: object
+          properties:
+            itens: { type: array, items: { $ref: '#/components/schemas/Conversa' } }
+    TipoMensagem:
+      type: string
+      enum: [TEXTO, ANEXO, CHECKIN, ORIENTACAO, SISTEMA]
+    Mensagem:
+      type: object
+      additionalProperties: false
+      required: [id, idCliente, conversaId, tipo, autor, texto, anexos, referencia, enviadoEm]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        idCliente: { type: [string, 'null'] }
+        conversaId: { $ref: '#/components/schemas/Id' }
+        tipo: { $ref: '#/components/schemas/TipoMensagem' }
+        autor:
+          oneOf:
+            - $ref: '#/components/schemas/ReferenciaUsuario'
+            - type: 'null'
+          description: Nulo em mensagens SISTEMA e ORIENTACAO.
+        texto: { type: [string, 'null'] }
+        anexos:
+          type: array
+          items: { $ref: '#/components/schemas/ArquivoResumo' }
+        referencia:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [tipo, id, resumo, temAlerta]
+              properties:
+                tipo: { type: string, enum: [CHECKIN, ACOMPANHAMENTO] }
+                id: { $ref: '#/components/schemas/Id' }
+                resumo: { type: string }
+                temAlerta: { type: boolean }
+            - type: 'null'
+        enviadoEm: { $ref: '#/components/schemas/DataHora' }
+
+    # ─────────── Equipe e organização ───────────
+    StatusMembro:
+      type: string
+      enum: [CONVIDADO, ATIVO, SUSPENSO, DESLIGADO]
+    Membro:
+      type: object
+      additionalProperties: false
+      required: [id, nome, email, perfis, status, profissional, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id', description: Igual ao `usuarioId`. }
+        nome: { type: string }
+        email: { $ref: '#/components/schemas/Email' }
+        perfis:
+          type: array
+          items: { $ref: '#/components/schemas/PerfilEquipe' }
+        status: { $ref: '#/components/schemas/StatusMembro' }
+        profissional:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [conselho, numero, uf, especialidade]
+              properties:
+                conselho: { type: string, examples: [CRM, CREFITO, CRMV] }
+                numero: { type: string }
+                uf: { type: string, pattern: '^[A-Z]{2}$' }
+                especialidade: { type: [string, 'null'] }
+            - type: 'null'
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR, SUSPENDER, DESLIGAR, REATIVAR] }
+    OrganizacaoConfiguracao:
+      type: object
+      additionalProperties: false
+      required: [nome, contato, tema, textos, chat, acoesPermitidas]
+      properties:
+        nome: { type: string }
+        contato: { $ref: '#/components/schemas/ContatoOrganizacao' }
+        tema:
+          type: object
+          additionalProperties: false
+          required: [corMarca, logoUrl]
+          properties:
+            corMarca: { $ref: '#/components/schemas/Cor' }
+            logoUrl: { type: [string, 'null'], format: uri }
+        textos:
+          type: object
+          additionalProperties: false
+          required: [boasVindasTitulo, boasVindasTexto]
+          properties:
+            boasVindasTitulo: { type: string }
+            boasVindasTexto: { type: string }
+        chat:
+          type: object
+          additionalProperties: false
+          required: [horarioAtendimento, mensagemForaDoHorario, avisoUrgencia]
+          properties:
+            horarioAtendimento:
+              type: array
+              items: { $ref: '#/components/schemas/HorarioAtendimento' }
+            mensagemForaDoHorario: { type: [string, 'null'] }
+            avisoUrgencia: { type: [string, 'null'] }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR] }
+    OrganizacaoEdicao:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 120 }
+        contato: { $ref: '#/components/schemas/ContatoOrganizacao' }
+        tema:
+          type: object
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            corMarca: { $ref: '#/components/schemas/Cor' }
+            logoArquivoId: { $ref: '#/components/schemas/IdOuNulo' }
+        textos:
+          type: object
+          additionalProperties: false
+          properties:
+            boasVindasTitulo: { type: string, maxLength: 120 }
+            boasVindasTexto: { type: string, maxLength: 500 }
+        chat:
+          type: object
+          additionalProperties: false
+          properties:
+            horarioAtendimento:
+              type: array
+              items: { $ref: '#/components/schemas/HorarioAtendimento' }
+            mensagemForaDoHorario: { type: [string, 'null'], maxLength: 500 }
+            avisoUrgencia: { type: [string, 'null'], maxLength: 500 }

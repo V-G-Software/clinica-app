@@ -1,0 +1,80 @@
+{
+  "requisicao": "GET /v1/notificacoes?limite=5",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "ntf_0mw414io00004u",
+        "tipo": "CHAT_MENSAGEM",
+        "titulo": "Clínica Modelo Otorrino",
+        "texto": "Clínica Modelo Otorrino: Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
+        "criadoEm": "2026-11-08T12:00:00Z",
+        "lidoEm": null,
+        "destino": {
+          "tela": "chat.conversa",
+          "parametros": {
+            "conversaId": "cnv_0mw28tpc00004b"
+          }
+        }
+      },
+      {
+        "id": "ntf_0mw7s5mo000086",
+        "tipo": "CHECKIN_DISPONIVEL",
+        "titulo": "Check-in disponível",
+        "texto": "O check-in de hoje já pode ser respondido.",
+        "criadoEm": "2026-11-08T12:00:00Z",
+        "lidoEm": null,
+        "destino": {
+          "tela": "acompanhamento.checkin",
+          "parametros": {
+            "checkinId": "chk_0mw28tpc000046"
+          }
+        }
+      },
+      {
+        "id": "ntf_0mw6cps000006h",
+        "tipo": "CHECKIN_DISPONIVEL",
+        "titulo": "Check-in disponível",
+        "texto": "O check-in de hoje já pode ser respondido.",
+        "criadoEm": "2026-11-07T12:00:00Z",
+        "lidoEm": null,
+        "destino": {
+          "tela": "acompanhamento.checkin",
+          "parametros": {
+            "checkinId": "chk_0mw28tpc000045"
+          }
+        }
+      },
+      {
+        "id": "ntf_0mw4x9xc000054",
+        "tipo": "CHECKIN_DISPONIVEL",
+        "titulo": "Check-in disponível",
+        "texto": "O check-in de hoje já pode ser respondido.",
+        "criadoEm": "2026-11-06T12:00:00Z",
+        "lidoEm": null,
+        "destino": {
+          "tela": "acompanhamento.checkin",
+          "parametros": {
+            "checkinId": "chk_0mw28tpc000044"
+          }
+        }
+      },
+      {
+        "id": "ntf_0mw28tpc00004d",
+        "tipo": "ACOMPANHAMENTO_INICIADO",
+        "titulo": "Septoplastia — 7 dias",
+        "texto": "A equipe iniciou o seu acompanhamento.",
+        "criadoEm": "2026-11-04T15:00:00Z",
+        "lidoEm": null,
+        "destino": {
+          "tela": "acompanhamento.detalhe",
+          "parametros": {
+            "acompanhamentoId": "acp_marcos"
+          }
+        }
+      }
+    ],
+    "proximoCursor": null
+  }
+}

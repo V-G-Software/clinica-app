@@ -1,0 +1,6 @@
+packages:
+  - pacotes/*
+  - mock
+  - conformidade
+onlyBuiltDependencies:
+  - esbuild

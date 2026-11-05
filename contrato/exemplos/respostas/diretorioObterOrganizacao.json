@@ -1,0 +1,12 @@
+{
+  "requisicao": "GET /v1/organizacoes/modelo-otorrino",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "slug": "modelo-otorrino",
+    "nome": "Clínica Modelo Otorrino",
+    "urlApi": "http://localhost:4010/o/modelo-otorrino",
+    "contratoVersao": "1.0.0-rc.1",
+    "status": "ATIVA"
+  }
+}

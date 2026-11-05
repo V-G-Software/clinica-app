@@ -1,0 +1,232 @@
+{
+  "$comentario": "Cenário de exemplo (não faz parte do contrato). Relógio inicial do mock: 2026-11-08T13:30:00Z (10:30 em São Paulo). Conteúdo clínico ilustrativo.",
+  "organizacao": {
+    "id": "org_otorrino",
+    "slug": "modelo-otorrino",
+    "nome": "Clínica Modelo Otorrino",
+    "fuso": "America/Sao_Paulo",
+    "locale": "pt-BR",
+    "status": "ATIVA",
+    "mensagemStatus": null,
+    "dominios": ["modelo-otorrino.localhost"],
+    "contato": {
+      "telefone": "+551130000000",
+      "email": "contato@modelo-otorrino.exemplo",
+      "endereco": "Av. Exemplo, 100 — São Paulo/SP"
+    },
+    "mapaUrl": "https://maps.exemplo/clinica-modelo-otorrino",
+    "tema": {
+      "corMarca": "#3B5BFD",
+      "logoUrl": "https://cdn.exemplo/modelo-otorrino/logo.svg",
+      "logoEscuroUrl": "https://cdn.exemplo/modelo-otorrino/logo-escuro.svg",
+      "modoPadrao": "SISTEMA"
+    },
+    "pwa": {
+      "nome": "Clínica Modelo Otorrino",
+      "nomeCurto": "Modelo",
+      "corTema": "#3B5BFD",
+      "icones": [
+        { "src": "https://cdn.exemplo/modelo-otorrino/icone-192.png", "tamanho": "192x192" },
+        { "src": "https://cdn.exemplo/modelo-otorrino/icone-512.png", "tamanho": "512x512", "proposito": "maskable" }
+      ]
+    },
+    "autenticacao": {
+      "metodos": [
+        { "tipo": "CODIGO_EMAIL", "publico": "PACIENTE" },
+        { "tipo": "SENHA", "publico": "EQUIPE", "mfa": "OBRIGATORIO" }
+      ],
+      "cadastroPaciente": "SOMENTE_CONVITE",
+      "termosVersao": "2026-11-01"
+    },
+    "textos": {
+      "boasVindasTitulo": "Sua recuperação, acompanhada de perto",
+      "boasVindasTexto": "Converse com a equipe e responda seu check-in diário."
+    },
+    "links": {
+      "termosDeUso": "https://modelo-otorrino.exemplo/termos",
+      "privacidade": "https://modelo-otorrino.exemplo/privacidade",
+      "suporte": "mailto:contato@modelo-otorrino.exemplo"
+    }
+  },
+  "termos": {
+    "organizacao": { "singular": "clínica", "plural": "clínicas", "genero": "F" },
+    "paciente": { "singular": "paciente", "plural": "pacientes", "genero": "M" },
+    "responsavel": { "singular": "responsável", "plural": "responsáveis", "genero": "M" },
+    "profissional": { "singular": "médico", "plural": "médicos", "genero": "M" },
+    "acompanhamento": { "singular": "pós-operatório", "plural": "pós-operatórios", "genero": "M" },
+    "protocolo": { "singular": "protocolo", "plural": "protocolos", "genero": "M" },
+    "procedimento": { "singular": "cirurgia", "plural": "cirurgias", "genero": "F" },
+    "checkin": { "singular": "check-in", "plural": "check-ins", "genero": "M" },
+    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" }
+  },
+  "modulos": [
+    { "id": "pacientes", "versao": "1.0", "config": { "formularioCadastroId": "frm_cadastro_basico", "relacoesPermitidas": ["PROPRIO", "DEPENDENTE"] } },
+    { "id": "acompanhamento", "versao": "1.0", "config": { "publicarCheckinNaConversa": true } },
+    {
+      "id": "chat",
+      "versao": "1.0",
+      "config": {
+        "pacientePodeIniciar": false,
+        "anexosPermitidos": true,
+        "horarioAtendimento": [
+          { "diaSemana": 1, "inicio": "08:00", "fim": "18:00" },
+          { "diaSemana": 2, "inicio": "08:00", "fim": "18:00" },
+          { "diaSemana": 3, "inicio": "08:00", "fim": "18:00" },
+          { "diaSemana": 4, "inicio": "08:00", "fim": "18:00" },
+          { "diaSemana": 5, "inicio": "08:00", "fim": "18:00" }
+        ],
+        "mensagemForaDoHorario": "Recebemos sua mensagem. A equipe responde de segunda a sexta, das 8h às 18h.",
+        "avisoUrgencia": "Em caso de sangramento intenso, falta de ar ou febre alta, procure um pronto-socorro ou ligue 192."
+      }
+    },
+    { "id": "equipe", "versao": "1.0", "config": {} }
+  ],
+  "capacidades": {
+    "tempoReal": { "modo": "SSE", "intervaloPollingSegundos": 20 },
+    "push": { "modo": "WEB_PUSH", "chavePublicaVapid": "BExemploDeChavePublicaVapidEmBase64Url" },
+    "upload": { "tamanhoMaximoBytes": 15728640, "tiposPermitidos": ["image/jpeg", "image/png", "image/webp"] }
+  },
+  "usuarios": [
+    {
+      "id": "usr_ana", "nome": "Ana Lima", "nomeExibicao": "Dra. Ana Lima", "email": "ana@modelo-otorrino.exemplo",
+      "senha": "Senha@12345", "perfis": ["GESTOR", "PROFISSIONAL"], "mfaSegredo": "JBSWY3DPEHPK3PXP",
+      "rotulosPerfis": { "PROFISSIONAL": "Médica", "GESTOR": "Gestão da clínica" },
+      "profissional": { "conselho": "CRM", "numero": "123456", "uf": "SP", "especialidade": "Otorrinolaringologia" }
+    },
+    {
+      "id": "usr_julia", "nome": "Júlia Ramos", "nomeExibicao": "Júlia Ramos", "email": "julia@modelo-otorrino.exemplo",
+      "senha": "Senha@12345", "perfis": ["SECRETARIA"], "mfaSegredo": "KRSXG5CTMVRXEZLU"
+    },
+    {
+      "id": "usr_carlos", "nome": "Carlos Nogueira", "nomeExibicao": "Dr. Carlos Nogueira", "email": "carlos@modelo-otorrino.exemplo",
+      "senha": "Provisoria@1", "perfis": ["PROFISSIONAL"], "mfaSegredo": null, "trocarSenha": true, "termosAceitos": false,
+      "profissional": { "conselho": "CRM", "numero": "654321", "uf": "SP", "especialidade": "Otorrinolaringologia" },
+      "$comentario": "Primeiro acesso: percorre TROCAR_SENHA → CONFIGURAR_MFA → ACEITAR_TERMOS."
+    },
+    { "id": "usr_marcos", "nome": "Marcos Souza", "email": "marcos@exemplo.com", "perfis": ["PACIENTE"], "push": true,
+      "vinculos": [{ "pacienteId": "pac_marcos", "relacao": "PROPRIO" }] },
+    { "id": "usr_rafael", "nome": "Rafael Mendes", "email": "rafael@exemplo.com", "perfis": ["PACIENTE"], "push": true,
+      "vinculos": [{ "pacienteId": "pac_rafael", "relacao": "PROPRIO" }] },
+    { "id": "usr_beatriz", "nome": "Beatriz Costa", "email": "beatriz@exemplo.com", "perfis": ["PACIENTE"], "push": true,
+      "vinculos": [{ "pacienteId": "pac_beatriz", "relacao": "PROPRIO" }] },
+    { "id": "usr_helena", "nome": "Helena Duarte", "email": "helena@exemplo.com", "perfis": ["PACIENTE"], "push": true,
+      "vinculos": [{ "pacienteId": "pac_helena", "relacao": "PROPRIO" }] },
+    { "id": "usr_sonia", "nome": "Sônia Ribeiro", "email": "sonia@exemplo.com", "perfis": ["PACIENTE"], "push": false,
+      "vinculos": [{ "pacienteId": "pac_sonia", "relacao": "PROPRIO" }], "$comentario": "Sem push: avisos vão por e-mail." }
+  ],
+  "formularios": [
+    {
+      "id": "frm_cadastro_basico", "versao": 1, "titulo": "Dados adicionais", "finalidade": "CADASTRO",
+      "campos": [
+        { "id": "convenio", "tipo": "TEXTO", "rotulo": "Convênio", "obrigatorio": false },
+        { "id": "alergias", "tipo": "TEXTO_LONGO", "rotulo": "Alergias conhecidas", "obrigatorio": false }
+      ]
+    },
+    {
+      "id": "frm_pos_op_diario", "versao": 1, "titulo": "Como você está hoje?", "finalidade": "CHECKIN",
+      "campos": [
+        { "id": "dor", "tipo": "ESCALA", "rotulo": "Qual o seu nível de dor agora?", "min": 0, "max": 10, "rotuloMin": "Sem dor", "rotuloMax": "Pior dor imaginável", "obrigatorio": true },
+        { "id": "noite", "tipo": "ESCOLHA_UNICA", "rotulo": "Como foi a noite?", "obrigatorio": true,
+          "opcoes": [{ "valor": "BEM", "rotulo": "Dormi bem" }, { "valor": "REGULAR", "rotulo": "Regular" }, { "valor": "MAL", "rotulo": "Dormi mal" }] },
+        { "id": "sangramento", "tipo": "ESCOLHA_UNICA", "rotulo": "Teve sangramento?", "obrigatorio": true,
+          "opcoes": [{ "valor": "NENHUM", "rotulo": "Não" }, { "valor": "LEVE", "rotulo": "Leve" }, { "valor": "INTENSO", "rotulo": "Intenso" }] },
+        { "id": "mediuTemperatura", "tipo": "SIM_NAO", "rotulo": "Mediu a temperatura hoje?", "obrigatorio": true },
+        { "id": "temperatura", "tipo": "NUMERO", "rotulo": "Qual foi a temperatura?", "unidade": "°C", "min": 34, "max": 43, "casasDecimais": 1, "obrigatorio": true,
+          "visivelSe": { "campo": "mediuTemperatura", "operador": "IGUAL", "valor": true } },
+        { "id": "foto", "tipo": "FOTO", "rotulo": "Envie uma foto de frente", "instrucao": "Com boa luz e sem filtro.", "maximo": 2, "obrigatorio": false },
+        { "id": "observacao", "tipo": "TEXTO_LONGO", "rotulo": "Quer contar mais alguma coisa para a equipe?", "obrigatorio": false }
+      ]
+    }
+  ],
+  "protocolos": [
+    {
+      "id": "prt_septo7", "versao": 3, "nome": "Septoplastia — 7 dias",
+      "descricao": "Acompanhamento diário na primeira semana após a cirurgia.", "duracaoDias": 7, "status": "ATIVO",
+      "checkins": [{ "dias": [1, 2, 3, 4, 5, 6, 7], "horario": "09:00", "formulario": { "id": "frm_pos_op_diario", "versao": 1 }, "lembreteAposHoras": 4, "expiraAposHoras": 14 }],
+      "orientacoes": [
+        { "dia": 0, "horario": "18:00", "texto": "Mantenha a cabeceira elevada e evite assoar o nariz." },
+        { "dia": 3, "horario": "09:00", "texto": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia." }
+      ],
+      "regrasAlerta": [
+        { "id": "dor_alta", "tipo": "RESPOSTA", "campo": "dor", "operador": "MAIOR_OU_IGUAL", "valor": 8, "severidade": "ALTA", "mensagem": "Dor 8 ou mais relatada" },
+        { "id": "sangramento_intenso", "tipo": "RESPOSTA", "campo": "sangramento", "operador": "IGUAL", "valor": "INTENSO", "severidade": "ALTA", "mensagem": "Sangramento intenso relatado" },
+        { "id": "febre", "tipo": "RESPOSTA", "campo": "temperatura", "operador": "MAIOR_OU_IGUAL", "valor": 38, "severidade": "MEDIA", "mensagem": "Temperatura de 38 °C ou mais" },
+        { "id": "sem_resposta", "tipo": "CHECKIN_EXPIRADO", "severidade": "MEDIA", "mensagem": "Check-in não respondido" }
+      ]
+    },
+    {
+      "id": "prt_rino10", "versao": 1, "nome": "Rinoplastia — 10 dias",
+      "descricao": "Acompanhamento até a retirada do curativo.", "duracaoDias": 10, "status": "ATIVO",
+      "checkins": [{ "dias": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "horario": "09:00", "formulario": { "id": "frm_pos_op_diario", "versao": 1 }, "lembreteAposHoras": 4, "expiraAposHoras": 14 }],
+      "orientacoes": [
+        { "dia": 0, "horario": "18:00", "texto": "Mantenha compressas frias nas primeiras 48 horas e a cabeceira elevada." },
+        { "dia": 7, "horario": "09:00", "texto": "Retorno para retirada do curativo conforme agendado com a secretária." }
+      ],
+      "regrasAlerta": [
+        { "id": "dor_alta", "tipo": "RESPOSTA", "campo": "dor", "operador": "MAIOR_OU_IGUAL", "valor": 8, "severidade": "ALTA", "mensagem": "Dor 8 ou mais relatada" },
+        { "id": "sangramento_intenso", "tipo": "RESPOSTA", "campo": "sangramento", "operador": "IGUAL", "valor": "INTENSO", "severidade": "ALTA", "mensagem": "Sangramento intenso relatado" },
+        { "id": "sem_resposta", "tipo": "CHECKIN_EXPIRADO", "severidade": "MEDIA", "mensagem": "Check-in não respondido" }
+      ]
+    }
+  ],
+  "pacientes": [
+    { "id": "pac_beatriz", "tipo": "PESSOA", "nome": "Beatriz Costa", "dataNascimento": "1991-03-14",
+      "contato": { "email": "beatriz@exemplo.com", "celular": "+5511977776666" }, "criadoEm": "2026-10-30T14:00:00Z",
+      "$comentario": "Antes da cirurgia (dia -2)." },
+    { "id": "pac_rafael", "tipo": "PESSOA", "nome": "Rafael Mendes", "dataNascimento": "1987-01-30",
+      "contato": { "email": "rafael@exemplo.com", "celular": "+5511966665555" }, "criadoEm": "2026-10-28T14:00:00Z",
+      "$comentario": "Dia 1, check-in disponível sem resposta." },
+    { "id": "pac_marcos", "tipo": "PESSOA", "nome": "Marcos Souza", "dataNascimento": "1994-08-21",
+      "contato": { "email": "marcos@exemplo.com", "celular": "+5511988887777" }, "criadoEm": "2026-10-25T14:00:00Z",
+      "$comentario": "Dia 3, com alerta de dor alta aberto no dia 2." },
+    { "id": "pac_helena", "tipo": "PESSOA", "nome": "Helena Duarte", "dataNascimento": "1979-11-02",
+      "contato": { "email": "helena@exemplo.com", "celular": null }, "criadoEm": "2026-10-10T14:00:00Z",
+      "$comentario": "Acompanhamento concluído; conversa arquivada." },
+    { "id": "pac_paulo", "tipo": "PESSOA", "nome": "Paulo Teixeira", "dataNascimento": "1969-06-09",
+      "contato": { "email": "paulo@exemplo.com", "celular": "+5511955554444" }, "criadoEm": "2026-11-07T17:00:00Z",
+      "convite": { "token": "convite-paulo-otorrino-0001", "criadoPor": "usr_julia" },
+      "$comentario": "Convite pendente, ainda sem conta no app." },
+    { "id": "pac_sonia", "tipo": "PESSOA", "nome": "Sônia Ribeiro", "dataNascimento": "1958-04-25",
+      "contato": { "email": "sonia@exemplo.com", "celular": "+5511944443333" }, "criadoEm": "2026-10-29T14:00:00Z",
+      "$comentario": "Sem push; dia 2." }
+  ],
+  "acompanhamentos": [
+    { "id": "acp_beatriz", "pacienteId": "pac_beatriz", "protocoloId": "prt_rino10", "dataInicio": "2026-11-10",
+      "equipeIds": ["usr_ana", "usr_julia"], "criadoPor": "usr_ana", "criadoEm": "2026-11-03T15:00:00Z", "observacao": null,
+      "mensagens": [
+        { "em": "2026-11-03T15:05:00Z", "autorId": "usr_julia", "texto": "Olá, Beatriz! Este é o canal com a equipe para o seu pós-operatório." },
+        { "em": "2026-11-03T18:20:00Z", "autorId": "usr_beatriz", "texto": "Obrigada! Preciso de jejum de quantas horas?" },
+        { "em": "2026-11-04T12:10:00Z", "autorId": "usr_ana", "texto": "Jejum de 8 horas, inclusive de água." }
+      ] },
+    { "id": "acp_rafael", "pacienteId": "pac_rafael", "protocoloId": "prt_septo7", "dataInicio": "2026-11-07",
+      "equipeIds": ["usr_ana", "usr_julia"], "criadoPor": "usr_ana", "criadoEm": "2026-11-06T15:00:00Z", "observacao": null },
+    { "id": "acp_marcos", "pacienteId": "pac_marcos", "protocoloId": "prt_septo7", "dataInicio": "2026-11-05",
+      "equipeIds": ["usr_ana", "usr_julia"], "criadoPor": "usr_ana", "criadoEm": "2026-11-04T15:00:00Z", "observacao": "Septo com desvio importante à esquerda.",
+      "respostas": {
+        "1": { "aposMinutos": 35, "respostas": { "dor": 5, "noite": "REGULAR", "sangramento": "LEVE", "mediuTemperatura": true, "temperatura": 37.2 } },
+        "2": { "aposMinutos": 40, "respostas": { "dor": 8, "noite": "MAL", "sangramento": "LEVE", "mediuTemperatura": false, "observacao": "Muita pressão na testa à noite." } }
+      },
+      "mensagens": [
+        { "em": "2026-11-07T13:05:00Z", "autorId": "usr_julia", "texto": "Marcos, a Dra. Ana já viu seu check-in e vai falar com você." },
+        { "em": "2026-11-07T13:30:00Z", "autorId": "usr_ana", "texto": "Marcos, essa pressão é esperada nos primeiros dias. Siga a medicação prescrita e me avise se piorar." },
+        { "em": "2026-11-07T13:42:00Z", "autorId": "usr_marcos", "texto": "Combinado, obrigado doutora." }
+      ] },
+    { "id": "acp_helena", "pacienteId": "pac_helena", "protocoloId": "prt_septo7", "dataInicio": "2026-10-20",
+      "equipeIds": ["usr_ana", "usr_julia"], "criadoPor": "usr_ana", "criadoEm": "2026-10-19T15:00:00Z", "observacao": null,
+      "respostas": {
+        "1": { "aposMinutos": 20, "respostas": { "dor": 4, "noite": "REGULAR", "sangramento": "LEVE", "mediuTemperatura": false } },
+        "2": { "aposMinutos": 30, "respostas": { "dor": 3, "noite": "BEM", "sangramento": "LEVE", "mediuTemperatura": false } },
+        "3": { "aposMinutos": 25, "respostas": { "dor": 3, "noite": "BEM", "sangramento": "NENHUM", "mediuTemperatura": false } },
+        "4": { "aposMinutos": 50, "respostas": { "dor": 2, "noite": "BEM", "sangramento": "NENHUM", "mediuTemperatura": false } },
+        "6": { "aposMinutos": 15, "respostas": { "dor": 1, "noite": "BEM", "sangramento": "NENHUM", "mediuTemperatura": false } },
+        "7": { "aposMinutos": 10, "respostas": { "dor": 0, "noite": "BEM", "sangramento": "NENHUM", "mediuTemperatura": false, "observacao": "Tudo ótimo!" } }
+      },
+      "resolverAlertas": [{ "em": "2026-10-26T13:00:00Z", "por": "usr_ana", "nota": "Paciente avisou por telefone que esqueceu de responder." }],
+      "arquivarConversaEm": "2026-11-03T12:00:00Z" },
+    { "id": "acp_sonia", "pacienteId": "pac_sonia", "protocoloId": "prt_septo7", "dataInicio": "2026-11-06",
+      "equipeIds": ["usr_ana", "usr_julia"], "criadoPor": "usr_julia", "criadoEm": "2026-11-05T15:00:00Z", "observacao": null,
+      "respostas": {
+        "1": { "aposMinutos": 120, "respostas": { "dor": 4, "noite": "REGULAR", "sangramento": "NENHUM", "mediuTemperatura": true, "temperatura": 36.8 } }
+      } }
+  ]
+}

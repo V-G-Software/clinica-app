@@ -1,0 +1,470 @@
+{
+  "requisicao": "GET /v1/inicio",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "secoes": [
+      {
+        "id": "alertas",
+        "tipo": "ALERTAS_ABERTOS",
+        "dados": {
+          "total": 1,
+          "itens": [
+            {
+              "id": "alr_0mw6e57uo0006l",
+              "acompanhamentoId": "acp_marcos",
+              "checkinId": "chk_0mw28tpc000045",
+              "paciente": {
+                "id": "pac_marcos",
+                "nome": "Marcos Souza"
+              },
+              "regraId": "dor_alta",
+              "severidade": "ALTA",
+              "mensagem": "Dor 8 ou mais relatada",
+              "status": "ABERTO",
+              "criadoEm": "2026-11-07T12:40:00Z",
+              "resolvidoEm": null,
+              "resolvidoPor": null,
+              "nota": null,
+              "acoesPermitidas": [
+                "RESOLVER",
+                "ABRIR_CONVERSA"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "checkins-hoje",
+        "tipo": "CHECKINS_DO_DIA",
+        "dados": {
+          "data": "2026-11-08",
+          "respondidos": 0,
+          "pendentes": 3,
+          "expirados": 0,
+          "itens": [
+            {
+              "id": "chk_0mw28tpc000046",
+              "acompanhamentoId": "acp_marcos",
+              "paciente": {
+                "id": "pac_marcos",
+                "nome": "Marcos Souza"
+              },
+              "dia": 3,
+              "status": "DISPONIVEL",
+              "disponivelEm": "2026-11-08T12:00:00Z",
+              "expiraEm": "2026-11-09T02:00:00Z"
+            },
+            {
+              "id": "chk_0mw3o9k000004g",
+              "acompanhamentoId": "acp_sonia",
+              "paciente": {
+                "id": "pac_sonia",
+                "nome": "Sônia Ribeiro"
+              },
+              "dia": 2,
+              "status": "DISPONIVEL",
+              "disponivelEm": "2026-11-08T12:00:00Z",
+              "expiraEm": "2026-11-09T02:00:00Z"
+            },
+            {
+              "id": "chk_0mw53peo00005c",
+              "acompanhamentoId": "acp_rafael",
+              "paciente": {
+                "id": "pac_rafael",
+                "nome": "Rafael Mendes"
+              },
+              "dia": 1,
+              "status": "DISPONIVEL",
+              "disponivelEm": "2026-11-08T12:00:00Z",
+              "expiraEm": "2026-11-09T02:00:00Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "acompanhamentos-ativos",
+        "tipo": "ACOMPANHAMENTOS_ATIVOS",
+        "dados": {
+          "total": 3,
+          "itens": [
+            {
+              "id": "acp_rafael",
+              "paciente": {
+                "id": "pac_rafael",
+                "nome": "Rafael Mendes"
+              },
+              "protocolo": {
+                "id": "prt_septo7",
+                "versao": 3,
+                "nome": "Septoplastia — 7 dias"
+              },
+              "dataInicio": "2026-11-07",
+              "diaAtual": 1,
+              "totalDias": 7,
+              "status": "ATIVO",
+              "equipe": [
+                {
+                  "usuarioId": "usr_ana",
+                  "nome": "Dra. Ana Lima",
+                  "perfil": "PROFISSIONAL"
+                },
+                {
+                  "usuarioId": "usr_julia",
+                  "nome": "Júlia Ramos",
+                  "perfil": "SECRETARIA"
+                }
+              ],
+              "conversaId": "cnv_0mw53peo00005j",
+              "resumoCheckins": {
+                "respondidos": 0,
+                "pendentes": 1,
+                "expirados": 0,
+                "agendados": 6
+              },
+              "alertasAbertos": 0,
+              "proximoCheckin": {
+                "id": "chk_0mw53peo00005c",
+                "acompanhamentoId": "acp_rafael",
+                "paciente": {
+                  "id": "pac_rafael",
+                  "nome": "Rafael Mendes"
+                },
+                "dia": 1,
+                "status": "DISPONIVEL",
+                "disponivelEm": "2026-11-08T12:00:00Z",
+                "expiraEm": "2026-11-09T02:00:00Z"
+              },
+              "observacao": null,
+              "motivoEncerramento": null,
+              "criadoEm": "2026-11-06T15:00:00Z",
+              "acoesPermitidas": [
+                "EDITAR",
+                "ENCERRAR",
+                "ABRIR_CONVERSA"
+              ]
+            },
+            {
+              "id": "acp_sonia",
+              "paciente": {
+                "id": "pac_sonia",
+                "nome": "Sônia Ribeiro"
+              },
+              "protocolo": {
+                "id": "prt_septo7",
+                "versao": 3,
+                "nome": "Septoplastia — 7 dias"
+              },
+              "dataInicio": "2026-11-06",
+              "diaAtual": 2,
+              "totalDias": 7,
+              "status": "ATIVO",
+              "equipe": [
+                {
+                  "usuarioId": "usr_ana",
+                  "nome": "Dra. Ana Lima",
+                  "perfil": "PROFISSIONAL"
+                },
+                {
+                  "usuarioId": "usr_julia",
+                  "nome": "Júlia Ramos",
+                  "perfil": "SECRETARIA"
+                }
+              ],
+              "conversaId": "cnv_0mw3o9k000004m",
+              "resumoCheckins": {
+                "respondidos": 1,
+                "pendentes": 1,
+                "expirados": 0,
+                "agendados": 5
+              },
+              "alertasAbertos": 0,
+              "proximoCheckin": {
+                "id": "chk_0mw3o9k000004g",
+                "acompanhamentoId": "acp_sonia",
+                "paciente": {
+                  "id": "pac_sonia",
+                  "nome": "Sônia Ribeiro"
+                },
+                "dia": 2,
+                "status": "DISPONIVEL",
+                "disponivelEm": "2026-11-08T12:00:00Z",
+                "expiraEm": "2026-11-09T02:00:00Z"
+              },
+              "observacao": null,
+              "motivoEncerramento": null,
+              "criadoEm": "2026-11-05T15:00:00Z",
+              "acoesPermitidas": [
+                "EDITAR",
+                "ENCERRAR",
+                "ABRIR_CONVERSA"
+              ]
+            },
+            {
+              "id": "acp_marcos",
+              "paciente": {
+                "id": "pac_marcos",
+                "nome": "Marcos Souza"
+              },
+              "protocolo": {
+                "id": "prt_septo7",
+                "versao": 3,
+                "nome": "Septoplastia — 7 dias"
+              },
+              "dataInicio": "2026-11-05",
+              "diaAtual": 3,
+              "totalDias": 7,
+              "status": "ATIVO",
+              "equipe": [
+                {
+                  "usuarioId": "usr_ana",
+                  "nome": "Dra. Ana Lima",
+                  "perfil": "PROFISSIONAL"
+                },
+                {
+                  "usuarioId": "usr_julia",
+                  "nome": "Júlia Ramos",
+                  "perfil": "SECRETARIA"
+                }
+              ],
+              "conversaId": "cnv_0mw28tpc00004b",
+              "resumoCheckins": {
+                "respondidos": 2,
+                "pendentes": 1,
+                "expirados": 0,
+                "agendados": 4
+              },
+              "alertasAbertos": 1,
+              "proximoCheckin": {
+                "id": "chk_0mw28tpc000046",
+                "acompanhamentoId": "acp_marcos",
+                "paciente": {
+                  "id": "pac_marcos",
+                  "nome": "Marcos Souza"
+                },
+                "dia": 3,
+                "status": "DISPONIVEL",
+                "disponivelEm": "2026-11-08T12:00:00Z",
+                "expiraEm": "2026-11-09T02:00:00Z"
+              },
+              "observacao": "Septo com desvio importante à esquerda.",
+              "motivoEncerramento": null,
+              "criadoEm": "2026-11-04T15:00:00Z",
+              "acoesPermitidas": [
+                "EDITAR",
+                "ENCERRAR",
+                "ABRIR_CONVERSA"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "conversas-recentes",
+        "tipo": "CONVERSAS_RECENTES",
+        "dados": {
+          "itens": [
+            {
+              "id": "cnv_0mw28tpc00004b",
+              "titulo": "Marcos Souza",
+              "paciente": {
+                "id": "pac_marcos",
+                "nome": "Marcos Souza"
+              },
+              "acompanhamentoAtivoId": "acp_marcos",
+              "status": "ATIVA",
+              "participantes": [
+                {
+                  "usuarioId": "usr_ana",
+                  "nome": "Dra. Ana Lima",
+                  "perfil": "PROFISSIONAL",
+                  "lidoAte": "msg_0mw6fxio00006x"
+                },
+                {
+                  "usuarioId": "usr_julia",
+                  "nome": "Júlia Ramos",
+                  "perfil": "SECRETARIA",
+                  "lidoAte": "msg_0mw6f1d9c0006v"
+                },
+                {
+                  "usuarioId": "usr_marcos",
+                  "nome": "Marcos Souza",
+                  "perfil": "PACIENTE",
+                  "lidoAte": "msg_0mw6gcy800006z"
+                }
+              ],
+              "ultimaMensagem": {
+                "id": "msg_0mw7s5mo000088",
+                "resumo": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
+                "autorNome": null,
+                "enviadoEm": "2026-11-08T12:00:00Z"
+              },
+              "naoLidas": 2,
+              "criadoEm": "2026-11-04T15:00:00Z",
+              "acoesPermitidas": [
+                "ENVIAR",
+                "ADICIONAR_PARTICIPANTE",
+                "REMOVER_PARTICIPANTE",
+                "ARQUIVAR"
+              ]
+            },
+            {
+              "id": "cnv_0mw53peo00005j",
+              "titulo": "Rafael Mendes",
+              "paciente": {
+                "id": "pac_rafael",
+                "nome": "Rafael Mendes"
+              },
+              "acompanhamentoAtivoId": "acp_rafael",
+              "status": "ATIVA",
+              "participantes": [
+                {
+                  "usuarioId": "usr_ana",
+                  "nome": "Dra. Ana Lima",
+                  "perfil": "PROFISSIONAL",
+                  "lidoAte": null
+                },
+                {
+                  "usuarioId": "usr_julia",
+                  "nome": "Júlia Ramos",
+                  "perfil": "SECRETARIA",
+                  "lidoAte": null
+                },
+                {
+                  "usuarioId": "usr_rafael",
+                  "nome": "Rafael Mendes",
+                  "perfil": "PACIENTE",
+                  "lidoAte": null
+                }
+              ],
+              "ultimaMensagem": {
+                "id": "msg_0mw6w08000007r",
+                "resumo": "Mantenha a cabeceira elevada e evite assoar o nariz.",
+                "autorNome": null,
+                "enviadoEm": "2026-11-07T21:00:00Z"
+              },
+              "naoLidas": 2,
+              "criadoEm": "2026-11-06T15:00:00Z",
+              "acoesPermitidas": [
+                "ENVIAR",
+                "ADICIONAR_PARTICIPANTE",
+                "REMOVER_PARTICIPANTE",
+                "ARQUIVAR"
+              ]
+            },
+            {
+              "id": "cnv_0mw3o9k000004m",
+              "titulo": "Sônia Ribeiro",
+              "paciente": {
+                "id": "pac_sonia",
+                "nome": "Sônia Ribeiro"
+              },
+              "acompanhamentoAtivoId": "acp_sonia",
+              "status": "ATIVA",
+              "participantes": [
+                {
+                  "usuarioId": "usr_ana",
+                  "nome": "Dra. Ana Lima",
+                  "perfil": "PROFISSIONAL",
+                  "lidoAte": null
+                },
+                {
+                  "usuarioId": "usr_julia",
+                  "nome": "Júlia Ramos",
+                  "perfil": "SECRETARIA",
+                  "lidoAte": null
+                },
+                {
+                  "usuarioId": "usr_sonia",
+                  "nome": "Sônia Ribeiro",
+                  "perfil": "PACIENTE",
+                  "lidoAte": "msg_0mw6h03k00007h"
+                }
+              ],
+              "ultimaMensagem": {
+                "id": "msg_0mw6h03k00007h",
+                "resumo": "Dia 1 · dor 4 · noite regular · sangramento não",
+                "autorNome": "Sônia Ribeiro",
+                "enviadoEm": "2026-11-07T14:00:00Z"
+              },
+              "naoLidas": 3,
+              "criadoEm": "2026-11-05T15:00:00Z",
+              "acoesPermitidas": [
+                "ENVIAR",
+                "ADICIONAR_PARTICIPANTE",
+                "REMOVER_PARTICIPANTE",
+                "ARQUIVAR"
+              ]
+            },
+            {
+              "id": "cnv_0mw0tduo000037",
+              "titulo": "Beatriz Costa",
+              "paciente": {
+                "id": "pac_beatriz",
+                "nome": "Beatriz Costa"
+              },
+              "acompanhamentoAtivoId": "acp_beatriz",
+              "status": "ATIVA",
+              "participantes": [
+                {
+                  "usuarioId": "usr_ana",
+                  "nome": "Dra. Ana Lima",
+                  "perfil": "PROFISSIONAL",
+                  "lidoAte": "msg_0mw22r2yo0003j"
+                },
+                {
+                  "usuarioId": "usr_julia",
+                  "nome": "Júlia Ramos",
+                  "perfil": "SECRETARIA",
+                  "lidoAte": "msg_0mw0tka5c0003b"
+                },
+                {
+                  "usuarioId": "usr_beatriz",
+                  "nome": "Beatriz Costa",
+                  "perfil": "PACIENTE",
+                  "lidoAte": "msg_0mw10j1xc0003g"
+                }
+              ],
+              "ultimaMensagem": {
+                "id": "msg_0mw22r2yo0003j",
+                "resumo": "Jejum de 8 horas, inclusive de água.",
+                "autorNome": "Dra. Ana Lima",
+                "enviadoEm": "2026-11-04T12:10:00Z"
+              },
+              "naoLidas": 0,
+              "criadoEm": "2026-11-03T15:00:00Z",
+              "acoesPermitidas": [
+                "ENVIAR",
+                "ADICIONAR_PARTICIPANTE",
+                "REMOVER_PARTICIPANTE",
+                "ARQUIVAR"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "atalhos",
+        "tipo": "ATALHOS",
+        "dados": {
+          "itens": [
+            {
+              "rotulo": "Novo paciente",
+              "icone": "user-plus",
+              "destino": {
+                "tela": "pacientes.novo"
+              }
+            },
+            {
+              "rotulo": "Novo pós-operatório",
+              "icone": "activity",
+              "destino": {
+                "tela": "acompanhamento.novo"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

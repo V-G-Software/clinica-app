@@ -1,0 +1,264 @@
+{
+  "requisicao": "GET /v1/sessao",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "contrato": {
+      "versao": "1.0.0-rc.1"
+    },
+    "organizacao": {
+      "id": "org_otorrino",
+      "slug": "modelo-otorrino",
+      "nome": "Clínica Modelo Otorrino",
+      "fuso": "America/Sao_Paulo",
+      "locale": "pt-BR",
+      "contato": {
+        "telefone": "+551130000000",
+        "email": "contato@modelo-otorrino.exemplo",
+        "endereco": "Av. Exemplo, 100 — São Paulo/SP"
+      }
+    },
+    "usuario": {
+      "id": "usr_ana",
+      "nome": "Ana Lima",
+      "nomeExibicao": "Dra. Ana Lima",
+      "email": "ana@modelo-otorrino.exemplo",
+      "fotoUrl": null,
+      "preferencias": {
+        "tema": "SISTEMA",
+        "densidade": "CONFORTAVEL"
+      }
+    },
+    "perfilAtivo": "PROFISSIONAL",
+    "perfisDisponiveis": [
+      {
+        "id": "PROFISSIONAL",
+        "rotulo": "Médica"
+      },
+      {
+        "id": "GESTOR",
+        "rotulo": "Gestão da clínica"
+      }
+    ],
+    "termos": {
+      "organizacao": {
+        "singular": "clínica",
+        "plural": "clínicas",
+        "genero": "F"
+      },
+      "paciente": {
+        "singular": "paciente",
+        "plural": "pacientes",
+        "genero": "M"
+      },
+      "responsavel": {
+        "singular": "responsável",
+        "plural": "responsáveis",
+        "genero": "M"
+      },
+      "profissional": {
+        "singular": "médico",
+        "plural": "médicos",
+        "genero": "M"
+      },
+      "acompanhamento": {
+        "singular": "pós-operatório",
+        "plural": "pós-operatórios",
+        "genero": "M"
+      },
+      "protocolo": {
+        "singular": "protocolo",
+        "plural": "protocolos",
+        "genero": "M"
+      },
+      "procedimento": {
+        "singular": "cirurgia",
+        "plural": "cirurgias",
+        "genero": "F"
+      },
+      "checkin": {
+        "singular": "check-in",
+        "plural": "check-ins",
+        "genero": "M"
+      },
+      "conversa": {
+        "singular": "conversa",
+        "plural": "conversas",
+        "genero": "F"
+      }
+    },
+    "modulos": [
+      {
+        "id": "pacientes",
+        "versao": "1.0",
+        "config": {
+          "formularioCadastroId": "frm_cadastro_basico",
+          "relacoesPermitidas": [
+            "PROPRIO",
+            "DEPENDENTE"
+          ]
+        }
+      },
+      {
+        "id": "acompanhamento",
+        "versao": "1.0",
+        "config": {
+          "publicarCheckinNaConversa": true
+        }
+      },
+      {
+        "id": "chat",
+        "versao": "1.0",
+        "config": {
+          "pacientePodeIniciar": false,
+          "anexosPermitidos": true,
+          "horarioAtendimento": [
+            {
+              "diaSemana": 1,
+              "inicio": "08:00",
+              "fim": "18:00"
+            },
+            {
+              "diaSemana": 2,
+              "inicio": "08:00",
+              "fim": "18:00"
+            },
+            {
+              "diaSemana": 3,
+              "inicio": "08:00",
+              "fim": "18:00"
+            },
+            {
+              "diaSemana": 4,
+              "inicio": "08:00",
+              "fim": "18:00"
+            },
+            {
+              "diaSemana": 5,
+              "inicio": "08:00",
+              "fim": "18:00"
+            }
+          ],
+          "mensagemForaDoHorario": "Recebemos sua mensagem. A equipe responde de segunda a sexta, das 8h às 18h.",
+          "avisoUrgencia": "Em caso de sangramento intenso, falta de ar ou febre alta, procure um pronto-socorro ou ligue 192."
+        }
+      },
+      {
+        "id": "equipe",
+        "versao": "1.0",
+        "config": {}
+      }
+    ],
+    "navegacao": [
+      {
+        "id": "inicio",
+        "rotulo": "Início",
+        "icone": "house",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "inicio"
+        }
+      },
+      {
+        "id": "acompanhamentos",
+        "rotulo": "Pós-operatórios",
+        "icone": "activity",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "acompanhamento.lista"
+        },
+        "contador": "acompanhamento.alertasAbertos"
+      },
+      {
+        "id": "conversas",
+        "rotulo": "Conversas",
+        "icone": "message-circle",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "chat.lista"
+        },
+        "contador": "chat.naoLidas"
+      },
+      {
+        "id": "pacientes",
+        "rotulo": "Pacientes",
+        "icone": "users",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "pacientes.lista"
+        }
+      },
+      {
+        "id": "notificacoes",
+        "rotulo": "Notificações",
+        "icone": "bell",
+        "grupo": "SECUNDARIO",
+        "destino": {
+          "tela": "notificacoes"
+        },
+        "contador": "notificacoes.naoLidas"
+      },
+      {
+        "id": "protocolos",
+        "rotulo": "Protocolos",
+        "icone": "clipboard-list",
+        "grupo": "SECUNDARIO",
+        "destino": {
+          "tela": "acompanhamento.protocolos"
+        }
+      },
+      {
+        "id": "perfil",
+        "rotulo": "Meu perfil",
+        "icone": "user",
+        "grupo": "SECUNDARIO",
+        "destino": {
+          "tela": "perfil"
+        }
+      }
+    ],
+    "permissoes": [
+      "pacientes.paciente.ler",
+      "pacientes.paciente.criar",
+      "pacientes.paciente.editar",
+      "pacientes.paciente.convidar",
+      "acompanhamento.protocolo.ler",
+      "acompanhamento.protocolo.gerenciar",
+      "acompanhamento.acompanhamento.ler",
+      "acompanhamento.acompanhamento.criar",
+      "acompanhamento.acompanhamento.encerrar",
+      "acompanhamento.checkin.ler",
+      "acompanhamento.alerta.ler",
+      "acompanhamento.alerta.resolver",
+      "chat.conversa.ler",
+      "chat.conversa.criar",
+      "chat.conversa.gerenciar",
+      "chat.mensagem.enviar",
+      "equipe.membro.ler"
+    ],
+    "capacidades": {
+      "tempoReal": {
+        "modo": "SSE",
+        "intervaloPollingSegundos": 20
+      },
+      "push": {
+        "modo": "WEB_PUSH",
+        "chavePublicaVapid": "BExemploDeChavePublicaVapidEmBase64Url"
+      },
+      "upload": {
+        "tamanhoMaximoBytes": 15728640,
+        "tiposPermitidos": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ]
+      }
+    },
+    "contadores": {
+      "notificacoes.naoLidas": 7,
+      "chat.naoLidas": 7,
+      "acompanhamento.alertasAbertos": 1,
+      "acompanhamento.checkinsPendentes": 3
+    }
+  }
+}

@@ -1,0 +1,249 @@
+{
+  "requisicao": "GET /v1/sessao",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "contrato": {
+      "versao": "1.0.0-rc.1"
+    },
+    "organizacao": {
+      "id": "org_vet",
+      "slug": "vet-amigo",
+      "nome": "Clínica Vet Amigo",
+      "fuso": "America/Sao_Paulo",
+      "locale": "pt-BR",
+      "contato": {
+        "telefone": "+554130002222",
+        "email": "contato@vet-amigo.exemplo",
+        "endereco": "Rua dos Pinheiros, 800 — Curitiba/PR"
+      }
+    },
+    "usuario": {
+      "id": "usr_laura",
+      "nome": "Laura Martins",
+      "nomeExibicao": "Laura Martins",
+      "email": "laura@exemplo.com",
+      "fotoUrl": null,
+      "preferencias": {
+        "tema": "SISTEMA",
+        "densidade": "CONFORTAVEL"
+      }
+    },
+    "perfilAtivo": "PACIENTE",
+    "perfisDisponiveis": [
+      {
+        "id": "PACIENTE",
+        "rotulo": "Paciente"
+      }
+    ],
+    "termos": {
+      "organizacao": {
+        "singular": "clínica",
+        "plural": "clínicas",
+        "genero": "F"
+      },
+      "paciente": {
+        "singular": "pet",
+        "plural": "pets",
+        "genero": "M"
+      },
+      "responsavel": {
+        "singular": "tutor",
+        "plural": "tutores",
+        "genero": "M"
+      },
+      "profissional": {
+        "singular": "veterinário",
+        "plural": "veterinários",
+        "genero": "M"
+      },
+      "acompanhamento": {
+        "singular": "recuperação",
+        "plural": "recuperações",
+        "genero": "F"
+      },
+      "protocolo": {
+        "singular": "protocolo",
+        "plural": "protocolos",
+        "genero": "M"
+      },
+      "procedimento": {
+        "singular": "cirurgia",
+        "plural": "cirurgias",
+        "genero": "F"
+      },
+      "checkin": {
+        "singular": "check-in",
+        "plural": "check-ins",
+        "genero": "M"
+      },
+      "conversa": {
+        "singular": "conversa",
+        "plural": "conversas",
+        "genero": "F"
+      }
+    },
+    "modulos": [
+      {
+        "id": "pacientes",
+        "versao": "1.0",
+        "config": {
+          "formularioCadastroId": "frm_cadastro_pet",
+          "relacoesPermitidas": [
+            "ANIMAL"
+          ]
+        }
+      },
+      {
+        "id": "acompanhamento",
+        "versao": "1.0",
+        "config": {
+          "publicarCheckinNaConversa": true
+        }
+      },
+      {
+        "id": "chat",
+        "versao": "1.0",
+        "config": {
+          "pacientePodeIniciar": false,
+          "anexosPermitidos": true,
+          "horarioAtendimento": [
+            {
+              "diaSemana": 1,
+              "inicio": "08:00",
+              "fim": "19:00"
+            },
+            {
+              "diaSemana": 2,
+              "inicio": "08:00",
+              "fim": "19:00"
+            },
+            {
+              "diaSemana": 3,
+              "inicio": "08:00",
+              "fim": "19:00"
+            },
+            {
+              "diaSemana": 4,
+              "inicio": "08:00",
+              "fim": "19:00"
+            },
+            {
+              "diaSemana": 5,
+              "inicio": "08:00",
+              "fim": "19:00"
+            },
+            {
+              "diaSemana": 6,
+              "inicio": "08:00",
+              "fim": "13:00"
+            }
+          ],
+          "mensagemForaDoHorario": "Recebemos sua mensagem. Respondemos no próximo horário de atendimento.",
+          "avisoUrgencia": "Sangramento, pontos abertos, vômitos repetidos ou apatia: procure o plantão veterinário 24 h."
+        }
+      },
+      {
+        "id": "equipe",
+        "versao": "1.0",
+        "config": {}
+      }
+    ],
+    "navegacao": [
+      {
+        "id": "inicio",
+        "rotulo": "Início",
+        "icone": "house",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "inicio"
+        }
+      },
+      {
+        "id": "meus-acompanhamentos",
+        "rotulo": "Minha recuperação",
+        "icone": "heart-pulse",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "acompanhamento.meus"
+        },
+        "contador": "acompanhamento.checkinsPendentes"
+      },
+      {
+        "id": "conversas",
+        "rotulo": "Conversas",
+        "icone": "message-circle",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "chat.lista"
+        },
+        "contador": "chat.naoLidas"
+      },
+      {
+        "id": "notificacoes",
+        "rotulo": "Notificações",
+        "icone": "bell",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "notificacoes"
+        },
+        "contador": "notificacoes.naoLidas"
+      },
+      {
+        "id": "perfil",
+        "rotulo": "Meu perfil",
+        "icone": "user",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "perfil"
+        }
+      }
+    ],
+    "permissoes": [
+      "pacientes.paciente.ler",
+      "acompanhamento.acompanhamento.ler",
+      "acompanhamento.checkin.ler",
+      "acompanhamento.checkin.responder",
+      "chat.conversa.ler",
+      "chat.mensagem.enviar"
+    ],
+    "capacidades": {
+      "tempoReal": {
+        "modo": "POLLING",
+        "intervaloPollingSegundos": 15
+      },
+      "push": {
+        "modo": "WEB_PUSH",
+        "chavePublicaVapid": "BExemploDeChavePublicaVapidEmBase64Url"
+      },
+      "upload": {
+        "tamanhoMaximoBytes": 15728640,
+        "tiposPermitidos": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ]
+      }
+    },
+    "contadores": {
+      "notificacoes.naoLidas": 13,
+      "chat.naoLidas": 3,
+      "acompanhamento.alertasAbertos": 0,
+      "acompanhamento.checkinsPendentes": 0
+    },
+    "pacientesVinculados": [
+      {
+        "id": "pac_thor",
+        "nome": "Thor",
+        "tipo": "ANIMAL",
+        "relacao": "ANIMAL"
+      },
+      {
+        "id": "pac_mel",
+        "nome": "Mel",
+        "tipo": "ANIMAL",
+        "relacao": "ANIMAL"
+      }
+    ]
+  }
+}

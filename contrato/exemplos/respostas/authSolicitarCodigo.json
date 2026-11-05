@@ -1,0 +1,4 @@
+{
+  "requisicao": "POST /v1/auth/codigo/solicitar",
+  "status": 202
+}

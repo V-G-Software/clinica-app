@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exemplo.com.br/contrato/v1/problema.schema.json",
+  "title": "Erro RFC 9457 com codigo estável",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Problema (1.0.0-rc.1)",
+  "type": "object",
+  "description": "RFC 9457. Nunca stack trace, SQL ou nome de tabela.",
+  "required": [
+    "type",
+    "title",
+    "status",
+    "codigo",
+    "requestId"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "format": "uri"
+    },
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "type": "integer",
+      "minimum": 400,
+      "maximum": 599
+    },
+    "detail": {
+      "type": "string"
+    },
+    "instance": {
+      "type": "string"
+    },
+    "codigo": {
+      "$ref": "#/$defs/CodigoErro"
+    },
+    "requestId": {
+      "type": "string"
+    },
+    "campos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "campo",
+          "codigo",
+          "mensagem"
+        ],
+        "properties": {
+          "campo": {
+            "type": "string"
+          },
+          "codigo": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "mensagem": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "estadoAtual": {
+      "description": "Em 412 `CONFLITO_VERSAO`, o recurso na versão atual.",
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "CodigoErro": {
+      "type": "string",
+      "enum": [
+        "AUTENTICACAO_INVALIDA",
+        "CODIGO_INVALIDO",
+        "CODIGO_EXPIRADO",
+        "MUITAS_TENTATIVAS",
+        "SESSAO_EXPIRADA",
+        "SESSAO_REVOGADA",
+        "PERMISSAO_NEGADA",
+        "RECURSO_NAO_ENCONTRADO",
+        "VALIDACAO_FALHOU",
+        "CONFLITO_VERSAO",
+        "LIMITE_EXCEDIDO",
+        "CONVITE_INVALIDO",
+        "CONVITE_EXPIRADO",
+        "MODULO_NAO_CONTRATADO",
+        "ORGANIZACAO_SUSPENSA",
+        "CHECKIN_INDISPONIVEL",
+        "CHECKIN_JA_RESPONDIDO",
+        "CONVERSA_ARQUIVADA",
+        "ARQUIVO_MUITO_GRANDE",
+        "TIPO_ARQUIVO_NAO_PERMITIDO",
+        "ARQUIVO_REJEITADO",
+        "CURSOR_EXPIRADO",
+        "ULTIMO_GESTOR",
+        "INDISPONIVEL_TEMPORARIAMENTE"
+      ]
+    }
+  }
+}

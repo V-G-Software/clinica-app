@@ -1,0 +1,85 @@
+{
+  "requisicao": "GET /v1/protocolos/prt_septo7",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "prt_septo7",
+    "versao": 3,
+    "nome": "Septoplastia — 7 dias",
+    "descricao": "Acompanhamento diário na primeira semana após a cirurgia.",
+    "duracaoDias": 7,
+    "status": "ATIVO",
+    "checkins": [
+      {
+        "dias": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "horario": "09:00",
+        "formulario": {
+          "id": "frm_pos_op_diario",
+          "versao": 1
+        },
+        "lembreteAposHoras": 4,
+        "expiraAposHoras": 14
+      }
+    ],
+    "orientacoes": [
+      {
+        "dia": 0,
+        "horario": "18:00",
+        "texto": "Mantenha a cabeceira elevada e evite assoar o nariz."
+      },
+      {
+        "dia": 3,
+        "horario": "09:00",
+        "texto": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia."
+      }
+    ],
+    "regrasAlerta": [
+      {
+        "id": "dor_alta",
+        "tipo": "RESPOSTA",
+        "campo": "dor",
+        "operador": "MAIOR_OU_IGUAL",
+        "valor": 8,
+        "severidade": "ALTA",
+        "mensagem": "Dor 8 ou mais relatada"
+      },
+      {
+        "id": "sangramento_intenso",
+        "tipo": "RESPOSTA",
+        "campo": "sangramento",
+        "operador": "IGUAL",
+        "valor": "INTENSO",
+        "severidade": "ALTA",
+        "mensagem": "Sangramento intenso relatado"
+      },
+      {
+        "id": "febre",
+        "tipo": "RESPOSTA",
+        "campo": "temperatura",
+        "operador": "MAIOR_OU_IGUAL",
+        "valor": 38,
+        "severidade": "MEDIA",
+        "mensagem": "Temperatura de 38 °C ou mais"
+      },
+      {
+        "id": "sem_resposta",
+        "tipo": "CHECKIN_EXPIRADO",
+        "severidade": "MEDIA",
+        "mensagem": "Check-in não respondido"
+      }
+    ],
+    "acoesPermitidas": [
+      "EDITAR",
+      "ARQUIVAR",
+      "INICIAR_ACOMPANHAMENTO"
+    ]
+  }
+}

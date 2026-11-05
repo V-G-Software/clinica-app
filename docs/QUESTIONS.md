@@ -1,0 +1,25 @@
+# Dúvidas em aberto
+
+Decisões assumidas na F0 que precisam de confirmação. As decisões de negócio da seção 19 do prompt continuam valendo; aqui ficam as que surgiram na implementação. Formato: pergunta · o que foi assumido · impacto se mudar.
+
+| # | Pergunta | Assumido na F0 | Impacto se mudar |
+|---|---|---|---|
+| QUESTION-001 | Check-in já vencido ao criar acompanhamento retroativo deve gerar alerta `CHECKIN_EXPIRADO`? | Não: nasce `EXPIRADO` sem alerta nem notificação (ADR-0009). | Regra no backend; contrato não muda. |
+| QUESTION-002 | Orientações com horário já passado na criação retroativa são publicadas na conversa? | Não. | Idem. |
+| QUESTION-003 | Como a suíte faz login por código em backend real (não lê e-mail)? | Ambiente de teste aceita um código fixo configurável (`CONF_CODIGO_EMAIL`). Alternativa: caixa de e-mail de teste com API. | Só a suíte. |
+| QUESTION-004 | Status HTTP exato de `CODIGO_INVALIDO` (401 ou 422)? | Mock usa 422; a suíte aceita 401/422 e confere o `codigo`. Proposta: fixar a tabela código→status no contrato antes de `1.0.0`. | Contrato (rc ainda permite). |
+| QUESTION-005 | [DECISÃO 3] O profissional pode desligar a visão de check-ins/alertas da secretária? | Secretária vê por padrão; não há chave de configuração no contrato ainda. | Aditivo: `acompanhamento.config.secretariaVeCheckins`. |
+| QUESTION-006 | Quando o paciente inicia conversa (`pacientePodeIniciar`), quem da equipe entra? | Todos os `PROFISSIONAL` e `SECRETARIA` ativos. | Regra no backend; talvez `chat.config.participantesPadrao`. |
+| QUESTION-007 | `POST /v1/conversas` com conversa ativa existente e quem chama não participa? | Equipe com `chat.conversa.gerenciar` entra na conversa e recebe 200 ("clica no paciente e cai na conversa"). | Regra no backend. |
+| QUESTION-008 | A observação do acompanhamento é interna? | Sim: o paciente recebe `observacao: null`. | Se não for, só o backend muda. |
+| QUESTION-009 | Notificações de chat na central: uma por mensagem ou agrupadas? | Agrupadas por conversa enquanto não lidas. | Só backend. |
+| QUESTION-010 | Exclusão de conta pelo paciente: um novo convite reativa a conta? | Não tratado (conta fica `DESLIGADO`). | Definir antes da F1. |
+| QUESTION-011 | `MODULO_NAO_CONTRATADO` devolve 404 ou 403? | 404 (não revela o que não está contratado). | Contrato (rc). |
+| QUESTION-012 | URI base do `type` dos erros (`https://{{DOMINIO}}/erros/...`). | Mock usa `https://exemplo.com.br/erros`. | Depende da decisão 1 (nome e domínio). |
+| QUESTION-013 | `Membro.id` é igual ao `usuarioId`? | Sim. | Simplifica o frontend; mudar seria quebra. |
+| QUESTION-014 | Termos de uso mudaram: aceite no próximo login (`ACEITAR_TERMOS`) ou também durante a sessão? | Só no próximo login. Proposta: evento `sessao.manifesto.alterado` + etapa no próximo `renovar`. | Aditivo. |
+| QUESTION-015 | Retenção de conversas, check-ins e fotos (decisão 7, 20 anos se prontuário). | Nada é apagado; `POST /v1/me/exclusao` só remove o acesso. | Jurídico. |
+
+## Adições ao contrato em relação ao prompt (registradas no CHANGELOG)
+
+`GET /v1/equipe/membros/{membroId}` (necessário para obter `ETag` antes do `PATCH`), `Convite.token`, `Saude.agora`, `autenticacao.termosVersao`, `RespostaEtapa.termos`/`emailMascarado`, `ultimoEventoId` em `GET /v1/eventos`, `temMais` na lista de mensagens, `Paciente.conversaAtivaId`, `Checkin.anexos`, `Secao.titulo`, `StatusMembro.CONVIDADO`, `304` em configuração pública e manifesto.

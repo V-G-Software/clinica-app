@@ -1,0 +1,776 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exemplo.com.br/contrato/v1/manifesto.schema.json",
+  "title": "Manifesto da sessão (GET /v1/sessao)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Manifesto (1.0.0-rc.1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contrato",
+    "organizacao",
+    "usuario",
+    "perfilAtivo",
+    "perfisDisponiveis",
+    "termos",
+    "modulos",
+    "navegacao",
+    "permissoes",
+    "capacidades",
+    "contadores"
+  ],
+  "properties": {
+    "contrato": {
+      "$ref": "#/$defs/Contrato"
+    },
+    "organizacao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "slug",
+        "nome",
+        "fuso",
+        "locale",
+        "contato"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "slug": {
+          "$ref": "#/$defs/Slug"
+        },
+        "nome": {
+          "type": "string"
+        },
+        "fuso": {
+          "type": "string"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "contato": {
+          "$ref": "#/$defs/ContatoOrganizacao"
+        }
+      }
+    },
+    "usuario": {
+      "$ref": "#/$defs/Usuario"
+    },
+    "perfilAtivo": {
+      "$ref": "#/$defs/Perfil"
+    },
+    "perfisDisponiveis": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "rotulo"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/Perfil"
+          },
+          "rotulo": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "termos": {
+      "type": "object",
+      "description": "Todos os termos do catálogo, em minúsculas.",
+      "propertyNames": {
+        "$ref": "#/$defs/TermoChave"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/Termo"
+      },
+      "required": [
+        "organizacao",
+        "paciente",
+        "responsavel",
+        "profissional",
+        "acompanhamento",
+        "protocolo",
+        "procedimento",
+        "checkin",
+        "conversa"
+      ]
+    },
+    "modulos": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Modulo"
+      }
+    },
+    "navegacao": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ItemNavegacao"
+      }
+    },
+    "permissoes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/Permissao"
+      }
+    },
+    "capacidades": {
+      "$ref": "#/$defs/Capacidades"
+    },
+    "contadores": {
+      "$ref": "#/$defs/Contadores"
+    },
+    "pacientesVinculados": {
+      "type": "array",
+      "description": "Somente no perfil PACIENTE.",
+      "items": {
+        "$ref": "#/$defs/PacienteVinculado"
+      }
+    }
+  },
+  "$defs": {
+    "Contrato": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "versao"
+      ],
+      "properties": {
+        "versao": {
+          "$ref": "#/$defs/Versao"
+        }
+      }
+    },
+    "Versao": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.]+)?$"
+    },
+    "Id": {
+      "type": "string",
+      "description": "Identificador opaco; o frontend nunca interpreta.",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "Slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 63
+    },
+    "ContatoOrganizacao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "telefone",
+        "email",
+        "endereco"
+      ],
+      "properties": {
+        "telefone": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Telefone"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "email": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Email"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "endereco": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "Telefone": {
+      "type": "string",
+      "pattern": "^\\+[1-9][0-9]{7,14}$",
+      "description": "E.164."
+    },
+    "Email": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 254,
+      "pattern": "^[^A-Z]+$",
+      "description": "Sempre em minúsculas."
+    },
+    "Usuario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "nome",
+        "nomeExibicao",
+        "email",
+        "fotoUrl",
+        "preferencias"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "nome": {
+          "type": "string"
+        },
+        "nomeExibicao": {
+          "type": "string"
+        },
+        "email": {
+          "$ref": "#/$defs/Email"
+        },
+        "fotoUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "preferencias": {
+          "$ref": "#/$defs/PreferenciasUsuario"
+        }
+      }
+    },
+    "PreferenciasUsuario": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tema": {
+          "type": "string",
+          "enum": [
+            "CLARO",
+            "ESCURO",
+            "SISTEMA"
+          ]
+        },
+        "densidade": {
+          "type": "string",
+          "enum": [
+            "CONFORTAVEL",
+            "COMPACTA"
+          ]
+        }
+      }
+    },
+    "Perfil": {
+      "type": "string",
+      "enum": [
+        "GESTOR",
+        "PROFISSIONAL",
+        "SECRETARIA",
+        "PACIENTE"
+      ]
+    },
+    "TermoChave": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "enum": [
+        "organizacao",
+        "paciente",
+        "responsavel",
+        "profissional",
+        "acompanhamento",
+        "protocolo",
+        "procedimento",
+        "checkin",
+        "conversa"
+      ]
+    },
+    "Termo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "singular",
+        "plural",
+        "genero"
+      ],
+      "properties": {
+        "singular": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "plural": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "genero": {
+          "type": "string",
+          "enum": [
+            "M",
+            "F"
+          ]
+        }
+      }
+    },
+    "Modulo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "versao",
+        "config"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ModuloId"
+        },
+        "versao": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "config": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "pacientes"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "config": {
+                "$ref": "#/$defs/ConfigPacientes"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "acompanhamento"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "config": {
+                "$ref": "#/$defs/ConfigAcompanhamento"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "id": {
+                "const": "chat"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "config": {
+                "$ref": "#/$defs/ConfigChat"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ModuloId": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "enum": [
+        "pacientes",
+        "acompanhamento",
+        "chat",
+        "equipe"
+      ]
+    },
+    "ConfigPacientes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "formularioCadastroId",
+        "relacoesPermitidas"
+      ],
+      "properties": {
+        "formularioCadastroId": {
+          "$ref": "#/$defs/IdOuNulo"
+        },
+        "relacoesPermitidas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/RelacaoVinculo"
+          }
+        }
+      }
+    },
+    "IdOuNulo": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "RelacaoVinculo": {
+      "type": "string",
+      "enum": [
+        "PROPRIO",
+        "DEPENDENTE",
+        "ANIMAL"
+      ]
+    },
+    "ConfigAcompanhamento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publicarCheckinNaConversa"
+      ],
+      "properties": {
+        "publicarCheckinNaConversa": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ConfigChat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pacientePodeIniciar",
+        "anexosPermitidos",
+        "horarioAtendimento",
+        "mensagemForaDoHorario",
+        "avisoUrgencia"
+      ],
+      "properties": {
+        "pacientePodeIniciar": {
+          "type": "boolean"
+        },
+        "anexosPermitidos": {
+          "type": "boolean"
+        },
+        "horarioAtendimento": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HorarioAtendimento"
+          }
+        },
+        "mensagemForaDoHorario": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        },
+        "avisoUrgencia": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        }
+      }
+    },
+    "HorarioAtendimento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diaSemana",
+        "inicio",
+        "fim"
+      ],
+      "properties": {
+        "diaSemana": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "0 = domingo"
+        },
+        "inicio": {
+          "$ref": "#/$defs/Hora"
+        },
+        "fim": {
+          "$ref": "#/$defs/Hora"
+        }
+      }
+    },
+    "Hora": {
+      "type": "string",
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+      "description": "HH:MM no fuso da organização."
+    },
+    "ItemNavegacao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "rotulo",
+        "icone",
+        "grupo",
+        "destino"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "rotulo": {
+          "type": "string"
+        },
+        "icone": {
+          "$ref": "#/$defs/Icone"
+        },
+        "grupo": {
+          "type": "string",
+          "enum": [
+            "PRINCIPAL",
+            "SECUNDARIO"
+          ]
+        },
+        "destino": {
+          "$ref": "#/$defs/Destino"
+        },
+        "contador": {
+          "$ref": "#/$defs/ContadorChave"
+        }
+      }
+    },
+    "Icone": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "description": "Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.",
+      "enum": [
+        "house",
+        "users",
+        "user",
+        "user-plus",
+        "activity",
+        "heart-pulse",
+        "message-circle",
+        "bell",
+        "settings",
+        "clipboard-list",
+        "calendar",
+        "stethoscope",
+        "paw-print",
+        "circle-alert",
+        "file-text",
+        "camera",
+        "credit-card",
+        "circle-help",
+        "log-out"
+      ]
+    },
+    "Destino": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tela"
+      ],
+      "properties": {
+        "tela": {
+          "$ref": "#/$defs/Tela"
+        },
+        "parametros": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Tela": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "enum": [
+        "inicio",
+        "notificacoes",
+        "perfil",
+        "pacientes.lista",
+        "pacientes.detalhe",
+        "pacientes.novo",
+        "acompanhamento.lista",
+        "acompanhamento.meus",
+        "acompanhamento.detalhe",
+        "acompanhamento.novo",
+        "acompanhamento.protocolos",
+        "acompanhamento.protocolo",
+        "acompanhamento.checkin",
+        "chat.lista",
+        "chat.conversa",
+        "equipe.lista",
+        "organizacao.configuracao"
+      ]
+    },
+    "ContadorChave": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "enum": [
+        "chat.naoLidas",
+        "notificacoes.naoLidas",
+        "acompanhamento.alertasAbertos",
+        "acompanhamento.checkinsPendentes"
+      ]
+    },
+    "Permissao": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "enum": [
+        "pacientes.paciente.ler",
+        "pacientes.paciente.criar",
+        "pacientes.paciente.editar",
+        "pacientes.paciente.convidar",
+        "acompanhamento.protocolo.ler",
+        "acompanhamento.protocolo.gerenciar",
+        "acompanhamento.acompanhamento.ler",
+        "acompanhamento.acompanhamento.criar",
+        "acompanhamento.acompanhamento.encerrar",
+        "acompanhamento.checkin.ler",
+        "acompanhamento.checkin.responder",
+        "acompanhamento.alerta.ler",
+        "acompanhamento.alerta.resolver",
+        "chat.conversa.ler",
+        "chat.conversa.criar",
+        "chat.conversa.gerenciar",
+        "chat.mensagem.enviar",
+        "equipe.membro.ler",
+        "equipe.membro.gerenciar",
+        "organizacao.configuracao.editar"
+      ]
+    },
+    "Capacidades": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tempoReal",
+        "push",
+        "upload"
+      ],
+      "properties": {
+        "tempoReal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "modo",
+            "intervaloPollingSegundos"
+          ],
+          "properties": {
+            "modo": {
+              "type": "string",
+              "enum": [
+                "SSE",
+                "POLLING"
+              ]
+            },
+            "intervaloPollingSegundos": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 300
+            }
+          }
+        },
+        "push": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "modo"
+          ],
+          "properties": {
+            "modo": {
+              "type": "string",
+              "enum": [
+                "WEB_PUSH",
+                "NENHUM"
+              ]
+            },
+            "chavePublicaVapid": {
+              "type": "string"
+            }
+          }
+        },
+        "upload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tamanhoMaximoBytes",
+            "tiposPermitidos"
+          ],
+          "properties": {
+            "tamanhoMaximoBytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "tiposPermitidos": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Contadores": {
+      "type": "object",
+      "description": "Chaves do catálogo `ContadorChave`; chave desconhecida é ignorada.",
+      "propertyNames": {
+        "$ref": "#/$defs/ContadorChave"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "PacienteVinculado": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "nome",
+        "tipo",
+        "relacao"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "nome": {
+          "type": "string"
+        },
+        "tipo": {
+          "$ref": "#/$defs/TipoPaciente"
+        },
+        "relacao": {
+          "$ref": "#/$defs/RelacaoVinculo"
+        }
+      }
+    },
+    "TipoPaciente": {
+      "type": "string",
+      "enum": [
+        "PESSOA",
+        "ANIMAL"
+      ]
+    }
+  }
+}

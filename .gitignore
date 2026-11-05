@@ -1,0 +1,10 @@
+node_modules/
+dist/
+contrato/dist/
+mock/.dados/
+conformidade/relatorio.md
+conformidade/relatorio.json
+.env
+*.log
+conformidade/.vitest-resultado.json
+conformidade/.cobertura.jsonl

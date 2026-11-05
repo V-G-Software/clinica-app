@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exemplo.com.br/contrato/v1/diretorio.schema.json",
+  "title": "Organização resolvida no diretório",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/OrganizacaoDiretorio (1.0.0-rc.1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "slug",
+    "nome",
+    "urlApi",
+    "contratoVersao",
+    "status"
+  ],
+  "properties": {
+    "slug": {
+      "$ref": "#/$defs/Slug"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "urlApi": {
+      "type": "string",
+      "format": "uri"
+    },
+    "contratoVersao": {
+      "$ref": "#/$defs/Versao"
+    },
+    "status": {
+      "$ref": "#/$defs/StatusOrganizacao"
+    }
+  },
+  "$defs": {
+    "Slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 63
+    },
+    "Versao": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.]+)?$"
+    },
+    "StatusOrganizacao": {
+      "type": "string",
+      "enum": [
+        "ATIVA",
+        "MANUTENCAO",
+        "SUSPENSA"
+      ]
+    }
+  }
+}

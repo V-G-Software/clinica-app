@@ -1,0 +1,170 @@
+{
+  "$comentario": "Cenário de exemplo. Termos de fisioterapia, protocolo de 14 dias de exercícios em casa, chat sem anexos e paciente pode iniciar conversa.",
+  "organizacao": {
+    "id": "org_fisio",
+    "slug": "fisio-movimento",
+    "nome": "Fisio Movimento",
+    "fuso": "America/Sao_Paulo",
+    "locale": "pt-BR",
+    "status": "ATIVA",
+    "mensagemStatus": null,
+    "dominios": ["fisio-movimento.localhost"],
+    "contato": {
+      "telefone": "+553130001111",
+      "email": "contato@fisio-movimento.exemplo",
+      "endereco": "Rua das Acácias, 45 — Belo Horizonte/MG"
+    },
+    "mapaUrl": "https://maps.exemplo/fisio-movimento",
+    "tema": {
+      "corMarca": "#047857",
+      "logoUrl": "https://cdn.exemplo/fisio-movimento/logo.svg",
+      "logoEscuroUrl": null,
+      "modoPadrao": "CLARO"
+    },
+    "pwa": {
+      "nome": "Fisio Movimento",
+      "nomeCurto": "Movimento",
+      "corTema": "#047857",
+      "icones": [
+        { "src": "https://cdn.exemplo/fisio-movimento/icone-192.png", "tamanho": "192x192" },
+        { "src": "https://cdn.exemplo/fisio-movimento/icone-512.png", "tamanho": "512x512", "proposito": "maskable" }
+      ]
+    },
+    "autenticacao": {
+      "metodos": [
+        { "tipo": "CODIGO_EMAIL", "publico": "PACIENTE" },
+        { "tipo": "SENHA", "publico": "EQUIPE", "mfa": "OBRIGATORIO" }
+      ],
+      "cadastroPaciente": "SOMENTE_CONVITE",
+      "termosVersao": "2026-10-15"
+    },
+    "textos": {
+      "boasVindasTitulo": "Seu tratamento continua em casa",
+      "boasVindasTexto": "Registre seus exercícios todos os dias e fale com o seu fisioterapeuta."
+    },
+    "links": {
+      "termosDeUso": "https://fisio-movimento.exemplo/termos",
+      "privacidade": "https://fisio-movimento.exemplo/privacidade",
+      "suporte": "mailto:contato@fisio-movimento.exemplo"
+    }
+  },
+  "termos": {
+    "organizacao": { "singular": "clínica", "plural": "clínicas", "genero": "F" },
+    "paciente": { "singular": "paciente", "plural": "pacientes", "genero": "M" },
+    "responsavel": { "singular": "responsável", "plural": "responsáveis", "genero": "M" },
+    "profissional": { "singular": "fisioterapeuta", "plural": "fisioterapeutas", "genero": "M" },
+    "acompanhamento": { "singular": "acompanhamento", "plural": "acompanhamentos", "genero": "M" },
+    "protocolo": { "singular": "programa", "plural": "programas", "genero": "M" },
+    "procedimento": { "singular": "sessão", "plural": "sessões", "genero": "F" },
+    "checkin": { "singular": "registro diário", "plural": "registros diários", "genero": "M" },
+    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" }
+  },
+  "modulos": [
+    { "id": "pacientes", "versao": "1.0", "config": { "formularioCadastroId": null, "relacoesPermitidas": ["PROPRIO", "DEPENDENTE"] } },
+    { "id": "acompanhamento", "versao": "1.0", "config": { "publicarCheckinNaConversa": false } },
+    {
+      "id": "chat",
+      "versao": "1.0",
+      "config": {
+        "pacientePodeIniciar": true,
+        "anexosPermitidos": false,
+        "horarioAtendimento": [
+          { "diaSemana": 1, "inicio": "07:00", "fim": "20:00" },
+          { "diaSemana": 2, "inicio": "07:00", "fim": "20:00" },
+          { "diaSemana": 3, "inicio": "07:00", "fim": "20:00" },
+          { "diaSemana": 4, "inicio": "07:00", "fim": "20:00" },
+          { "diaSemana": 5, "inicio": "07:00", "fim": "20:00" },
+          { "diaSemana": 6, "inicio": "08:00", "fim": "12:00" }
+        ],
+        "mensagemForaDoHorario": "Recebemos sua mensagem e respondemos no próximo horário de atendimento.",
+        "avisoUrgencia": "Dor súbita e intensa, formigamento novo ou perda de força: procure atendimento de urgência."
+      }
+    }
+  ],
+  "capacidades": {
+    "tempoReal": { "modo": "SSE", "intervaloPollingSegundos": 20 },
+    "push": { "modo": "WEB_PUSH", "chavePublicaVapid": "BExemploDeChavePublicaVapidEmBase64Url" },
+    "upload": { "tamanhoMaximoBytes": 10485760, "tiposPermitidos": ["image/jpeg", "image/png", "image/webp"] }
+  },
+  "usuarios": [
+    {
+      "id": "usr_pedro", "nome": "Pedro Alves", "nomeExibicao": "Pedro Alves", "email": "pedro@fisio-movimento.exemplo",
+      "senha": "Senha@12345", "perfis": ["GESTOR", "PROFISSIONAL"], "mfaSegredo": "JBSWY3DPEHPK3PXP",
+      "rotulosPerfis": { "PROFISSIONAL": "Fisioterapeuta", "GESTOR": "Gestão da clínica" },
+      "profissional": { "conselho": "CREFITO", "numero": "4-112233-F", "uf": "MG", "especialidade": "Ortopedia" }
+    },
+    {
+      "id": "usr_lucas", "nome": "Lucas Prado", "nomeExibicao": "Lucas Prado", "email": "lucas@fisio-movimento.exemplo",
+      "senha": "Senha@12345", "perfis": ["SECRETARIA"], "mfaSegredo": "KRSXG5CTMVRXEZLU"
+    },
+    { "id": "usr_fernanda", "nome": "Fernanda Lopes", "email": "fernanda@exemplo.com", "perfis": ["PACIENTE"], "push": true,
+      "vinculos": [{ "pacienteId": "pac_fernanda", "relacao": "PROPRIO" }] },
+    { "id": "usr_gustavo", "nome": "Gustavo Reis", "email": "gustavo@exemplo.com", "perfis": ["PACIENTE"], "push": true,
+      "vinculos": [{ "pacienteId": "pac_gustavo", "relacao": "PROPRIO" }] },
+    { "id": "usr_clara", "nome": "Clara Reis", "email": "clara@exemplo.com", "perfis": ["PACIENTE"], "push": false,
+      "vinculos": [{ "pacienteId": "pac_davi", "relacao": "DEPENDENTE" }], "$comentario": "Mãe responsável pelo filho menor." }
+  ],
+  "formularios": [
+    {
+      "id": "frm_registro_exercicios", "versao": 1, "titulo": "Registro do dia", "finalidade": "CHECKIN",
+      "campos": [
+        { "id": "fezExercicios", "tipo": "SIM_NAO", "rotulo": "Fez os exercícios de hoje?", "obrigatorio": true },
+        { "id": "series", "tipo": "NUMERO", "rotulo": "Quantas séries completou?", "min": 0, "max": 20, "casasDecimais": 0, "obrigatorio": true,
+          "visivelSe": { "campo": "fezExercicios", "operador": "IGUAL", "valor": true } },
+        { "id": "dor", "tipo": "ESCALA", "rotulo": "Dor durante os exercícios", "min": 0, "max": 10, "rotuloMin": "Nenhuma", "rotuloMax": "Insuportável", "obrigatorio": true },
+        { "id": "dificuldade", "tipo": "ESCOLHA_UNICA", "rotulo": "Como foi a execução?", "obrigatorio": true,
+          "opcoes": [{ "valor": "FACIL", "rotulo": "Fácil" }, { "valor": "ADEQUADA", "rotulo": "Adequada" }, { "valor": "DIFICIL", "rotulo": "Difícil" }] },
+        { "id": "sintomas", "tipo": "ESCOLHA_MULTIPLA", "rotulo": "Sentiu algo disso?", "obrigatorio": false,
+          "opcoes": [{ "valor": "FORMIGAMENTO", "rotulo": "Formigamento" }, { "valor": "RIGIDEZ", "rotulo": "Rigidez" }, { "valor": "CANSACO", "rotulo": "Cansaço" }] },
+        { "id": "observacao", "tipo": "TEXTO_LONGO", "rotulo": "Observações", "obrigatorio": false }
+      ]
+    }
+  ],
+  "protocolos": [
+    {
+      "id": "prt_lombalgia14", "versao": 1, "nome": "Lombalgia — 14 dias de exercícios em casa",
+      "descricao": "Programa domiciliar entre as sessões presenciais.", "duracaoDias": 14, "status": "ATIVO",
+      "checkins": [{ "dias": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "horario": "19:00", "formulario": { "id": "frm_registro_exercicios", "versao": 1 }, "lembreteAposHoras": 2, "expiraAposHoras": 10 }],
+      "orientacoes": [
+        { "dia": 0, "horario": "20:00", "texto": "Faça os exercícios em superfície firme e pare se a dor passar de 7." },
+        { "dia": 7, "horario": "08:00", "texto": "A partir de hoje, aumente para 3 séries de cada exercício." }
+      ],
+      "regrasAlerta": [
+        { "id": "dor_alta", "tipo": "RESPOSTA", "campo": "dor", "operador": "MAIOR_OU_IGUAL", "valor": 7, "severidade": "MEDIA", "mensagem": "Dor 7 ou mais durante os exercícios" },
+        { "id": "formigamento", "tipo": "RESPOSTA", "campo": "sintomas", "operador": "CONTEM", "valor": "FORMIGAMENTO", "severidade": "ALTA", "mensagem": "Formigamento relatado" },
+        { "id": "nao_fez", "tipo": "RESPOSTA", "campo": "fezExercicios", "operador": "IGUAL", "valor": false, "severidade": "BAIXA", "mensagem": "Exercícios do dia não realizados" },
+        { "id": "sem_registro", "tipo": "CHECKIN_EXPIRADO", "severidade": "BAIXA", "mensagem": "Registro diário não enviado" }
+      ]
+    }
+  ],
+  "pacientes": [
+    { "id": "pac_fernanda", "tipo": "PESSOA", "nome": "Fernanda Lopes", "dataNascimento": "1985-09-12",
+      "contato": { "email": "fernanda@exemplo.com", "celular": "+5531988880000" }, "criadoEm": "2026-10-20T14:00:00Z" },
+    { "id": "pac_gustavo", "tipo": "PESSOA", "nome": "Gustavo Reis", "dataNascimento": "1990-02-03",
+      "contato": { "email": "gustavo@exemplo.com", "celular": null }, "criadoEm": "2026-11-01T14:00:00Z",
+      "$comentario": "Sem acompanhamento; iniciou a conversa pelo app." },
+    { "id": "pac_davi", "tipo": "PESSOA", "nome": "Davi Reis", "dataNascimento": "2014-07-19",
+      "contato": { "email": null, "celular": null }, "criadoEm": "2026-11-02T14:00:00Z",
+      "responsaveis": [{ "nome": "Clara Reis", "parentesco": "Mãe", "contato": { "email": "clara@exemplo.com", "celular": "+5531977770000" } }] }
+  ],
+  "acompanhamentos": [
+    { "id": "acp_fernanda", "pacienteId": "pac_fernanda", "protocoloId": "prt_lombalgia14", "dataInicio": "2026-11-04",
+      "equipeIds": ["usr_pedro"], "criadoPor": "usr_pedro", "criadoEm": "2026-11-04T13:00:00Z", "observacao": null,
+      "respostas": {
+        "1": { "aposMinutos": 30, "respostas": { "fezExercicios": true, "series": 2, "dor": 4, "dificuldade": "ADEQUADA", "sintomas": ["RIGIDEZ"] } },
+        "2": { "aposMinutos": 45, "respostas": { "fezExercicios": true, "series": 2, "dor": 5, "dificuldade": "ADEQUADA", "sintomas": [] } },
+        "3": { "aposMinutos": 20, "respostas": { "fezExercicios": false, "dor": 3, "dificuldade": "FACIL", "observacao": "Viajei a trabalho." } }
+      },
+      "mensagens": [
+        { "em": "2026-11-07T22:10:00Z", "autorId": "usr_pedro", "texto": "Tudo bem, Fernanda. Retome amanhã no mesmo ritmo." }
+      ] }
+  ],
+  "conversas": [
+    { "id": "cnv_gustavo", "pacienteId": "pac_gustavo", "criadoPor": "usr_gustavo", "criadoEm": "2026-11-06T11:00:00Z",
+      "participantesIds": ["usr_gustavo", "usr_pedro", "usr_lucas"],
+      "mensagens": [
+        { "em": "2026-11-06T11:00:00Z", "autorId": "usr_gustavo", "texto": "Oi! Posso remarcar a sessão de quinta para sexta?" },
+        { "em": "2026-11-06T12:15:00Z", "autorId": "usr_lucas", "texto": "Pode sim, Gustavo. Sexta às 9h está confirmada." }
+      ] }
+  ]
+}

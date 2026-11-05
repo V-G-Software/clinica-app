@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://exemplo.com.br/contrato/v1/evento.schema.json",
+  "title": "Evento de tempo real (SSE e GET /v1/eventos)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Evento (1.0.0-rc.1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "tipo",
+    "ocorridoEm",
+    "dados"
+  ],
+  "description": "Leva só identificadores; o conteúdo é buscado pela API REST.",
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/Id"
+    },
+    "tipo": {
+      "$ref": "#/$defs/TipoEvento"
+    },
+    "ocorridoEm": {
+      "$ref": "#/$defs/DataHora"
+    },
+    "dados": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "chat.mensagem.criada"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "conversaId",
+              "mensagemId"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "chat.conversa.atualizada"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "conversaId"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "anyOf": [
+              {
+                "const": "acompanhamento.checkin.disponivel"
+              },
+              {
+                "const": "acompanhamento.checkin.respondido"
+              }
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "checkinId",
+              "acompanhamentoId"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "acompanhamento.alerta.criado"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "alertaId",
+              "acompanhamentoId"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "acompanhamento.alerta.resolvido"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "alertaId"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "acompanhamento.acompanhamento.atualizado"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "acompanhamentoId"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "notificacao.criada"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "notificacaoId"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "contadores.alterados"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "$ref": "#/$defs/Contadores"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "arquivo.processado"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "arquivoId",
+              "status"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "const": "sessao.encerrada"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "motivo"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "description": "Identificador opaco; o frontend nunca interpreta.",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "TipoEvento": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "enum": [
+        "chat.mensagem.criada",
+        "chat.conversa.atualizada",
+        "acompanhamento.checkin.disponivel",
+        "acompanhamento.checkin.respondido",
+        "acompanhamento.alerta.criado",
+        "acompanhamento.alerta.resolvido",
+        "acompanhamento.acompanhamento.atualizado",
+        "notificacao.criada",
+        "contadores.alterados",
+        "arquivo.processado",
+        "sessao.manifesto.alterado",
+        "sessao.encerrada"
+      ]
+    },
+    "DataHora": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 em UTC.",
+      "pattern": "Z$"
+    },
+    "Contadores": {
+      "type": "object",
+      "description": "Chaves do catálogo `ContadorChave`; chave desconhecida é ignorada.",
+      "propertyNames": {
+        "$ref": "#/$defs/ContadorChave"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "ContadorChave": {
+      "type": "string",
+      "x-catalogo-nomes": true,
+      "enum": [
+        "chat.naoLidas",
+        "notificacoes.naoLidas",
+        "acompanhamento.alertasAbertos",
+        "acompanhamento.checkinsPendentes"
+      ]
+    }
+  }
+}

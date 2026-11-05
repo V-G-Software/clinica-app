@@ -1,0 +1,133 @@
+{
+  "requisicao": "GET /v1/conversas/cnv_0mw28tpc00004b/mensagens?limite=10",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "msg_0mw28tpc00004c",
+        "idCliente": null,
+        "conversaId": "cnv_0mw28tpc00004b",
+        "tipo": "SISTEMA",
+        "autor": null,
+        "texto": "Pós-operatório iniciado: Septoplastia — 7 dias.",
+        "anexos": [],
+        "referencia": {
+          "tipo": "ACOMPANHAMENTO",
+          "id": "acp_marcos",
+          "resumo": "Septoplastia — 7 dias",
+          "temAlerta": false
+        },
+        "enviadoEm": "2026-11-04T15:00:00Z"
+      },
+      {
+        "id": "msg_0mw414io00004p",
+        "idCliente": null,
+        "conversaId": "cnv_0mw28tpc00004b",
+        "tipo": "ORIENTACAO",
+        "autor": null,
+        "texto": "Mantenha a cabeceira elevada e evite assoar o nariz.",
+        "anexos": [],
+        "referencia": null,
+        "enviadoEm": "2026-11-05T21:00:00Z"
+      },
+      {
+        "id": "msg_0mw4yixpc00059",
+        "idCliente": null,
+        "conversaId": "cnv_0mw28tpc00004b",
+        "tipo": "CHECKIN",
+        "autor": {
+          "usuarioId": "usr_marcos",
+          "nome": "Marcos Souza",
+          "perfil": "PACIENTE"
+        },
+        "texto": null,
+        "anexos": [],
+        "referencia": {
+          "tipo": "CHECKIN",
+          "id": "chk_0mw28tpc000044",
+          "resumo": "Dia 1 · dor 5 · noite regular · sangramento leve",
+          "temAlerta": false
+        },
+        "enviadoEm": "2026-11-06T12:35:00Z"
+      },
+      {
+        "id": "msg_0mw6e57uo0006q",
+        "idCliente": null,
+        "conversaId": "cnv_0mw28tpc00004b",
+        "tipo": "CHECKIN",
+        "autor": {
+          "usuarioId": "usr_marcos",
+          "nome": "Marcos Souza",
+          "perfil": "PACIENTE"
+        },
+        "texto": null,
+        "anexos": [],
+        "referencia": {
+          "tipo": "CHECKIN",
+          "id": "chk_0mw28tpc000045",
+          "resumo": "Dia 2 · dor 8 · noite dormi mal · sangramento leve",
+          "temAlerta": true
+        },
+        "enviadoEm": "2026-11-07T12:40:00Z"
+      },
+      {
+        "id": "msg_0mw6f1d9c0006v",
+        "idCliente": "8729ec37-6f81-422d-8060-32dc890513c0",
+        "conversaId": "cnv_0mw28tpc00004b",
+        "tipo": "TEXTO",
+        "autor": {
+          "usuarioId": "usr_julia",
+          "nome": "Júlia Ramos",
+          "perfil": "SECRETARIA"
+        },
+        "texto": "Marcos, a Dra. Ana já viu seu check-in e vai falar com você.",
+        "anexos": [],
+        "referencia": null,
+        "enviadoEm": "2026-11-07T13:05:00Z"
+      },
+      {
+        "id": "msg_0mw6fxio00006x",
+        "idCliente": "0e37ca6c-c213-4ff5-ad4f-b91c65aa7db1",
+        "conversaId": "cnv_0mw28tpc00004b",
+        "tipo": "TEXTO",
+        "autor": {
+          "usuarioId": "usr_ana",
+          "nome": "Dra. Ana Lima",
+          "perfil": "PROFISSIONAL"
+        },
+        "texto": "Marcos, essa pressão é esperada nos primeiros dias. Siga a medicação prescrita e me avise se piorar.",
+        "anexos": [],
+        "referencia": null,
+        "enviadoEm": "2026-11-07T13:30:00Z"
+      },
+      {
+        "id": "msg_0mw6gcy800006z",
+        "idCliente": "a3f950f7-2ada-4d8c-b4c2-d260515f021f",
+        "conversaId": "cnv_0mw28tpc00004b",
+        "tipo": "TEXTO",
+        "autor": {
+          "usuarioId": "usr_marcos",
+          "nome": "Marcos Souza",
+          "perfil": "PACIENTE"
+        },
+        "texto": "Combinado, obrigado doutora.",
+        "anexos": [],
+        "referencia": null,
+        "enviadoEm": "2026-11-07T13:42:00Z"
+      },
+      {
+        "id": "msg_0mw7s5mo000088",
+        "idCliente": null,
+        "conversaId": "cnv_0mw28tpc00004b",
+        "tipo": "ORIENTACAO",
+        "autor": null,
+        "texto": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
+        "anexos": [],
+        "referencia": null,
+        "enviadoEm": "2026-11-08T12:00:00Z"
+      }
+    ],
+    "temMais": false
+  }
+}

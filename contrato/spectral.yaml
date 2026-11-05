@@ -1,0 +1,70 @@
+extends: ["spectral:oas"]
+functions: []
+rules:
+  # Ajustes das regras padrão
+  oas3-api-servers: off            # servers dependem de urlApi (variável)
+  info-contact: off
+  operation-description: off       # summary já descreve; description só quando há regra
+  oas3-valid-media-example: error
+  oas3-valid-schema-example: error
+  operation-operationId: error
+  operation-tags: error
+  operation-success-response: error
+
+  # Regras próprias (seção 4.3)
+  nomes-camelcase-sem-acento:
+    description: Propriedades em camelCase, português sem acento (exceto campos RFC 9457).
+    severity: error
+    given: "$..properties[*]~"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^([a-z][a-zA-Z0-9]*|type|title|status|detail|instance)$"
+  enums-maiusculas:
+    description: Valores de enum em MAIUSCULAS_COM_SUBLINHADO (catálogos com nome próprio são exceção).
+    severity: error
+    given: "$..[?(@ && @.enum && !@['x-catalogo-nomes'] && @.type == 'string')].enum[*]"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^[A-Z][A-Z0-9_]*$"
+  catalogo-tipo-evento:
+    description: Tipos de evento em minúsculas, no formato modulo.entidade.fato (ou modulo.fato no núcleo).
+    severity: error
+    given: "$.components.schemas.TipoEvento.enum[*]"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^[a-z]+(\\.[a-z]+){1,2}$"
+  caminhos-kebab-v1:
+    description: Caminhos começam em /v1 e usam kebab-case.
+    severity: error
+    given: "$.paths[*]~"
+    then:
+      function: pattern
+      functionOptions:
+        match: "^/v1(/([a-z0-9]+(-[a-z0-9]+)*|\\{[a-z][a-zA-Z0-9]*\\}))+$"
+  data-hora-termina-em-em:
+    description: Campos de data e hora terminam em "Em".
+    severity: error
+    resolved: false
+    given: "$..properties[?(@ && @.$ref && (@.$ref == '#/components/schemas/DataHora' || @.$ref == '#/components/schemas/DataHoraOuNulo'))]~"
+    then:
+      function: pattern
+      functionOptions:
+        match: "(Em|agora)$"
+  sem-query-de-busca-livre:
+    description: Busca por texto livre vai no corpo (POST .../busca), nunca em query string.
+    severity: error
+    given: "$.paths[*][*].parameters[?(@.in == 'query')].name"
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: "^(q|busca|texto|nome|email|celular)$"
+  erro-padrao-problem-json:
+    description: Toda operação declara a resposta de erro padrão.
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].responses"
+    then:
+      field: default
+      function: truthy

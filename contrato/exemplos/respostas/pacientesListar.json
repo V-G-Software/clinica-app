@@ -1,0 +1,97 @@
+{
+  "requisicao": "GET /v1/pacientes?limite=3",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "pac_beatriz",
+        "tipo": "PESSOA",
+        "nome": "Beatriz Costa",
+        "nomeSocial": null,
+        "dataNascimento": "1991-03-14",
+        "contato": {
+          "email": "beatriz@exemplo.com",
+          "celular": "+5511977776666"
+        },
+        "camposAdicionais": {},
+        "responsaveis": [],
+        "status": "ATIVO",
+        "acessoApp": {
+          "status": "ATIVO",
+          "ultimoAcessoEm": null,
+          "notificacoes": "PUSH"
+        },
+        "acompanhamentosAtivos": 1,
+        "conversaAtivaId": "cnv_0mw0tduo000037",
+        "criadoEm": "2026-10-30T14:00:00Z",
+        "acoesPermitidas": [
+          "EDITAR",
+          "INATIVAR",
+          "CONVIDAR",
+          "INICIAR_ACOMPANHAMENTO",
+          "ABRIR_CONVERSA"
+        ]
+      },
+      {
+        "id": "pac_helena",
+        "tipo": "PESSOA",
+        "nome": "Helena Duarte",
+        "nomeSocial": null,
+        "dataNascimento": "1979-11-02",
+        "contato": {
+          "email": "helena@exemplo.com",
+          "celular": null
+        },
+        "camposAdicionais": {},
+        "responsaveis": [],
+        "status": "ATIVO",
+        "acessoApp": {
+          "status": "ATIVO",
+          "ultimoAcessoEm": null,
+          "notificacoes": "PUSH"
+        },
+        "acompanhamentosAtivos": 0,
+        "conversaAtivaId": null,
+        "criadoEm": "2026-10-10T14:00:00Z",
+        "acoesPermitidas": [
+          "EDITAR",
+          "INATIVAR",
+          "CONVIDAR",
+          "INICIAR_ACOMPANHAMENTO",
+          "ABRIR_CONVERSA"
+        ]
+      },
+      {
+        "id": "pac_marcos",
+        "tipo": "PESSOA",
+        "nome": "Marcos Souza",
+        "nomeSocial": null,
+        "dataNascimento": "1994-08-21",
+        "contato": {
+          "email": "marcos@exemplo.com",
+          "celular": "+5511988887777"
+        },
+        "camposAdicionais": {},
+        "responsaveis": [],
+        "status": "ATIVO",
+        "acessoApp": {
+          "status": "ATIVO",
+          "ultimoAcessoEm": "2026-11-08T13:30:00Z",
+          "notificacoes": "PUSH"
+        },
+        "acompanhamentosAtivos": 1,
+        "conversaAtivaId": "cnv_0mw28tpc00004b",
+        "criadoEm": "2026-10-25T14:00:00Z",
+        "acoesPermitidas": [
+          "EDITAR",
+          "INATIVAR",
+          "CONVIDAR",
+          "INICIAR_ACOMPANHAMENTO",
+          "ABRIR_CONVERSA"
+        ]
+      }
+    ],
+    "proximoCursor": "eyJvIjozfQ"
+  }
+}
