@@ -15,6 +15,9 @@ import { enviarArquivo } from '@/dados/arquivos';
 import { formatarHora, formatarData } from '@/i18n/datas';
 import { dentroDoHorario } from './horario';
 import Aviso from '@/ds/Aviso.vue';
+import Botao from '@/ds/Botao.vue';
+import Dialogo from '@/ds/Dialogo.vue';
+import { useMensagemErro } from '@/dados/erro';
 
 const { t } = useI18n();
 const rota = useRoute();
@@ -70,6 +73,18 @@ watch(() => m.lista.value.at(-1)?.id, async (ultima) => {
 });
 watch(() => m.pendentes.value.length, async () => { await nextTick(); rolagem.value?.scrollTo({ top: rolagem.value.scrollHeight }); });
 
+// Equipe: participantes, arquivar e reabrir (acoesPermitidas).
+const msgErro = useMensagemErro();
+const acoes = computed(() => new Set(conversa.data.value?.acoesPermitidas ?? []));
+const gerenciando = ref(false);
+const membros = useQuery({ queryKey: ['membros', 'ATIVO'], queryFn: () => ok(api().GET('/v1/equipe/membros', { params: { query: { status: 'ATIVO', limite: 100 } } })), enabled: computed(() => gerenciando.value && sessao.modulos.has('equipe') && sessao.pode('equipe.membro.ler')) });
+const foraDaConversa = computed(() => (membros.data.value?.itens ?? []).filter((mb) => !conversa.data.value?.participantes.some((p) => p.usuarioId === mb.id)));
+const atualizarConversa = () => { void conversa.refetch(); void qc.invalidateQueries({ queryKey: ['conversas'] }); void qc.invalidateQueries({ queryKey: ['mensagens', id] }); };
+const adicionar = useMutation({ mutationFn: (usuarioId: string) => ok(api().POST('/v1/conversas/{conversaId}/participantes', { params: { path: { conversaId: id.value } }, body: { usuarioId } })), onSuccess: atualizarConversa });
+const remover = useMutation({ mutationFn: (usuarioId: string) => ok(api().DELETE('/v1/conversas/{conversaId}/participantes/{usuarioId}', { params: { path: { conversaId: id.value, usuarioId } } })), onSuccess: atualizarConversa });
+const arquivar = useMutation({ mutationFn: () => ok(api().POST('/v1/conversas/{conversaId}/arquivar', { params: { path: { conversaId: id.value } } })), onSuccess: atualizarConversa });
+const reabrir = useMutation({ mutationFn: () => ok(api().POST('/v1/conversas/{conversaId}/reabrir', { params: { path: { conversaId: id.value } } })), onSuccess: atualizarConversa });
+
 const novoDia = (i: number) => i === 0 || m.lista.value[i - 1].enviadoEm.slice(0, 10) !== m.lista.value[i].enviadoEm.slice(0, 10);
 const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { timeZone: app.fuso }).format(new Date(iso)), app.locale, { day: '2-digit', month: 'long' });
 </script>
@@ -79,6 +94,12 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
     <header class="border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
       <h1 class="text-lg font-bold">{{ titulo }}</h1>
       <p v-if="conversa.data.value" class="text-sm text-zinc-500">{{ conversa.data.value.participantes.map((p) => p.nome).join(', ') }}</p>
+      <div v-if="!sessao.ehPaciente && (acoes.has('ADICIONAR_PARTICIPANTE') || acoes.has('ARQUIVAR') || acoes.has('REABRIR'))" class="mt-2 flex flex-wrap gap-2">
+        <RouterLink v-if="conversa.data.value" :to="`/pacientes/${conversa.data.value.paciente.id}`" class="text-sm text-acao underline">Ver paciente</RouterLink>
+        <button v-if="acoes.has('ADICIONAR_PARTICIPANTE')" type="button" class="text-sm text-acao underline" @click="gerenciando = true">Participantes</button>
+        <button v-if="acoes.has('ARQUIVAR')" type="button" class="text-sm text-acao underline" @click="arquivar.mutate()">Arquivar</button>
+        <button v-if="acoes.has('REABRIR')" type="button" class="text-sm text-acao underline" @click="reabrir.mutate()">Reabrir</button>
+      </div>
     </header>
     <div v-if="sessao.ehPaciente && cfgChat.avisoUrgencia" class="flex gap-2 bg-red-50 px-4 py-2 text-sm text-red-900 dark:bg-red-950 dark:text-red-100" role="note">
       <CircleAlert class="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {{ cfgChat.avisoUrgencia }}
@@ -137,5 +158,18 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
         </form>
       </template>
     </footer>
+    <Dialogo v-model:aberto="gerenciando" titulo="Participantes" descricao="Quem sai deixa de ver a conversa daqui em diante; o histórico fica.">
+      <Aviso v-if="adicionar.error.value || remover.error.value" tipo="erro" class="mb-2">{{ msgErro(adicionar.error.value ?? remover.error.value)?.texto }}</Aviso>
+      <ul class="flex flex-col gap-1">
+        <li v-for="p in conversa.data.value?.participantes ?? []" :key="p.usuarioId" class="flex min-h-11 items-center justify-between">
+          <span>{{ p.nome }} <span class="text-sm text-zinc-500">{{ p.perfil.toLowerCase() }}</span></span>
+          <Botao v-if="p.perfil !== 'PACIENTE' && acoes.has('REMOVER_PARTICIPANTE') && p.usuarioId !== eu" variante="fantasma" @click="remover.mutate(p.usuarioId)">Remover</Botao>
+        </li>
+      </ul>
+      <template v-if="foraDaConversa.length">
+        <p class="mt-3 mb-1 text-sm font-medium">Adicionar</p>
+        <Botao v-for="mb in foraDaConversa" :key="mb.id" variante="secundario" class="mr-2 mb-2" @click="adicionar.mutate(mb.id)">{{ mb.nome }}</Botao>
+      </template>
+    </Dialogo>
   </div>
 </template>

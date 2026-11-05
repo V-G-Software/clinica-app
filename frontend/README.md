@@ -14,6 +14,18 @@ Em desenvolvimento, `?org=` escolhe a organização (fica lembrado) e o botão d
 
 ## Estado
 
+### FE2 · equipe: concluída
+| Critério de saída | Como foi verificado |
+|---|---|
+| E2E 1: três marcas, claro e escuro | `e2e/fe2.mjs` (capturas por organização e esquema; `modoPadrao` respeitado) |
+| E2E 3: equipe vê o alerta chegar sem recarregar e resolve | `e2e/fe2.mjs` |
+| E2E 7: tutora alterna entre pets e recebe mensagem por polling | `e2e/fe2.mjs` (vet-amigo, intervalo de 15 s) |
+| E2E 8: conflito 412 tratado | `e2e/fe2.mjs` (duas sessões editando o mesmo paciente) |
+| E2E 10: duas abas | `e2e/fe0.mjs` e `e2e/fe2.mjs` |
+| Nenhum `if` por organização | `e2e/fe2.mjs` varre `src/` atrás de slugs e nomes dos cenários |
+
+Telas: pacientes (lista, busca pelo corpo, cadastro de pessoa ou animal com campos adicionais, detalhe, edição com If-Match, convite com QR), acompanhamentos (lista com filtros, novo com prévia dos dias, alertas e resolução, encerramento, equipe e observação), protocolos (lista, editor que publica nova versão), conversas da equipe (participantes, arquivar, reabrir), equipe (convite, perfis, suspender, desligar) e configurações da organização (marca com prévia e contraste, logo, textos, horário do chat).
+
 ### FE1 · login e paciente: concluída
 | Critério de saída | Como foi verificado |
 |---|---|

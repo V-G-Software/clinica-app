@@ -41,3 +41,9 @@ describe('horário de atendimento no fuso da organização', () => {
   it('segunda 19:00 em São Paulo (22:00Z) está fora', () => expect(dentroDoHorario(seg, Date.parse('2026-11-09T22:00:00Z'), 'America/Sao_Paulo')).toBe(false));
   it('sem horário configurado: sempre dentro', () => expect(dentroDoHorario([], 0, 'UTC')).toBe(true));
 });
+
+import { escreverDias, lerDias } from '@/i18n/intervalos';
+describe('dias do protocolo', () => {
+  it.each([['1-7', [1, 2, 3, 4, 5, 6, 7]], ['1,3,5-7', [1, 3, 5, 6, 7]], ['3, 1, 1', [1, 3]], ['7-1', null], ['abc', null], ['', null], ['400', null]])('%s', (t, r) => expect(lerDias(t as string)).toEqual(r));
+  it('escreve intervalos', () => expect(escreverDias([1, 2, 3, 5, 7, 8])).toBe('1-3, 5, 7-8'));
+});

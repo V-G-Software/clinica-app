@@ -49,15 +49,18 @@ const primeiroNome = computed(() => sessao.manifesto?.usuario.nomeExibicao.split
       </Cartao>
       <Cartao v-else-if="s.tipo === 'ALERTAS_ABERTOS'">
         <h2 class="font-bold">Alertas abertos ({{ s.dados.total }})</h2>
-        <ul class="mt-2 flex flex-col gap-1"><li v-for="a in s.dados.itens" :key="a.id" class="flex gap-2"><span class="font-semibold" :class="a.severidade === 'ALTA' ? 'text-erro' : 'text-atencao'">{{ a.severidade }}</span> {{ a.paciente.nome }} — {{ a.mensagem }}</li></ul>
+        <ul class="mt-2 flex flex-col gap-1"><li v-for="a in s.dados.itens" :key="a.id"><RouterLink :to="`/acompanhamentos/${a.acompanhamentoId}`" class="flex min-h-11 gap-2 py-1"><span class="font-semibold" :class="a.severidade === 'ALTA' ? 'text-erro' : 'text-atencao'">{{ a.severidade }}</span> <span>{{ a.paciente.nome }} — {{ a.mensagem }}</span></RouterLink></li></ul>
       </Cartao>
       <Cartao v-else-if="s.tipo === 'CHECKINS_DO_DIA'">
         <h2 class="font-bold">{{ capitalizar(termo('checkin').plural) }} de hoje</h2>
         <p>{{ t('inicio.respondidos', s.dados.respondidos) }} · {{ t('inicio.pendentes', s.dados.pendentes) }} · {{ t('inicio.expirados', s.dados.expirados) }}</p>
+        <ul v-if="!sessao.ehPaciente" class="mt-1"><li v-for="c in s.dados.itens" :key="c.id"><RouterLink :to="`/checkins/${c.id}`" class="flex min-h-10 justify-between py-1 text-sm"><span>{{ c.paciente?.nome }} · dia {{ c.dia }}</span><span class="text-zinc-500">{{ c.status === 'RESPONDIDO' ? 'respondido' : c.status === 'EXPIRADO' ? 'não respondido' : 'pendente' }}</span></RouterLink></li></ul>
       </Cartao>
       <Cartao v-else-if="s.tipo === 'ACOMPANHAMENTOS_ATIVOS'">
         <h2 class="font-bold">{{ capitalizar(termo('acompanhamento').plural) }} em andamento</h2>
         <p>{{ contar(s.dados.total, termo('acompanhamento')) }}</p>
+        <ul class="mt-1"><li v-for="a in s.dados.itens" :key="a.id"><RouterLink :to="`/acompanhamentos/${a.id}`" class="flex min-h-10 justify-between py-1 text-sm"><span>{{ a.paciente.nome }}</span><span class="text-zinc-500">dia {{ a.diaAtual }}/{{ a.totalDias }}</span></RouterLink></li></ul>
+        <RouterLink to="/acompanhamentos" class="text-sm text-acao underline">Ver todos</RouterLink>
       </Cartao>
       <Cartao v-else-if="s.tipo === 'CONVERSAS_RECENTES'">
         <h2 class="font-bold">{{ capitalizar(termo('conversa').plural) }}</h2>
