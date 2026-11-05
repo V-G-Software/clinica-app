@@ -117,7 +117,7 @@ export const handlers: Record<string, Handler> = {
     const o = q.org.config;
     const corpo = {
       contrato: { versao: q.org.cenario.__versaoContrato }, status: o.status, mensagemStatus: o.mensagemStatus ?? null,
-      frontend: { versaoMinima: o.versaoMinimaFrontend ?? '1.0.0' },
+      frontend: { versaoMinima: o.versaoMinimaFrontend ?? '0.1.0' },
       organizacao: { slug: o.slug, nome: o.nome, fuso: o.fuso, locale: o.locale },
       tema: o.tema, pwa: o.pwa, autenticacao: o.autenticacao, textos: o.textos, links: o.links,
     };
