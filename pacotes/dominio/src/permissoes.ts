@@ -1,0 +1,39 @@
+export type Perfil = 'GESTOR' | 'PROFISSIONAL' | 'SECRETARIA' | 'PACIENTE';
+export interface ModuloAtivo { id: string; versao: string; config: Record<string, any> }
+export const PRIORIDADE_PERFIL: Perfil[] = ['PROFISSIONAL', 'SECRETARIA', 'GESTOR', 'PACIENTE'];
+export const perfilPadrao = (perfis: string[]): Perfil => PRIORIDADE_PERFIL.find((p) => perfis.includes(p))!;
+export const ehEquipe = (perfis: string[]) => perfis.some((p) => p !== 'PACIENTE');
+
+export const TODAS_PERMISSOES = [
+  'pacientes.paciente.ler', 'pacientes.paciente.criar', 'pacientes.paciente.editar', 'pacientes.paciente.convidar',
+  'acompanhamento.protocolo.ler', 'acompanhamento.protocolo.gerenciar', 'acompanhamento.acompanhamento.ler',
+  'acompanhamento.acompanhamento.criar', 'acompanhamento.acompanhamento.encerrar', 'acompanhamento.checkin.ler',
+  'acompanhamento.checkin.responder', 'acompanhamento.alerta.ler', 'acompanhamento.alerta.resolver',
+  'chat.conversa.ler', 'chat.conversa.criar', 'chat.conversa.gerenciar', 'chat.mensagem.enviar',
+  'equipe.membro.ler', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar',
+] as const;
+
+/** Tabela da seção 9.6. [DECISÃO 3]: secretária vê check-ins e alertas por padrão. */
+export const PERMISSOES_POR_PERFIL: Record<Perfil, readonly string[]> = {
+  GESTOR: TODAS_PERMISSOES.filter((p) => p !== 'acompanhamento.checkin.responder'),
+  PROFISSIONAL: TODAS_PERMISSOES.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar'].includes(p)),
+  SECRETARIA: [
+    'pacientes.paciente.ler', 'pacientes.paciente.criar', 'pacientes.paciente.editar', 'pacientes.paciente.convidar',
+    'acompanhamento.protocolo.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.acompanhamento.criar',
+    'acompanhamento.checkin.ler', 'acompanhamento.alerta.ler', 'chat.conversa.ler', 'chat.conversa.criar',
+    'chat.conversa.gerenciar', 'chat.mensagem.enviar', 'equipe.membro.ler',
+  ],
+  PACIENTE: [
+    'pacientes.paciente.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.checkin.ler',
+    'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar',
+  ],
+};
+export const temModulo = (modulos: ModuloAtivo[], id: string) => modulos.some((m) => m.id === id);
+export const configModulo = (modulos: ModuloAtivo[], id: string) => modulos.find((m) => m.id === id)?.config ?? {};
+
+/** Permissões efetivas: tabela do perfil, filtrada pelos módulos ativos (núcleo: organizacao). */
+export function permissoesDe(modulos: ModuloAtivo[], perfil: Perfil): string[] {
+  const base = [...PERMISSOES_POR_PERFIL[perfil]];
+  if (perfil === 'PACIENTE' && configModulo(modulos, 'chat').pacientePodeIniciar) base.push('chat.conversa.criar');
+  return base.filter((p) => { const m = p.split('.')[0]; return m === 'organizacao' || temModulo(modulos, m); });
+}

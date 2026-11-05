@@ -8,3 +8,4 @@ conformidade/relatorio.json
 *.log
 conformidade/.vitest-resultado.json
 conformidade/.cobertura.jsonl
+backend/.dados/

@@ -23,10 +23,14 @@ export async function percorrerEtapas(api: Cliente, primeira: any, cred: Credenc
     switch (r.etapa) {
       case 'CONCLUIDO':
         return { vistas, tokenAcesso: r.tokenAcesso as string, tokenRenovacao: r.tokenRenovacao as string | undefined, expiraEm: r.expiraEm, codigosRecuperacao };
-      case 'MFA':
+      case 'MFA': {
         if (!cred.totp) throw new Error('etapa MFA sem segredo TOTP configurado');
-        r = esperar(await api.chamar('POST', '/v1/auth/mfa/verificar', { body: { desafioId: d, codigo: await proximoCodigo(cred.totp) } }), 200).body;
+        let resp = await api.chamar('POST', '/v1/auth/mfa/verificar', { body: { desafioId: d, codigo: await proximoCodigo(cred.totp) } });
+        // Backends que recusam reuso de TOTP: se outro cliente já usou esta janela, espera a próxima (uma vez).
+        if (resp.status !== 200 && resp.body?.codigo === 'CODIGO_INVALIDO') resp = await api.chamar('POST', '/v1/auth/mfa/verificar', { body: { desafioId: d, codigo: await proximoCodigo(cred.totp) } });
+        r = esperar(resp, 200).body;
         break;
+      }
       case 'CONFIGURAR_MFA': {
         const ini = esperar(await api.chamar('POST', '/v1/auth/mfa/totp/iniciar', { body: { desafioId: d } }), 200).body;
         cred.totp = ini.segredo;
