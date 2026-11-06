@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Configurações da organização (gestor): nome, contato, marca (com prévia e contraste), logo,
-// textos de boas-vindas e regras do chat. Salvar emite `sessao.manifesto.alterado` (RN-EQP-004).
+// textos de boas-vindas, regras do chat e do acompanhamento. Salvar emite `sessao.manifesto.alterado` (RN-EQP-004).
 import { computed, reactive, ref, watch } from 'vue';
 import { useMutation, useQuery } from '@tanstack/vue-query';
 import { useI18n } from 'vue-i18n';
@@ -16,6 +16,7 @@ import { formatarTelefone, paraE164 } from '@/i18n/telefone';
 import { useSessaoStore } from '@/sessao/store';
 import { useAppStore } from '@/app/store';
 import { aplicarMarca } from '@/app/tema';
+import { TERMOS_PADRAO, artigoPlural, capitalizar, type Termo } from '@/i18n/termos';
 import Botao from '@/ds/Botao.vue';
 import Aviso from '@/ds/Aviso.vue';
 import Cartao from '@/ds/Cartao.vue';
@@ -31,13 +32,16 @@ async function reaplicarMarca() {
   if (r?.ok) { app.config = await r.json(); aplicarMarca(app.config!, { dev: import.meta.env.DEV }); }
 }
 const q = useQuery({ queryKey: ['organizacao'], queryFn: () => comEtag(api().GET('/v1/organizacao', {})) });
-const f = reactive({ nome: '', telefone: '', email: '', endereco: '', cor: '#000000', boasVindasTitulo: '', boasVindasTexto: '', mensagemForaDoHorario: '', avisoUrgencia: '', horario: [] as Array<{ diaSemana: number; inicio: string; fim: string }>, logoArquivoId: undefined as string | null | undefined });
+const f = reactive({ nome: '', telefone: '', email: '', endereco: '', cor: '#000000', boasVindasTitulo: '', boasVindasTexto: '', mensagemForaDoHorario: '', avisoUrgencia: '', horario: [] as Array<{ diaSemana: number; inicio: string; fim: string }>, logoArquivoId: undefined as string | null | undefined, resolverAlertasAoEncerrar: false });
 watch(() => q.data.value, (d) => {
   if (!d) return;
   const o = d.dado;
-  Object.assign(f, { nome: o.nome, telefone: formatarTelefone(o.contato.telefone), email: o.contato.email ?? '', endereco: o.contato.endereco ?? '', cor: o.tema.corMarca, boasVindasTitulo: o.textos.boasVindasTitulo, boasVindasTexto: o.textos.boasVindasTexto, mensagemForaDoHorario: o.chat.mensagemForaDoHorario ?? '', avisoUrgencia: o.chat.avisoUrgencia ?? '', horario: o.chat.horarioAtendimento.map((h) => ({ ...h })), logoArquivoId: undefined });
+  Object.assign(f, { nome: o.nome, telefone: formatarTelefone(o.contato.telefone), email: o.contato.email ?? '', endereco: o.contato.endereco ?? '', cor: o.tema.corMarca, boasVindasTitulo: o.textos.boasVindasTitulo, boasVindasTexto: o.textos.boasVindasTexto, mensagemForaDoHorario: o.chat.mensagemForaDoHorario ?? '', avisoUrgencia: o.chat.avisoUrgencia ?? '', horario: o.chat.horarioAtendimento.map((h) => ({ ...h })), logoArquivoId: undefined, resolverAlertasAoEncerrar: o.acompanhamento?.resolverAlertasAoEncerrar ?? false });
 }, { immediate: true });
 const temChat = computed(() => sessao.modulos.has('chat'));
+// Presente só com o módulo contratado (o backend omite o bloco sem ele).
+const temAcompanhamento = computed(() => !!q.data.value?.dado.acompanhamento);
+const termo = (k: string): Termo => ((sessao.termos as Record<string, Termo> | undefined)?.[k] ?? TERMOS_PADRAO[k]);
 const corValida = computed(() => /^#[0-9a-fA-F]{6}$/.test(f.cor));
 const ajuste = computed(() => (corValida.value ? corComContraste(f.cor, FUNDO_CLARO) : null));
 const conflito = ref(false);
@@ -58,6 +62,7 @@ const salvar = useMutation({
       contato: { telefone: paraE164(f.telefone), email: f.email.trim().toLowerCase() || null, endereco: f.endereco.trim() || null },
       tema: { corMarca: f.cor.toUpperCase(), ...(f.logoArquivoId !== undefined ? { logoArquivoId: f.logoArquivoId } : {}) },
       textos: { boasVindasTitulo: f.boasVindasTitulo, boasVindasTexto: f.boasVindasTexto },
+      ...(temAcompanhamento.value ? { acompanhamento: { resolverAlertasAoEncerrar: f.resolverAlertasAoEncerrar } } : {}),
       ...(temChat.value ? { chat: { horarioAtendimento: f.horario, mensagemForaDoHorario: f.mensagemForaDoHorario || null, avisoUrgencia: f.avisoUrgencia || null } } : {}),
     },
   })),
@@ -110,6 +115,16 @@ const entrada = 'min-h-11 rounded-lg border-2 border-zinc-300 bg-white px-3 dark
         <label class="flex flex-col gap-1 text-sm">Mensagem automática fora do horário<textarea v-model="f.mensagemForaDoHorario" rows="2" maxlength="500" :class="entrada" class="py-2" /></label>
         <label class="flex flex-col gap-1 text-sm">Aviso de urgência (fixo no topo da conversa do paciente)<textarea v-model="f.avisoUrgencia" rows="2" maxlength="500" :class="entrada" class="py-2" /></label>
         <Aviso tipo="atencao">Revise o aviso de urgência com um profissional e com o jurídico antes de usar com pacientes.</Aviso>
+      </Cartao>
+      <Cartao v-if="temAcompanhamento" class="flex flex-col gap-3">
+        <h2 class="font-bold">{{ capitalizar(termo('acompanhamento').plural) }}</h2>
+        <label class="flex items-start gap-3">
+          <input v-model="f.resolverAlertasAoEncerrar" type="checkbox" class="mt-0.5 size-5 shrink-0" />
+          <span>
+            Resolver os alertas abertos ao encerrar ou concluir {{ artigoPlural(termo('acompanhamento')) }} {{ termo('acompanhamento').plural }}
+            <span class="block text-sm text-secundario">Cada alerta fica registrado como resolvido por quem encerrou (ou pelo sistema, na conclusão automática). Desligado, os alertas continuam abertos até alguém resolver.</span>
+          </span>
+        </label>
       </Cartao>
       <Botao tipo="submit" bloco :carregando="salvar.isPending.value" :desabilitado="!corValida || f.nome.trim().length < 2">Salvar</Botao>
     </form>

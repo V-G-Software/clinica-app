@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { esperar } from '../src/cliente.ts';
 import { config } from '../src/config.ts';
 import { ambiente, temModulo } from '../src/contexto.ts';
-import { criarPacienteComConta } from '../src/sessoes.ts';
+import { criarPacienteComConta, percorrerEtapas } from '../src/sessoes.ts';
 
 const amb = ambiente();
 const { api, gestor, pacienteA, pacienteB, termosVersao, execucao, slug } = amb;
@@ -34,6 +34,18 @@ describe('senha e conta', () => {
     expect(r.dadosRetidos.length).toBeGreaterThan(0);
     esperar(await api.chamar('GET', '/v1/me', { token: s.token }), 401);
     esperar(await api.chamar('POST', '/v1/me/exclusao', { token: gestor.token }), 403, 'PERMISSAO_NEGADA');
+  });
+
+  it('conta excluída fica só inativa: novo convite da organização reativa a MESMA conta (QUESTION-010)', async () => {
+    const email = `conf.${execucao}.reativar@exemplo.com`;
+    const s = await criarPacienteComConta(api, gestor, email, `Reativar ${execucao}`, termosVersao);
+    esperar(await api.chamar('POST', '/v1/me/exclusao', { token: s.token }), 202);
+    esperar(await api.chamar('GET', '/v1/me', { token: s.token }), 401);
+    const conv = esperar(await api.chamar('POST', `/v1/pacientes/${s.pacienteId}/convites`, { token: gestor.token, body: { email }, idempotencia: true }), 201).body;
+    const r = esperar(await api.chamar('POST', `/v1/auth/convites/${conv.token}/aceitar`, { body: { email, termosVersao } }), 200);
+    const fim = await percorrerEtapas(api, r.body, { email }, termosVersao);
+    const me = esperar(await api.chamar('GET', '/v1/me', { token: fim.tokenAcesso }), 200).body;
+    expect(me.id).toBe(s.usuarioId);
   });
 });
 

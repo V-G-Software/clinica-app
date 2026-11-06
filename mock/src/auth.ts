@@ -205,6 +205,8 @@ function concluirConvite(org: Org, c: any, email: string, termosVersao: string, 
     org.usuarios.set(u.id, u);
   }
   if (!u.vinculos.some((v) => v.pacienteId === c.pacienteId)) u.vinculos.push({ pacienteId: c.pacienteId, relacao: c.relacao });
+  // QUESTION-010: conta inativada (DESLIGADO) pelo próprio paciente volta com o novo convite — mesma conta, mesmo histórico.
+  u.status = 'ATIVO'; u._v++;
   u.termosAceitosVersao = termosVersao;
   if (temModulo(org, 'chat')) {
     const conversa = conversaAtivaDoPaciente(org, c.pacienteId);

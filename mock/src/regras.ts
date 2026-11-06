@@ -560,6 +560,7 @@ export function concluirAcompanhamento(org: Org, id: string) {
   const a = org.acompanhamentos.get(id);
   if (!a || (a.status !== 'ATIVO' && a.status !== 'AGENDADO')) return;
   a.status = 'CONCLUIDO'; a._v++;
+  resolverAlertasAoFinalizar(org, a, null, 'Acompanhamento concluído.');
   const contas = contasIdsDoPaciente(org, a.pacienteId);
   emitir(org, 'acompanhamento.acompanhamento.atualizado', { acompanhamentoId: a.id }, [...equipeAtivaDe(org, a), ...contas]);
   for (const uid of contas)
@@ -567,6 +568,7 @@ export function concluirAcompanhamento(org: Org, id: string) {
 }
 export function encerrarAcompanhamento(org: Org, a: any, motivo: string, porId: string) {
   a.status = 'ENCERRADO'; a.motivoEncerramento = motivo; a.encerradoPor = porId; a._v++;
+  resolverAlertasAoFinalizar(org, a, porId, 'Acompanhamento encerrado.');
   cancelarJobsComPrefixo(`acompanhamento:${a.id}:`);
   for (const c of checkinsDoAcompanhamento(org, a.id)) {
     if (c.status === 'AGENDADO' || c.status === 'DISPONIVEL') { c.status = 'CANCELADO'; cancelarJobsComPrefixo(`checkin:${c.id}:`); }
@@ -686,7 +688,12 @@ export function responderCheckin(org: Org, c: any, respostas: Record<string, any
   for (const uid of [...equipe, ...contasIdsDoPaciente(org, a.pacienteId)]) avisarContadores(org)(uid);
   return c;
 }
-export function resolverAlerta(org: Org, alerta: any, porId: string, nota: string | null) {
+/** QUESTION-019: com `resolverAlertasAoEncerrar`, o fim do acompanhamento resolve os alertas abertos (autor = quem encerrou; null na conclusão automática). */
+function resolverAlertasAoFinalizar(org: Org, a: any, porId: string | null, nota: string) {
+  if (!configModulo(org, 'acompanhamento').resolverAlertasAoEncerrar) return;
+  for (const al of org.alertas.values()) if (al.acompanhamentoId === a.id && al.status === 'ABERTO') resolverAlerta(org, al, porId, nota);
+}
+export function resolverAlerta(org: Org, alerta: any, porId: string | null, nota: string | null) {
   alerta.status = 'RESOLVIDO'; alerta.resolvidoEm = agoraIso(); alerta.resolvidoPor = porId; alerta.nota = nota ?? null;
   const a = org.acompanhamentos.get(alerta.acompanhamentoId);
   const equipe = equipeAtivaDe(org, a);

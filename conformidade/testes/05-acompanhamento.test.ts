@@ -13,6 +13,7 @@ const ativo = temModulo(amb, 'acompanhamento');
 let protocolo: any;
 let acomp: any;
 let checkin: any;
+let inicioPassado: string; // dataInicio que deixa o check-in do dia 1 disponível agora
 
 describe.runIf(ativo)('acompanhamento', () => {
   beforeAll(async () => {
@@ -36,8 +37,9 @@ describe.runIf(ativo)('acompanhamento', () => {
         { id: 'sem_resposta', tipo: 'CHECKIN_EXPIRADO', severidade: 'MEDIA', mensagem: 'Check-in não respondido' },
       ],
     } }), 201).body;
+    inicioPassado = somarDias(ref.data, -1);
     acomp = esperar(await api.chamar('POST', '/v1/acompanhamentos', { token: gestor.token, idempotencia: true, body: {
-      pacienteId: pacienteA.pacienteId, protocoloId: protocolo.id, dataInicio: somarDias(ref.data, -1), equipeIds: [gestor.usuarioId], observacao: 'teste',
+      pacienteId: pacienteA.pacienteId, protocoloId: protocolo.id, dataInicio: inicioPassado, equipeIds: [gestor.usuarioId], observacao: 'teste',
     } }), 201).body;
   });
 
@@ -125,5 +127,38 @@ describe.runIf(ativo)('acompanhamento', () => {
     const cks = esperar(await api.chamar('GET', '/v1/checkins', { token: gestor.token, query: { acompanhamentoId: futuro.id } }), 200).body.itens;
     expect(cks.every((c: any) => c.status === 'CANCELADO')).toBe(true);
     esperar(await api.chamar('POST', `/v1/acompanhamentos/${futuro.id}/encerrar`, { token: pacienteB.token, body: { motivo: 'Paciente tentando encerrar.' } }), [403, 404]);
+  });
+  it('alertas abertos ao encerrar: continuam abertos por padrão; com resolverAlertasAoEncerrar, resolvidos por quem encerrou (QUESTION-019)', async () => {
+    const config = async () => esperar(await api.chamar('GET', '/v1/organizacao', { token: gestor.token }), 200);
+    const ligar = async (valor: boolean) => {
+      const atual = await config();
+      return esperar(await api.chamar('PATCH', '/v1/organizacao', { token: gestor.token, body: { acompanhamento: { resolverAlertasAoEncerrar: valor } }, headers: { 'If-Match': atual.headers.get('etag')! } }), 200).body;
+    };
+    // Acompanhamento com alerta aberto, encerrado em seguida; devolve os alertas depois do encerramento.
+    const encerrarComAlerta = async () => {
+      const a = esperar(await api.chamar('POST', '/v1/acompanhamentos', { token: gestor.token, idempotencia: true, body: {
+        pacienteId: pacienteB.pacienteId, protocoloId: protocolo.id, dataInicio: inicioPassado, equipeIds: [gestor.usuarioId],
+      } }), 201).body;
+      const ck = esperar(await api.chamar('GET', '/v1/checkins', { token: pacienteB.token, query: { acompanhamentoId: a.id } }), 200).body.itens.find((c: any) => c.dia === 1);
+      esperar(await api.chamar('POST', `/v1/checkins/${ck.id}/respostas`, { token: pacienteB.token, idempotencia: true, body: { respostas: { dor: 9, febre: false } } }), 201);
+      esperar(await api.chamar('POST', `/v1/acompanhamentos/${a.id}/encerrar`, { token: gestor.token, body: { motivo: 'Teste de alertas ao encerrar.' } }), 200);
+      return esperar(await api.chamar('GET', '/v1/alertas', { token: gestor.token, query: { acompanhamentoId: a.id } }), 200).body.itens;
+    };
+    const original = (await config()).body.acompanhamento;
+    expect(original).toEqual({ resolverAlertasAoEncerrar: expect.any(Boolean) });
+    try {
+      expect((await ligar(false)).acompanhamento.resolverAlertasAoEncerrar).toBe(false);
+      const mantidos = await encerrarComAlerta();
+      expect(mantidos).toHaveLength(1);
+      expect(mantidos[0]).toMatchObject({ status: 'ABERTO', resolvidoPor: null });
+
+      expect((await ligar(true)).acompanhamento.resolverAlertasAoEncerrar).toBe(true);
+      const resolvidos = await encerrarComAlerta();
+      expect(resolvidos).toHaveLength(1);
+      expect(resolvidos[0]).toMatchObject({ status: 'RESOLVIDO', resolvidoPor: { usuarioId: gestor.usuarioId }, nota: 'Acompanhamento encerrado.' });
+      expect(resolvidos[0].resolvidoEm).toBeTruthy();
+    } finally {
+      await ligar(original.resolverAlertasAoEncerrar);
+    }
   });
 });

@@ -3,7 +3,8 @@
 // marca, formulários, pacientes, protocolos, acompanhamentos e conversas de exemplo. Roda como clinica_dono, com o contexto da organização (RLS forçado).
 //   pnpm org:criar --arquivo ../contrato/exemplos/cenarios/modelo-otorrino.json
 //   pnpm org:criar --todos           (os 3 cenários)
-//   pnpm org:atualizar --arquivo org.json   (só configuração: marca, módulos, termos, textos)
+//   pnpm org:atualizar --arquivo org.json [--aviso "o que mudou"]   (só configuração: marca, módulos, termos, textos;
+//        termos com versão nova avisam todas as contas ativas — QUESTION-014)
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +13,7 @@ import { config } from '../src/config.ts';
 import { cifrar, hashSenha, sha256 } from '../src/cripto.ts';
 import { normalizar } from '@clinica/dominio';
 import { migrar } from './migrar.ts';
+import { notificar } from '../src/servicos/notificar.ts';
 import { semearF2 } from './semear-f2.ts';
 
 const CENARIOS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../contrato/exemplos/cenarios');
@@ -58,11 +60,37 @@ export async function criarOrganizacao(c: pg.Client, cen: any, log = console.log
     log(`organização criada: ${o.slug} → ${urlApi} (${cen.usuarios.length} contas, ${(cen.pacientes ?? []).length} pacientes)`);
   } catch (e) { await c.query('ROLLBACK'); throw e; }
 }
-async function atualizar(c: pg.Client, cen: any) {
+/**
+ * Atualiza a configuração. Se `autenticacao.termosVersao` mudou (QUESTION-014): o aceite continua no próximo
+ * login (etapa ACEITAR_TERMOS), e toda conta ativa recebe agora uma notificação SISTEMA (central + push discreto)
+ * avisando da mudança. `aviso` substitui o texto padrão (ex.: resumo do que mudou, escrito pela clínica).
+ */
+export async function atualizarOrganizacao(c: pg.Client, cen: any, opcoes: { aviso?: string; log?: (m: string) => void } = {}) {
+  const log = opcoes.log ?? console.log;
   const o = cen.organizacao;
-  const r = await c.query('UPDATE organizacoes SET nome = $2, fuso = $3, locale = $4, status = $5, mensagem_status = $6, dominios = $7, configuracao = $8, termos = $9, modulos = $10, capacidades = $11, versao = versao + 1 WHERE slug = $1',
-    [o.slug, o.nome, o.fuso, o.locale, o.status, o.mensagemStatus, o.dominios ?? [], configuracao(o), cen.termos, JSON.stringify(cen.modulos), cen.capacidades]);
-  console.log(r.rowCount ? `organização atualizada: ${o.slug}` : `organização não encontrada: ${o.slug}`);
+  await c.query('BEGIN');
+  try {
+    const antes = (await c.query(`SELECT id, configuracao->'autenticacao'->>'termosVersao' AS termos FROM organizacoes WHERE slug = $1 FOR UPDATE`, [o.slug])).rows[0];
+    if (!antes) { await c.query('ROLLBACK'); log(`organização não encontrada: ${o.slug}`); return { avisados: 0 }; }
+    const r = (await c.query('UPDATE organizacoes SET nome = $2, fuso = $3, locale = $4, status = $5, mensagem_status = $6, dominios = $7, configuracao = $8, termos = $9, modulos = $10, capacidades = $11, versao = versao + 1 WHERE slug = $1 RETURNING *',
+      [o.slug, o.nome, o.fuso, o.locale, o.status, o.mensagemStatus, o.dominios ?? [], configuracao(o), cen.termos, JSON.stringify(cen.modulos), cen.capacidades])).rows[0];
+    let avisados = 0;
+    if (antes.termos !== o.autenticacao.termosVersao) {
+      await c.query("SELECT set_config('app.organizacao_id', $1, true)", [r.id]);
+      const org = { id: r.id, slug: r.slug, nome: r.nome, fuso: r.fuso, locale: r.locale, status: r.status, mensagemStatus: r.mensagem_status, dominios: r.dominios,
+        urlApi: r.url_api, configuracao: r.configuracao, termos: r.termos, modulos: r.modulos, capacidades: r.capacidades, versao: r.versao };
+      const texto = opcoes.aviso ?? `${r.nome} atualizou os termos de uso e a política de privacidade. Você vai ler e confirmar no próximo acesso ao app.`;
+      const contas = (await c.query(`SELECT id FROM usuarios WHERE organizacao_id = $1 AND status = 'ATIVO' AND termos_aceitos_versao IS DISTINCT FROM $2`, [r.id, o.autenticacao.termosVersao])).rows;
+      const silencioso = { info: () => undefined };
+      for (const u of contas) await notificar(c as any, org as any, u.id, { tipo: 'SISTEMA', titulo: 'Termos de uso atualizados', texto, destino: { tela: 'perfil' } }, silencioso);
+      await c.query(`INSERT INTO auditoria (organizacao_id, usuario_id, acao, recurso, recurso_id, request_id) VALUES ($1, NULL, 'ATUALIZAR_TERMOS', 'organizacao', $1, $2)`,
+        [r.id, `org:atualizar:${process.env.USER ?? 'operador'}`]);
+      avisados = contas.length;
+    }
+    await c.query('COMMIT');
+    log(`organização atualizada: ${o.slug}${avisados ? ` — termos ${antes.termos} → ${o.autenticacao.termosVersao}, ${avisados} conta(s) avisada(s)` : ''}`);
+    return { avisados };
+  } catch (e) { await c.query('ROLLBACK'); throw e; }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -74,7 +102,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   try {
     for (const a of arquivos) {
       const cen = JSON.parse(readFileSync(path.resolve(a), 'utf8'));
-      if (acao === 'criar') await criarOrganizacao(c, cen); else await atualizar(c, cen);
+      if (acao === 'criar') await criarOrganizacao(c, cen); else await atualizarOrganizacao(c, cen, { aviso: arg('--aviso') });
     }
   } finally { await c.end(); }
 }

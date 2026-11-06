@@ -18,7 +18,7 @@ Frontend apontando para este backend: `VITE_DIRETORIO_URL=http://localhost:4020/
 
 Ambiente completo com Docker (Postgres 17, MinIO, Mailpit): ver `docker-compose.yml` na raiz. Produção: [docs/operacao/implantacao.md](../docs/operacao/implantacao.md); incidente: [docs/operacao/incidente.md](../docs/operacao/incidente.md) e `pnpm incidente`.
 
-Uma organização nova: `pnpm org:criar --arquivo org.json` (mesmo formato dos cenários); mudanças de configuração: `pnpm org:atualizar --arquivo org.json`. Chaves de produção: `pnpm chaves`.
+Uma organização nova: `pnpm org:criar --arquivo org.json` (mesmo formato dos cenários); mudanças de configuração: `pnpm org:atualizar --arquivo org.json`. Se `autenticacao.termosVersao` mudar, todas as contas ativas recebem uma notificação na hora (texto em `--aviso "..."`) e aceitam no próximo login (QUESTION-014). Chaves de produção: `pnpm chaves`.
 
 ## Testes
 

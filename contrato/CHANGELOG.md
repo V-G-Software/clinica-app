@@ -2,6 +2,18 @@
 
 Versionamento semântico (seção 4.2). Dentro de `1.x`, só mudanças aditivas.
 
+## 1.0.0-rc.3 — 2026-11-06
+
+Decisões de produto das QUESTION-010, 014, 016, 019 e 029. Só mudanças aditivas.
+
+### Incluído
+- `ConfigAcompanhamento.resolverAlertasAoEncerrar` (opcional, padrão `false`): ao encerrar ou concluir um acompanhamento, os alertas ainda abertos são resolvidos com nota automática (QUESTION-019).
+- `OrganizacaoConfiguracao.acompanhamento` e `OrganizacaoEdicao.acompanhamento`: o gestor liga e desliga a opção acima.
+
+### Esclarecido (sem mudança de formato)
+- `POST /v1/me/exclusao` inativa a conta (`DESLIGADO`); um novo convite reativa a mesma conta com o histórico (QUESTION-010).
+- Termos novos: o aceite continua no próximo login (`ACEITAR_TERMOS`); a organização avisa as contas ativas com uma notificação `SISTEMA` (QUESTION-014).
+
 ## 1.0.0-rc.2 — 2026-11-05 (FE1)
 
 ### Corrigido

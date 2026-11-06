@@ -92,6 +92,7 @@ function orgConfig(ctx: Ctx) {
   return {
     nome: o.nome, contato: o.contato, tema: { corMarca: o.tema.corMarca, logoUrl: o.tema.logoUrl ?? null }, textos: o.textos,
     chat: { horarioAtendimento: chat.horarioAtendimento ?? [], mensagemForaDoHorario: chat.mensagemForaDoHorario ?? null, avisoUrgencia: chat.avisoUrgencia ?? null },
+    ...(r.temModulo(ctx.org, 'acompanhamento') ? { acompanhamento: { resolverAlertasAoEncerrar: !!r.configModulo(ctx.org, 'acompanhamento').resolverAlertasAoEncerrar } } : {}),
     acoesPermitidas: ctx.perms.has('organizacao.configuracao.editar') ? ['EDITAR'] : [],
   };
 }
@@ -739,6 +740,10 @@ export const handlers: Record<string, Handler> = {
     if (q.body.chat) {
       if (!r.temModulo(q.org, 'chat')) throw new ErroApi('MODULO_NAO_CONTRATADO');
       Object.assign(q.org.modulos.find((m) => m.id === 'chat').config, q.body.chat);
+    }
+    if (q.body.acompanhamento) {
+      if (!r.temModulo(q.org, 'acompanhamento')) throw new ErroApi('MODULO_NAO_CONTRATADO');
+      Object.assign(q.org.modulos.find((m) => m.id === 'acompanhamento').config, q.body.acompanhamento);
     }
     q.org._vConfig++;
     avisarManifesto(q.org); // RN-EQP-004

@@ -20,6 +20,7 @@ Acompanhamento pós-procedimento à distância: check-ins diários respondidos p
 | Paciente ver dados de outro paciente | visibilidade por vínculo conta↔paciente; 404 sem revelar existência | conformidade 04, 05 e 07 (isolamento entre pacientes) | baixo |
 | Vazamento por foto (localização, conteúdo escondido) | recodificação completa, limite de pixels | `imagem.test.ts` | baixo |
 | Vazamento por notificação na tela bloqueada | push e e-mail discretos, payload cifrado | `push.test.ts` decifra e confere | baixo |
+| Nome da organização no push/e-mail revela a especialidade (ex.: oncologia, psiquiatria) | decisão do produto: mantido o nome (QUESTION-029); o texto nunca traz conteúdo clínico nem nome de paciente | risco **aceito**, a reavaliar por organização especializada | baixo/médio |
 | Perda de dados | PITR do provedor; ensaio de restauração mensal | `scripts/ensaio-restauracao.sh` | depende do provedor (QUESTION-025) |
 | Indisponibilidade em momento crítico (alerta não visto) | aviso de urgência fixo na conversa; o app não é canal de emergência (texto a revisar) | `textos-para-revisao.md` | **médio**: alerta é informativo, não substitui contato (RN-ACO-005) |
 | Uso indevido interno (equipe consultando sem necessidade) | trilha de auditoria de leitura e alteração, só acréscimo | `pnpm incidente acessos` | médio: depende de revisão periódica pela clínica |

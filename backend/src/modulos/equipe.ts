@@ -22,9 +22,11 @@ async function obterMembro(tx: Tx, ctx: Ctx, id: string): Promise<Usuario> {
 function orgConfig(ctx: Ctx) {
   const c = ctx.org.configuracao;
   const chat = ctx.org.modulos.find((m) => m.id === 'chat')?.config ?? {};
+  const acomp = ctx.org.modulos.find((m) => m.id === 'acompanhamento');
   return {
     nome: ctx.org.nome, contato: c.contato, tema: { corMarca: c.tema.corMarca, logoUrl: c.tema.logoUrl ?? null }, textos: c.textos,
     chat: { horarioAtendimento: chat.horarioAtendimento ?? [], mensagemForaDoHorario: chat.mensagemForaDoHorario ?? null, avisoUrgencia: chat.avisoUrgencia ?? null },
+    ...(acomp ? { acompanhamento: { resolverAlertasAoEncerrar: !!acomp.config?.resolverAlertasAoEncerrar } } : {}),
     acoesPermitidas: ctx.perms.has('organizacao.configuracao.editar') ? ['EDITAR'] : [],
   };
 }
@@ -104,6 +106,11 @@ export const handlersEquipe: Record<string, Handler> = {
       const chat = modulos.find((m) => m.id === 'chat');
       if (!chat) throw new ErroApi('MODULO_NAO_CONTRATADO');
       Object.assign(chat.config, q.body.chat);
+    }
+    if (q.body.acompanhamento) {
+      const acomp = modulos.find((m) => m.id === 'acompanhamento');
+      if (!acomp) throw new ErroApi('MODULO_NAO_CONTRATADO');
+      acomp.config = { ...acomp.config, ...q.body.acompanhamento };
     }
     // UPDATE com versão (otimista): concorrência entre dois gestores vira 412.
     const r = await q.tx.query('UPDATE organizacoes SET nome = $2, configuracao = $3, modulos = $4, versao = versao + 1 WHERE id = $1 AND versao = $5 RETURNING versao',
