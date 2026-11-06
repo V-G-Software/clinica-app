@@ -12,6 +12,7 @@ import { criarServidor } from '../src/servidor.ts';
 const TABELAS_COM_RLS = [
   'usuarios', 'pacientes', 'vinculos', 'convites', 'desafios', 'codigos_email', 'sessoes', 'tokens_renovacao',
   'tokens_senha', 'idempotencia', 'tentativas', 'notificacoes', 'inscricoes_push', 'arquivos', 'eventos', 'auditoria', 'formularios',
+  'protocolos', 'acompanhamentos', 'checkins', 'alertas', 'conversas', 'participantes', 'mensagens',
 ];
 
 describe('isolamento no banco (RLS)', () => {
@@ -26,6 +27,16 @@ describe('isolamento no banco (RLS)', () => {
     // Tabela nova sem RLS é o erro mais provável numa migration futura: só organizacoes e o controle de migrations ficam de fora.
     const semRls = rows.filter((r) => !r.relrowsecurity).map((r) => r.relname).sort();
     expect(semRls).toEqual(['organizacoes', 'schema_migracoes']);
+    // jobs: RLS habilitado e NÃO forçado, de propósito — só reivindicar_jobs() (dono) atravessa organizações.
+    const naoForcadas = rows.filter((r) => r.relrowsecurity && !r.relforcerowsecurity).map((r) => r.relname);
+    expect(naoForcadas).toEqual(['jobs']);
+  });
+
+  it('jobs: a aplicação só lê e grava jobs da própria organização', async () => {
+    const outros = await comOrg('org_vet', async (tx) => (await tx.query("SELECT count(*)::int AS n FROM jobs WHERE organizacao_id <> 'org_vet'")).rows[0].n);
+    expect(outros).toBe(0);
+    await expect(comOrg('org_vet', (tx) => tx.query(
+      `INSERT INTO jobs (organizacao_id, id, tipo, executar_em) VALUES ('org_otorrino', 'teste:x', 'teste', now())`))).rejects.toThrow(/row-level security/);
   });
 
   it('o papel da aplicação não ignora RLS nem é dono das tabelas', async () => {

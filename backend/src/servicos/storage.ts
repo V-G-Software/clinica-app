@@ -1,9 +1,9 @@
 // Storage de arquivos (8.3) por adaptador. O frontend só segue as instruções de envio.
 // - local: disco + URLs assinadas por HMAC servidas pelo próprio backend (dev/teste; o contrato permite).
 // - s3: URLs pré-assinadas (PUT para a quarentena, GET de visualização de até 5 minutos).
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { assinarUrl, iguais } from '../cripto.ts';
 import { config } from '../config.ts';
@@ -13,6 +13,7 @@ export interface Storage {
   ler(chave: string): Promise<Buffer | null>;
   gravar(chave: string, bytes: Buffer, tipo: string): Promise<void>;
   urlVisualizacao(chave: string, expiraEm: number): Promise<string>;
+  remover(chave: string): Promise<void>;
 }
 
 class StorageLocal implements Storage {
@@ -23,6 +24,7 @@ class StorageLocal implements Storage {
   conferir(metodo: string, chave: string, exp: number, ass: string, tipo = '') { return exp > Date.now() && iguais(ass, assinarUrl(`${metodo}|${chave}|${exp}|${tipo}`)); }
   async ler(chave: string) { const p = this.caminho(chave); return existsSync(p) ? readFileSync(p) : null; }
   async gravar(chave: string, bytes: Buffer) { const p = this.caminho(chave); mkdirSync(path.dirname(p), { recursive: true }); writeFileSync(p, bytes); }
+  async remover(chave: string) { rmSync(this.caminho(chave), { force: true }); }
   async urlVisualizacao(chave: string, exp: number) { return `${config.urlPublica}/_arquivos/ver/${chave}?exp=${exp}&ass=${assinarUrl(`GET|${chave}|${exp}|`)}`; }
 }
 
@@ -36,6 +38,7 @@ class StorageS3 implements Storage {
     try { const r = await this.s3.send(new GetObjectCommand({ Bucket: config.s3.bucket, Key: chave })); return Buffer.from(await r.Body!.transformToByteArray()); } catch { return null; }
   }
   async gravar(chave: string, bytes: Buffer, tipo: string) { await this.s3.send(new PutObjectCommand({ Bucket: config.s3.bucket, Key: chave, Body: bytes, ContentType: tipo })); }
+  async remover(chave: string) { await this.s3.send(new DeleteObjectCommand({ Bucket: config.s3.bucket, Key: chave })); }
   async urlVisualizacao(chave: string, exp: number) {
     return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: config.s3.bucket, Key: chave }), { expiresIn: Math.max(60, Math.floor((exp - Date.now()) / 1000)) });
   }

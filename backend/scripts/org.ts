@@ -1,6 +1,6 @@
 // Administração da plataforma (14.7): cria ou atualiza uma organização a partir de um arquivo no formato
 // dos cenários (contrato/exemplos/cenarios/*.json): organização, primeiro gestor e equipe, módulos, termos,
-// marca, formulários e pacientes de exemplo. Roda como clinica_dono, com o contexto da organização (RLS forçado).
+// marca, formulários, pacientes, protocolos, acompanhamentos e conversas de exemplo. Roda como clinica_dono, com o contexto da organização (RLS forçado).
 //   pnpm org:criar --arquivo ../contrato/exemplos/cenarios/modelo-otorrino.json
 //   pnpm org:criar --todos           (os 3 cenários)
 //   pnpm org:atualizar --arquivo org.json   (só configuração: marca, módulos, termos, textos)
@@ -12,6 +12,7 @@ import { config } from '../src/config.ts';
 import { cifrar, hashSenha, sha256 } from '../src/cripto.ts';
 import { normalizar } from '@clinica/dominio';
 import { migrar } from './migrar.ts';
+import { semearF2 } from './semear-f2.ts';
 
 const CENARIOS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../contrato/exemplos/cenarios');
 const [acao, ...args] = process.argv.slice(2);
@@ -51,6 +52,8 @@ export async function criarOrganizacao(c: pg.Client, cen: any, log = console.log
       await c.query(`INSERT INTO convites (organizacao_id, id, token_hash, tipo, paciente_id, email, relacao, nome, nome_conta, criado_por, expira_em)
         VALUES ($1,$2,$3,'PACIENTE',$4,$5,$6,$7,$7,$8, now() + interval '7 days')`, [o.id, `cnt_${p.id}`, sha256(p.convite.token), p.id,
         p.contato?.email ?? p.responsaveis?.[0]?.contato?.email ?? null, p.tipo === 'ANIMAL' ? 'ANIMAL' : 'PROPRIO', p.nome, p.convite.criadoPor ?? null]);
+    await semearF2(c, { id: o.id, slug: o.slug, nome: o.nome, fuso: o.fuso, locale: o.locale, status: o.status, mensagemStatus: o.mensagemStatus ?? null,
+      dominios: o.dominios ?? [], urlApi, configuracao: configuracao(o), termos: cen.termos, modulos: cen.modulos, capacidades: cen.capacidades, versao: 1 }, cen);
     await c.query('COMMIT');
     log(`organização criada: ${o.slug} → ${urlApi} (${cen.usuarios.length} contas, ${(cen.pacientes ?? []).length} pacientes)`);
   } catch (e) { await c.query('ROLLBACK'); throw e; }

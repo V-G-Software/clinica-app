@@ -4,3 +4,4 @@ export * from './permissoes.ts';
 export * from './navegacao.ts';
 export * from './termos.ts';
 export * from './formulario.ts';
+export * from './datas.ts';

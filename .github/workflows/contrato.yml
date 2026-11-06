@@ -51,11 +51,12 @@ jobs:
         if: always()
         with: { name: conformidade, path: "conformidade/relatorio.*\nmock.log" }
 
-  backend-f1:
-    # Backend de referência contra PostgreSQL 17 real: testes de isolamento e a parte F1 da conformidade
-    # nas 3 organizações. Arquivos em storage local (S3/MinIO entra quando houver teste específico).
+  backend:
+    # Backend de referência contra PostgreSQL 17 real: testes do backend (isolamento, eventos, jobs,
+    # concorrência, Web Push), conformidade COMPLETA nas 3 organizações e o frontend real apontado para
+    # ele só pelo endereço do diretório (critério de saída da F2). Storage local (S3/MinIO: teste próprio depois).
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:17
@@ -71,10 +72,10 @@ jobs:
       URL_PUBLICA: http://localhost:4020
       EMAIL: log
       MODO_TESTE_CODIGO_EMAIL: '123456'
+      MODO_TESTE_TOTP: '000000'
       VALIDAR_RESPOSTA: '1'
       STORAGE_DIR: /tmp/clinica-arquivos
       CONF_DIRETORIO_URL: http://localhost:4020/diretorio
-      F1: testes/01-publico.test.ts testes/02-auth.test.ts testes/03-sessao.test.ts testes/04-pacientes.test.ts testes/06-arquivos.test.ts testes/08-equipe.test.ts testes/09-notificacoes-eventos.test.ts
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -87,25 +88,35 @@ jobs:
           psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f scripts/papeis.sql
           pnpm migrar
           pnpm org:criar --todos
-      - name: Backend — isolamento e eventos
+      - name: Backend — isolamento, eventos, jobs, concorrência e push
         working-directory: backend
         run: LOG_LEVEL=warn pnpm test
-      - name: Sobe o backend
+      - name: Sobe o backend (API + worker de jobs)
         working-directory: backend
         run: |
           pnpm start > ../backend.log 2>&1 &
           for i in $(seq 1 30); do curl -sf localhost:4020/diretorio/modelo-otorrino >/dev/null && break; sleep 1; done
-      - name: Conformidade F1 — modelo-otorrino
-        run: pnpm conformidade $F1
+      - name: Conformidade — modelo-otorrino
+        run: pnpm conformidade
         env: { CONF_SLUG: modelo-otorrino }
-      - name: Conformidade F1 — fisio-movimento
-        run: pnpm conformidade $F1
+      - name: Conformidade — fisio-movimento
+        run: pnpm conformidade
         env: { CONF_SLUG: fisio-movimento, CONF_GESTOR_EMAIL: pedro@fisio-movimento.exemplo, CONF_PACIENTE_EMAIL: fernanda@exemplo.com, CONF_PRIMEIRO_ACESSO_EMAIL: '' }
-      - name: Conformidade F1 — vet-amigo
-        run: pnpm conformidade $F1
+      - name: Conformidade — vet-amigo
+        run: pnpm conformidade
         env: { CONF_SLUG: vet-amigo, CONF_GESTOR_EMAIL: renata@vet-amigo.exemplo, CONF_PACIENTE_EMAIL: laura@exemplo.com, CONF_PRIMEIRO_ACESSO_EMAIL: '' }
-      - name: Backend sem violações de contrato
-        run: '! grep -i "RESPOSTA FORA DO CONTRATO" backend.log'
+      - name: Frontend real contra o backend real (só o endereço do diretório muda)
+        env: { PLAYWRIGHT_VERSAO: 1.56.1, VITE_DIRETORIO_URL: 'http://localhost:4020/diretorio' }
+        run: |
+          npm install -g playwright@$PLAYWRIGHT_VERSAO
+          npx -y playwright@$PLAYWRIGHT_VERSAO install --with-deps chromium
+          pnpm --filter frontend dev > vite.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:5173 >/dev/null && break; sleep 1; done
+          NODE_PATH=$(npm root -g) node frontend/e2e/backend-real.mjs
+      - name: Backend sem violações de contrato nem erros
+        run: |
+          ! grep -i "RESPOSTA FORA DO CONTRATO" backend.log
+          ! grep '"level":50' backend.log
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: backend-f1, path: "conformidade/relatorio.*\nbackend.log" }
+        with: { name: backend, path: "conformidade/relatorio.*\nbackend.log" }

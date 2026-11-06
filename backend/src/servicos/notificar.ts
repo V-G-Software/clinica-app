@@ -1,11 +1,13 @@
 // Central de notificações (8.2): toda notificação aparece na central (RN-NOT-001); push e e-mail são
 // cópias DISCRETAS, sem conteúdo clínico nem nome de paciente (RN-NOT-002); canal pela RN-NOT-003.
 import { novoId } from '../cripto.ts';
-import { todos, um, type Tx } from '../db.ts';
+import { um, type Tx } from '../db.ts';
 import { emitir } from '../eventos.ts';
 import type { Org } from '../nucleo.ts';
 import { enviarEmail } from './email.ts';
 import { contadoresDe } from './contadores.ts';
+import { agendar } from './jobs.ts';
+import { pushAtivo } from './push.ts';
 
 const TEXTO_DISCRETO: Record<string, string> = {
   CHAT_MENSAGEM: 'Você tem uma nova mensagem', CHECKIN_DISPONIVEL: 'Seu check-in de hoje está disponível',
@@ -35,15 +37,16 @@ export async function notificar(tx: Tx, org: Org, usuarioId: string, n: NovaNoti
   await avisarContadores(tx, org, [usuarioId]);
 
   const pref = u.preferencias_notificacao?.[n.tipo] ?? { push: true, email: true };
-  const inscricoes = await todos(tx, 'SELECT id FROM inscricoes_push WHERE organizacao_id = $1 AND usuario_id = $2', [org.id, usuarioId]);
   const discreto = `${TEXTO_DISCRETO[n.tipo] ?? 'Você tem uma nova notificação'} — ${org.nome}.`;
-  if (inscricoes.length && pref.push) {
-    // Envio Web Push (VAPID) entra na F2 com a fila de jobs; aqui fica o ponto de integração.
-    log.info({ org: org.slug, notificacaoId: id, inscricoes: inscricoes.length }, 'push enfileirado');
+  const temPush = pushAtivo() && pref.push && !!(await um(tx, 'SELECT 1 FROM inscricoes_push WHERE organizacao_id = $1 AND usuario_id = $2 LIMIT 1', [org.id, usuarioId]));
+  if (temPush) {
+    // Job na mesma transação: se a regra que notificou for desfeita, o push não sai. Agrupada (chat), a
+    // notificação reaproveita o id do job e o push pendente é substituído em vez de repetido.
+    await agendar(tx, org.id, `push:${id}`, 'push.enviar', Date.now(), { notificacaoId: id, texto: discreto });
     return;
   }
-  if (!pref.email) return;
-  if (EMAIL_SEM_PUSH.has(n.tipo)) enviarEmail({ org: org.slug, para: u.email, assunto: org.nome, texto: `${discreto} Abra o app para ver.` }, log);
+  // RN-NOT-003: sem push, os tipos que pedem ação viram e-mail discreto.
+  if (pref.email && EMAIL_SEM_PUSH.has(n.tipo)) enviarEmail({ org: org.slug, para: u.email, assunto: org.nome, texto: `${discreto} Abra o app para ver.` }, log);
 }
 
 export async function avisarContadores(tx: Tx, org: Org, usuarios: string[]) {

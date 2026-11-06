@@ -19,11 +19,17 @@ export async function urlsArquivo(a: any) {
 export async function serArquivo(a: any) {
   return { id: a.id, nome: a.nome, tipo: a.tipo, tamanhoBytes: Number(a.tamanho_bytes), finalidade: a.finalidade, status: a.status, motivoRejeicao: a.motivo_rejeicao ?? null, ...(await urlsArquivo(a)), criadoEm: iso(a.criado_em) };
 }
-/** Quem vê o arquivo: o dono; arquivos de perfil/organização; (F2) participantes da conversa ou quem vê o check-in. */
+/** Quem vê o arquivo: o dono; arquivos de perfil/organização; participante ativo da conversa em que foi
+ *  enviado; quem vê o check-in em que foi usado (equipe com permissão ou conta vinculada ao paciente). */
 async function obterVisivel(tx: Tx, ctx: Ctx, id: string) {
   const a = await um(tx, 'SELECT * FROM arquivos WHERE organizacao_id = $1 AND id = $2', [ctx.org.id, id]);
   if (!a) throw naoEncontrado('Arquivo');
   if (a.dono_id === ctx.usuario.id || a.finalidade === 'PERFIL' || a.finalidade === 'ORGANIZACAO') return a;
+  if (a.conversa_id && await um(tx, 'SELECT 1 FROM participantes WHERE organizacao_id = $1 AND conversa_id = $2 AND usuario_id = $3 AND removido_em IS NULL', [ctx.org.id, a.conversa_id, ctx.usuario.id])) return a;
+  if (a.checkin_id && ctx.perms.has('acompanhamento.checkin.ler')) {
+    const c = await um(tx, 'SELECT paciente_id FROM checkins WHERE organizacao_id = $1 AND id = $2', [ctx.org.id, a.checkin_id]);
+    if (c && (ctx.perfil !== 'PACIENTE' || await um(tx, 'SELECT 1 FROM vinculos WHERE organizacao_id = $1 AND usuario_id = $2 AND paciente_id = $3', [ctx.org.id, ctx.usuario.id, c.paciente_id]))) return a;
+  }
   throw naoEncontrado('Arquivo');
 }
 

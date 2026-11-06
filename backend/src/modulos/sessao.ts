@@ -1,5 +1,8 @@
 // Manifesto da sessão (7), conta, contadores, exclusão de conta e tela inicial (8.1).
 import { createHash } from 'node:crypto';
+import { secoesInicioAcompanhamento } from './acompanhamento.ts';
+import { secoesInicioChat } from './chat.ts';
+import { capacidadePush } from '../servicos/push.ts';
 import { montarNavegacao, temModulo, type Termo } from '@clinica/dominio';
 import { versaoContrato } from '@clinica/contrato-validador';
 import { ErroApi, invalido, negado } from '../erros.ts';
@@ -23,7 +26,7 @@ export async function manifesto(tx: Tx, ctx: Ctx) {
     modulos: org.modulos,
     navegacao: montarNavegacao({ equipe: ehEquipeCtx(ctx), permissoes: ctx.perms, modulos: org.modulos, termos: org.termos as Record<string, Termo> }),
     permissoes: [...ctx.perms],
-    capacidades: org.capacidades,
+    capacidades: { ...org.capacidades, push: capacidadePush() },
     contadores: await contadoresDe(tx, org, u.id),
     ...(ctx.perfil === 'PACIENTE' ? { pacientesVinculados: await pacientesVinculados(tx, org, u.id) } : {}),
   };
@@ -74,12 +77,14 @@ export const handlersSessao: Record<string, Handler> = {
     const ctx = C(q);
     const org = q.org;
     const secoes: any[] = [];
-    // F1: seções do núcleo. ALERTAS, CHECKINS, ACOMPANHAMENTOS e CONVERSAS chegam na F2.
+    if (org.configuracao.avisoInicio) secoes.push({ id: 'aviso', tipo: 'AVISO', dados: org.configuracao.avisoInicio });
+    secoes.push(...await secoesInicioAcompanhamento(q.tx, ctx), ...await secoesInicioChat(q.tx, ctx));
     if (ehEquipeCtx(ctx)) {
       const t = org.termos as Record<string, Termo>;
       const g = (x: Termo, m: string, f: string) => (x.genero === 'F' ? f : m);
       const atalhos: any[] = [];
       if (ctx.perms.has('pacientes.paciente.criar')) atalhos.push({ rotulo: `${g(t.paciente, 'Novo', 'Nova')} ${t.paciente.singular}`, icone: 'user-plus', destino: { tela: 'pacientes.novo' } });
+      if (ctx.perms.has('acompanhamento.acompanhamento.criar') && t.acompanhamento) atalhos.push({ rotulo: `${g(t.acompanhamento, 'Novo', 'Nova')} ${t.acompanhamento.singular}`, icone: 'activity', destino: { tela: 'acompanhamento.novo' } });
       if (atalhos.length) secoes.push({ id: 'atalhos', tipo: 'ATALHOS', dados: { itens: atalhos } });
     } else {
       secoes.push({ id: 'contato', tipo: 'CONTATO_ORGANIZACAO', dados: { telefone: org.configuracao.contato.telefone ?? null, endereco: org.configuracao.contato.endereco ?? null, mapaUrl: org.configuracao.mapaUrl ?? null } });
