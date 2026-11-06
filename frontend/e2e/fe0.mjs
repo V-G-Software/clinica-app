@@ -14,6 +14,8 @@ if (CAPTURAS) mkdirSync(CAPTURAS, { recursive: true });
 
 let falhas = 0;
 const ok = (cond, msg) => { console.log(`${cond ? '✓' : '✗'} ${msg}`); if (!cond) falhas++; };
+// Dado que chega por consulta assíncrona: isVisible() responde na hora e corre contra o carregamento.
+const visivel = (l) => l.waitFor({ timeout: 10_000 }).then(() => true, () => false);
 const post = (p, b) => fetch(`${MOCK}${p}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b ?? {}) }).then((r) => r.json());
 const foto = async (page, nome) => { if (CAPTURAS) await page.screenshot({ path: `${CAPTURAS}/${nome}.png` }); };
 
@@ -65,7 +67,7 @@ for (const [slug, [nome, cor]] of Object.entries(marcas)) {
   const menu = await menuPrincipal(page);
   ok(JSON.stringify(menu) === JSON.stringify(['Início', 'Pós-operatórios', 'Conversas', 'Pacientes']), `otorrino/equipe: menu ${JSON.stringify(menu)}`);
   ok(await page.getByRole('button', { name: 'Mais' }).isVisible(), 'otorrino/equipe: itens secundários em "Mais"');
-  ok(await page.getByText('Alertas abertos (1)').isVisible(), 'otorrino/equipe: seção ALERTAS_ABERTOS');
+  ok(await visivel(page.getByText('Alertas abertos (1)')), 'otorrino/equipe: seção ALERTAS_ABERTOS');
   await foto(page, '2-inicio-equipe-otorrino');
 
   // 3) Sessão restaurada pelo cookie de renovação ao recarregar (token só em memória).
@@ -109,7 +111,7 @@ for (const [slug, [nome, cor]] of Object.entries(marcas)) {
   await entrarEquipe(page, 'pedro@fisio-movimento.exemplo');
   const menu = await menuPrincipal(page);
   ok(JSON.stringify(menu) === JSON.stringify(['Início', 'Acompanhamentos', 'Conversas', 'Pacientes']), `fisio/equipe: menu ${JSON.stringify(menu)}`);
-  ok(await page.getByText('Registros diários de hoje').isVisible(), 'fisio: termo "registro diário" do manifesto');
+  ok(await visivel(page.getByText('Registros diários de hoje')), 'fisio: termo "registro diário" do manifesto');
   await foto(page, '3-inicio-equipe-fisio');
   await ctx.close();
 }
@@ -122,7 +124,7 @@ for (const [slug, [nome, cor]] of Object.entries(marcas)) {
   await entrarPaciente(page, 'laura@exemplo.com');
   const menu = await menuPrincipal(page);
   ok(JSON.stringify(menu) === JSON.stringify(['Início', 'Minha recuperação', 'Conversas', 'Notificações', 'Meu perfil']), `vet/tutora: menu ${JSON.stringify(menu)}`);
-  ok(await page.getByText('Castração — 10 dias').isVisible(), 'vet/tutora: acompanhamento do Thor no início');
+  ok(await visivel(page.getByText('Castração — 10 dias')), 'vet/tutora: acompanhamento do Thor no início');
   const conversas = await page.locator('section', { hasText: 'Conversas' }).locator('li span:first-child').allInnerTexts();
   ok(conversas.includes('Thor') && conversas.includes('Mel'), `vet/tutora: conversas identificadas por pet ${JSON.stringify(conversas)}`);
   await foto(page, '4-inicio-tutora-vet');
