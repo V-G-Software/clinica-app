@@ -1,0 +1,43 @@
+# Ambiente completo local, parecido com produção: Postgres 17, MinIO (S3), Mailpit (SMTP) e o backend.
+#   docker compose up -d postgres minio mailpit
+#   docker compose run --rm backend pnpm migrar && docker compose run --rm backend pnpm org:criar --todos
+#   docker compose up -d backend          → http://localhost:4020/o/{slug} · e-mails em http://localhost:8025
+# NÃO é configuração de produção: senhas de exemplo, MODO_TESTE ligado e chaves efêmeras.
+services:
+  postgres:
+    image: postgres:17
+    environment: { POSTGRES_PASSWORD: postgres }
+    ports: ['5432:5432']
+    volumes: ['./backend/scripts/papeis.sql:/docker-entrypoint-initdb.d/01-papeis.sql:ro', 'pg:/var/lib/postgresql/data']
+    healthcheck: { test: ['CMD', 'pg_isready', '-U', 'postgres'], interval: 2s, retries: 20 }
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address :9001
+    environment: { MINIO_ROOT_USER: clinica, MINIO_ROOT_PASSWORD: clinica-local-123 }
+    ports: ['9000:9000', '9001:9001']
+  minio-bucket:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    depends_on: [minio]
+    entrypoint: ['sh', '-c', 'until mc alias set m http://minio:9000 clinica clinica-local-123; do sleep 1; done; mc mb -p m/clinica']
+  mailpit:
+    image: axllent/mailpit:v1.24
+    ports: ['1025:1025', '8025:8025']
+  backend:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    depends_on: { postgres: { condition: service_healthy } }
+    ports: ['4020:4020']
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://clinica_app:app_local@postgres:5432/clinica
+      DATABASE_URL_DONO: postgres://clinica_dono:dono_local@postgres:5432/clinica
+      URL_PUBLICA: http://localhost:4020
+      STORAGE: s3
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: clinica
+      AWS_ACCESS_KEY_ID: clinica
+      AWS_SECRET_ACCESS_KEY: clinica-local-123
+      EMAIL: smtp
+      SMTP_URL: smtp://mailpit:1025
+      MODO_TESTE_CODIGO_EMAIL: '123456'
+      MODO_TESTE_TOTP: '000000'
+volumes: { pg: {} }

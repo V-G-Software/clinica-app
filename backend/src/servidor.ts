@@ -26,6 +26,7 @@ import { storage, storageLocal } from './servicos/storage.ts';
 import './servicos/acompanhamento.ts'; // registra os jobs do acompanhamento
 import './servicos/push.ts'; // registra o job de push
 import { iniciarWorker, pararWorker } from './servicos/jobs.ts';
+import { LIMITES, contar } from './servicos/limites.ts';
 
 const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat };
 const PUBLICAS_COM_LOGIN = new Set(['authSair']);
@@ -56,14 +57,33 @@ export function criarServidor() {
     };
   };
   const problema = (reply: FastifyReply, e: ErroApi, instance?: string) => {
-    if (e.status === 429) reply.header('Retry-After', '60');
+    if (e.status === 429) reply.header('Retry-After', String((e as any).retryAfter ?? 60));
     return reply.code(e.status).type('application/problem+json').send(e.problema(String(reply.request.id), instance));
+  };
+  // Cabeçalhos de segurança (14.4). A API só serve JSON e imagens: nada de HTML, nada de frame.
+  const SEGURANCA: Record<string, string> = {
+    'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY',
+    'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; sandbox",
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    ...(config.urlPublica.startsWith('https://') ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' } : {}),
   };
   app.addHook('onRequest', async (req, reply) => {
     reply.header('X-Request-Id', req.id);
+    reply.headers(SEGURANCA);
     const slug = req.url.match(/^\/o\/([^/?]+)/)?.[1];
-    reply.headers(cors(req.headers.origin, slug ? await orgPorSlug(slug) : null));
+    let org: Org | null = null;
+    try { org = slug ? await orgPorSlug(slug) : null; } catch (e: any) {
+      // Banco fora: responde no formato do contrato (503 + Retry-After), não com o 500 cru do framework.
+      req.log.error({ err: e?.message }, 'banco indisponível');
+      reply.header('Retry-After', '10');
+      return reply.code(503).type('application/problem+json').send(new ErroApi('INDISPONIVEL_TEMPORARIAMENTE', 'Serviço indisponível. Tente em instantes.', {}, 503).problema(String(req.id)));
+    }
+    reply.headers(cors(req.headers.origin, org));
     if (req.method === 'OPTIONS') return reply.code(204).send();
+    try {
+      contar(`ip:${req.ip}`, LIMITES.ip);
+      if (org) contar(`org:${org.id}`, LIMITES.organizacao);
+    } catch (e) { return problema(reply, e as ErroApi); }
   });
 
   // ─────────── Diretório (3.3) ───────────
@@ -127,6 +147,7 @@ export function criarServidor() {
       const hash = hashCorpo(req.body, caminho);
       const res = await comOrg(org.id, async (tx) => {
         const ctx = precisaLogin ? await autenticar(tx, org, req.headers.authorization) : null;
+        if (ctx) contar(`conta:${org.id}:${ctx.usuario.id}`, LIMITES.conta);
         let chave: string | null = null;
         if (op.idempotente) {
           chave = `${ctx?.usuario.id ?? req.ip}:${op.operationId}:${req.headers['idempotency-key']}`;
@@ -210,7 +231,7 @@ async function limpar() {
       const descartados = await tx.query(`UPDATE arquivos SET status = 'REJEITADO', motivo_rejeicao = 'Descartado: não foi usado em 24 horas.'
         WHERE organizacao_id = $1 AND criado_em < now() - interval '24 hours' AND usado_em IS NULL
           AND (status IN ('AGUARDANDO_ENVIO','PROCESSANDO') OR (status = 'DISPONIVEL' AND finalidade IN ('CHECKIN','CHAT'))) RETURNING id, chave_storage`, [id]);
-      for (const a of descartados.rows) { await storage.remover(a.chave_storage).catch(() => undefined); await storage.remover(`final/${id}/${a.id}`).catch(() => undefined); }
+      for (const a of descartados.rows) for (const k of [a.chave_storage, `final/${id}/${a.id}`, `final/${id}/${a.id}.mini`]) await storage.remover(k).catch(() => undefined);
     });
 }
 

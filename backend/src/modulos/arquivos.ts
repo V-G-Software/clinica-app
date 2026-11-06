@@ -5,7 +5,7 @@ import { emitir } from '../eventos.ts';
 import { ErroApi, naoEncontrado } from '../erros.ts';
 import { C, criado, ok, type Handler } from '../http.ts';
 import { exigir, iso, type Ctx } from '../nucleo.ts';
-import { ASSINATURAS, higienizar } from '../servicos/imagem.ts';
+import { ASSINATURAS, recodificar } from '../servicos/imagem.ts';
 import { storage } from '../servicos/storage.ts';
 import type { Tx } from '../db.ts';
 
@@ -13,8 +13,8 @@ const VISUALIZACAO_MS = 5 * 60_000;
 export async function urlsArquivo(a: any) {
   if (a.status !== 'DISPONIVEL') return { urlVisualizacao: null, urlMiniatura: null, urlsExpiramEm: null };
   const exp = Date.now() + VISUALIZACAO_MS;
-  const url = await storage.urlVisualizacao(`final/${a.organizacao_id}/${a.id}`, exp);
-  return { urlVisualizacao: url, urlMiniatura: url, urlsExpiramEm: iso(new Date(exp)) };
+  const chave = `final/${a.organizacao_id}/${a.id}`;
+  return { urlVisualizacao: await storage.urlVisualizacao(chave, exp), urlMiniatura: await storage.urlVisualizacao(`${chave}.mini`, exp), urlsExpiramEm: iso(new Date(exp)) };
 }
 export async function serArquivo(a: any) {
   return { id: a.id, nome: a.nome, tipo: a.tipo, tamanhoBytes: Number(a.tamanho_bytes), finalidade: a.finalidade, status: a.status, motivoRejeicao: a.motivo_rejeicao ?? null, ...(await urlsArquivo(a)), criadoEm: iso(a.criado_em) };
@@ -52,15 +52,26 @@ export const handlersArquivos: Record<string, Handler> = {
     const a = await um(q.tx, 'SELECT * FROM arquivos WHERE organizacao_id = $1 AND id = $2 AND dono_id = $3 FOR UPDATE', [q.org.id, q.params.arquivoId, ctx.usuario.id]);
     if (!a) throw naoEncontrado('Arquivo');
     if (a.status !== 'AGUARDANDO_ENVIO') return ok(await serArquivo(a));
-    // Validação e higiene (14.4): bytes recebidos, tamanho, assinatura do tipo e remoção de EXIF.
+    // Validação e higiene (14.4): bytes recebidos, tamanho, assinatura do tipo e recodificação completa.
     const bytes = await storage.ler(a.chave_storage);
     const cap = q.org.capacidades.upload;
     let status = 'DISPONIVEL', motivo: string | null = null, limpo: Buffer | null = null;
     if (!bytes) { status = 'REJEITADO'; motivo = 'Arquivo não recebido.'; }
     else if (bytes.length > cap.tamanhoMaximoBytes) { status = 'REJEITADO'; motivo = 'Arquivo maior que o permitido.'; }
     else if (!ASSINATURAS[a.tipo]?.(bytes)) { status = 'REJEITADO'; motivo = 'O conteúdo não corresponde ao tipo informado.'; }
-    else limpo = higienizar(a.tipo, bytes);
-    if (limpo) await storage.gravar(`final/${q.org.id}/${a.id}`, limpo, a.tipo);
+    else {
+      try {
+        const r = await recodificar(a.tipo, bytes);
+        limpo = r.imagem;
+        await storage.gravar(`final/${q.org.id}/${a.id}`, r.imagem, a.tipo);
+        await storage.gravar(`final/${q.org.id}/${a.id}.mini`, r.miniatura, a.tipo);
+      } catch (e: any) {
+        status = 'REJEITADO'; motivo = 'Não foi possível ler esta imagem. Tire outra foto e tente de novo.';
+        q.log.warn({ arquivo: a.id, err: e?.message }, 'imagem rejeitada na recodificação');
+      }
+    }
+    // O original (com metadados) sai da quarentena: só a versão recodificada fica guardada.
+    if (bytes) await storage.remover(a.chave_storage).catch(() => undefined);
     const r = await um(q.tx, 'UPDATE arquivos SET status = $3, motivo_rejeicao = $4, tamanho_bytes = COALESCE($5, tamanho_bytes) WHERE organizacao_id = $1 AND id = $2 RETURNING *',
       [q.org.id, a.id, status, motivo, limpo?.length ?? null]);
     await emitir(q.tx, q.org.id, 'arquivo.processado', { arquivoId: a.id, status }, [ctx.usuario.id]);
