@@ -25,6 +25,8 @@ const { t } = useI18n();
 const rota = useRoute();
 const app = useAppStore();
 const sessao = useSessaoStore();
+// QUESTION-019: com a opção ligada na configuração, encerrar também resolve os alertas abertos — o diálogo avisa.
+const resolveAlertasAoEncerrar = computed(() => !!(sessao.manifesto?.modulos.find((m) => m.id === 'acompanhamento')?.config as { resolverAlertasAoEncerrar?: boolean } | undefined)?.resolverAlertasAoEncerrar);
 const qc = useQueryClient();
 const termo = useTermos();
 const msg = useMensagemErro();
@@ -105,7 +107,7 @@ const SEV: Record<string, string> = { ALTA: 'text-erro', MEDIA: 'text-atencao', 
           <li v-for="al in alertas.data.value.itens" :key="al.id" class="flex flex-wrap items-center gap-2 py-2">
             <strong :class="SEV[al.severidade]">{{ al.severidade }}</strong>
             <span class="flex-1">{{ al.mensagem }} <span class="text-sm text-secundario">· {{ formatarDataHora(al.criadoEm, app.fuso, app.locale) }}</span>
-              <span v-if="al.status === 'RESOLVIDO'" class="block text-sm text-secundario">Resolvido por {{ al.resolvidoPor?.nome }}{{ al.nota ? ` — ${al.nota}` : '' }}</span></span>
+              <span v-if="al.status === 'RESOLVIDO'" class="block text-sm text-secundario">{{ al.resolvidoPor ? `Resolvido por ${al.resolvidoPor.nome}` : 'Resolvido automaticamente' }}{{ al.nota ? ` — ${al.nota}` : '' }}</span></span>
             <RouterLink v-if="al.checkinId" :to="`/checkins/${al.checkinId}`" class="text-sm text-acao underline">Ver respostas</RouterLink>
             <Botao v-if="al.acoesPermitidas.includes('RESOLVER')" variante="secundario" @click="resolvendo = { id: al.id, mensagem: al.mensagem }">Resolver</Botao>
           </li>
@@ -134,7 +136,7 @@ const SEV: Record<string, string> = { ALTA: 'text-erro', MEDIA: 'text-atencao', 
           <Botao tipo="submit" bloco :carregando="resolver.isPending.value">Marcar como resolvido</Botao>
         </form>
       </Dialogo>
-      <Dialogo v-model:aberto="encerrando" :titulo="`Encerrar ${termo('acompanhamento').singular}`" :descricao="`${capitalizar(termo('checkin').plural)} futuros serão cancelados. Nada é apagado.`">
+      <Dialogo v-model:aberto="encerrando" :titulo="`Encerrar ${termo('acompanhamento').singular}`" :descricao="`${capitalizar(termo('checkin').plural)} futuros serão cancelados.${resolveAlertasAoEncerrar ? ' Os alertas abertos serão marcados como resolvidos por você.' : ''} Nada é apagado.`">
         <form class="flex flex-col gap-3" @submit.prevent="encerrar.mutate()">
           <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">Motivo</span><textarea v-model="motivo" rows="3" maxlength="1000" required class="rounded-xl border-2 border-zinc-300 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-800" /></label>
           <Aviso v-if="encerrar.error.value" tipo="erro">{{ msg(encerrar.error.value)?.texto }}</Aviso>

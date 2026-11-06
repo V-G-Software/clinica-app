@@ -41,7 +41,7 @@ O servidor **se recusa a subir** em `NODE_ENV=production` sem as chaves, com `MO
 
 ## 4. Organização da clínica do piloto
 - [ ] Arquivo da organização no formato dos cenários (sem pacientes de exemplo), com marca, módulos, termos, horário de atendimento, aviso de urgência e protocolos **revisados** (`docs/legal/textos-para-revisao.md`).
-- [ ] `pnpm org:criar --arquivo clinica.json`, depois `org:atualizar` para mudanças. O primeiro gestor entra com senha provisória e passa por troca de senha, MFA e termos.
+- [ ] `pnpm org:criar --arquivo clinica.json`, depois `org:atualizar` para mudanças (termos com versão nova: use `--aviso "o que mudou"`; as contas ativas são avisadas e aceitam no próximo login). O primeiro gestor entra com senha provisória e passa por troca de senha, MFA e termos.
 - [ ] Domínio do frontend em `dominios` da organização: só ele recebe CORS em produção.
 - [ ] `links.termos` e `links.privacidade` apontando para os textos publicados; `termosVersao` igual à versão publicada.
 

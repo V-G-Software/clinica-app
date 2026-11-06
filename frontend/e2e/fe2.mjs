@@ -156,6 +156,19 @@ await espera(ana.getByText(/Salvo\./), 'configuração salva');
 await ana.waitForTimeout(500);
 ok((await ana.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--acao').trim())) === '#7C3AED', 'configuração: nova cor aplicada sem recarregar');
 await foto(ana, 'fe2-8-configuracao');
+// QUESTION-019: opção de resolver alertas ao encerrar — salva, persiste e o diálogo de encerrar avisa.
+const opcaoAlertas = ana.getByLabel(/Resolver os alertas abertos ao encerrar/);
+ok(!(await opcaoAlertas.isChecked()), 'configuração: resolver alertas ao encerrar vem desligado');
+await opcaoAlertas.check();
+await ana.getByRole('button', { name: 'Salvar' }).click();
+await ana.getByText(/Salvo\./).waitFor();
+await ana.reload();
+await opcaoAlertas.waitFor();
+ok(await opcaoAlertas.isChecked(), 'configuração: resolver alertas ao encerrar salvo');
+await ana.goto(`${APP}/acompanhamentos/acp_rafael`);
+await ana.getByRole('button', { name: 'Encerrar' }).click();
+await espera(ana.getByText(/Os alertas abertos serão marcados como resolvidos por você/), 'encerrar: diálogo avisa que os alertas serão resolvidos');
+await ana.keyboard.press('Escape');
 
 // 10) Duas abas na mesma sessão.
 const ana2 = await ctxAna.newPage();

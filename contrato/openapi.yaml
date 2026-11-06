@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Contrato da API — {{PRODUTO}}
-  version: 1.0.0-rc.2
+  version: 1.0.0-rc.3
   summary: Padrão que todo backend de organização segue para atender o frontend único (PWA).
   description: |
     Fonte da verdade do contrato v1. Spec-first (ADR-0001): tipos, cliente, mock e suíte
@@ -544,7 +544,7 @@ paths:
       operationId: contaSolicitarExclusao
       tags: [sessao]
       summary: Pede a exclusão da conta
-      description: Remove o acesso e explica o que a organização precisa guardar por lei.
+      description: 'Remove o acesso e explica o que a organização precisa guardar por lei. A conta é inativada (`DESLIGADO`), nunca apagada: um novo convite da organização reativa a mesma conta, com o histórico (QUESTION-010).'
       responses:
         '202':
           description: Pedido registrado
@@ -1239,6 +1239,7 @@ paths:
       operationId: acompanhamentosEncerrar
       tags: [acompanhamento]
       summary: Encerra manualmente (RN-ACO-008)
+      description: 'Com `resolverAlertasAoEncerrar` na configuração do módulo, os alertas ainda abertos são resolvidos por quem encerrou, com a nota "Acompanhamento encerrado." (a conclusão automática faz o mesmo, sem autor). Sem a opção, continuam abertos.'
       parameters:
         - $ref: '#/components/parameters/AcompanhamentoId'
       requestBody:
@@ -1758,7 +1759,7 @@ paths:
     patch:
       operationId: organizacaoEditar
       tags: [equipe]
-      summary: Edita nome, contato, marca, textos e regras do chat
+      summary: Edita nome, contato, marca, textos, regras do chat e do acompanhamento
       description: Mudança que afeta o manifesto emite `sessao.manifesto.alterado` (RN-EQP-004).
       parameters:
         - $ref: '#/components/parameters/IfMatch'
@@ -2386,6 +2387,10 @@ components:
       required: [publicarCheckinNaConversa]
       properties:
         publicarCheckinNaConversa: { type: boolean }
+        resolverAlertasAoEncerrar:
+          type: boolean
+          default: false
+          description: 'Ao encerrar ou concluir um acompanhamento, resolve os alertas ainda abertos com uma nota automática (QUESTION-019). Ausente = `false`: os alertas continuam abertos.'
     HorarioAtendimento:
       type: object
       additionalProperties: false
@@ -3327,6 +3332,13 @@ components:
               items: { $ref: '#/components/schemas/HorarioAtendimento' }
             mensagemForaDoHorario: { type: [string, 'null'] }
             avisoUrgencia: { type: [string, 'null'] }
+        acompanhamento:
+          type: object
+          description: Presente quando o módulo `acompanhamento` está contratado.
+          additionalProperties: false
+          required: [resolverAlertasAoEncerrar]
+          properties:
+            resolverAlertasAoEncerrar: { type: boolean }
         acoesPermitidas:
           type: array
           items: { type: string, enum: [EDITAR] }
@@ -3359,3 +3371,10 @@ components:
               items: { $ref: '#/components/schemas/HorarioAtendimento' }
             mensagemForaDoHorario: { type: [string, 'null'], maxLength: 500 }
             avisoUrgencia: { type: [string, 'null'], maxLength: 500 }
+        acompanhamento:
+          type: object
+          description: 'Exige o módulo `acompanhamento` (senão `MODULO_NAO_CONTRATADO`).'
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            resolverAlertasAoEncerrar: { type: boolean }

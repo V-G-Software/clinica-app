@@ -137,6 +137,7 @@ registrarJob('acompanhamento.concluir', async (tx, orgId, { acompanhamentoId }, 
   const a = await um(tx, `UPDATE acompanhamentos SET status = 'CONCLUIDO', versao = versao + 1 WHERE organizacao_id = $1 AND id = $2 AND status IN ('ATIVO','AGENDADO') RETURNING *`, [orgId, acompanhamentoId]);
   if (!a) return;
   const org = await orgPorId(orgId);
+  await resolverAlertasAoFinalizar(tx, org, a, null, 'Acompanhamento concluído.');
   await atualizado(tx, org, a);
   for (const uid of await contasDoPaciente(tx, org, a.paciente_id))
     await notificar(tx, org, uid, { tipo: 'ACOMPANHAMENTO_CONCLUIDO', titulo: a.protocolo.nome, texto: 'Seu acompanhamento foi concluído. Obrigado por responder!', destino: { tela: 'acompanhamento.detalhe', parametros: { acompanhamentoId: a.id } } }, log);
@@ -146,6 +147,7 @@ registrarJob('acompanhamento.concluir', async (tx, orgId, { acompanhamentoId }, 
 export async function encerrarAcompanhamento(tx: Tx, org: Org, a: any, motivo: string, porId: string, log: Log) {
   const r = (await um(tx, `UPDATE acompanhamentos SET status = 'ENCERRADO', motivo_encerramento = $3, encerrado_por = $4, versao = versao + 1 WHERE organizacao_id = $1 AND id = $2 RETURNING *`, [org.id, a.id, motivo, porId]))!;
   await cancelarPrefixo(tx, org.id, `acompanhamento:${a.id}:`);
+  await resolverAlertasAoFinalizar(tx, org, r, porId, 'Acompanhamento encerrado.');
   const cancelados = await todos(tx, `UPDATE checkins SET status = 'CANCELADO' WHERE organizacao_id = $1 AND acompanhamento_id = $2 AND status IN ('AGENDADO','DISPONIVEL') RETURNING id`, [org.id, a.id]);
   for (const c of cancelados) await cancelarPrefixo(tx, org.id, `checkin:${c.id}:`);
   const conversa = temModulo(org.modulos, 'chat') && a.conversa_id && await um(tx, `SELECT * FROM conversas WHERE organizacao_id = $1 AND id = $2 AND status = 'ATIVA'`, [org.id, a.conversa_id]);
@@ -216,7 +218,13 @@ export async function responderCheckin(tx: Tx, org: Org, checkinId: string, resp
   return r;
 }
 
-export async function resolverAlerta(tx: Tx, org: Org, alertaId: string, porId: string, nota: string | null) {
+/** QUESTION-019: com `resolverAlertasAoEncerrar`, o fim do acompanhamento resolve os alertas abertos (autor = quem encerrou; null na conclusão automática). */
+async function resolverAlertasAoFinalizar(tx: Tx, org: Org, a: any, porId: string | null, nota: string) {
+  if (!configModulo(org.modulos, 'acompanhamento').resolverAlertasAoEncerrar) return;
+  const abertos = await todos(tx, `SELECT id FROM alertas WHERE organizacao_id = $1 AND acompanhamento_id = $2 AND status = 'ABERTO'`, [org.id, a.id]);
+  for (const al of abertos) await resolverAlerta(tx, org, al.id, porId, nota);
+}
+export async function resolverAlerta(tx: Tx, org: Org, alertaId: string, porId: string | null, nota: string | null) {
   const al = await um(tx, `UPDATE alertas SET status = 'RESOLVIDO', resolvido_em = now(), resolvido_por = $3, nota = $4 WHERE organizacao_id = $1 AND id = $2 AND status = 'ABERTO' RETURNING *`, [org.id, alertaId, porId, nota]);
   if (!al) return;
   const a = await um(tx, 'SELECT equipe_ids FROM acompanhamentos WHERE organizacao_id = $1 AND id = $2', [org.id, al.acompanhamento_id]);

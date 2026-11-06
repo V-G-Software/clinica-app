@@ -424,7 +424,7 @@ export interface paths {
         put?: never;
         /**
          * Pede a exclusão da conta
-         * @description Remove o acesso e explica o que a organização precisa guardar por lei.
+         * @description Remove o acesso e explica o que a organização precisa guardar por lei. A conta é inativada (`DESLIGADO`), nunca apagada: um novo convite da organização reativa a mesma conta, com o histórico (QUESTION-010).
          */
         post: operations["contaSolicitarExclusao"];
         delete?: never;
@@ -843,7 +843,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Encerra manualmente (RN-ACO-008) */
+        /**
+         * Encerra manualmente (RN-ACO-008)
+         * @description Com `resolverAlertasAoEncerrar` na configuração do módulo, os alertas ainda abertos são resolvidos por quem encerrou, com a nota "Acompanhamento encerrado." (a conclusão automática faz o mesmo, sem autor). Sem a opção, continuam abertos.
+         */
         post: operations["acompanhamentosEncerrar"];
         delete?: never;
         options?: never;
@@ -1171,7 +1174,7 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Edita nome, contato, marca, textos e regras do chat
+         * Edita nome, contato, marca, textos, regras do chat e do acompanhamento
          * @description Mudança que afeta o manifesto emite `sessao.manifesto.alterado` (RN-EQP-004).
          */
         patch: operations["organizacaoEditar"];
@@ -1462,6 +1465,11 @@ export interface components {
         };
         ConfigAcompanhamento: {
             publicarCheckinNaConversa: boolean;
+            /**
+             * @description Ao encerrar ou concluir um acompanhamento, resolve os alertas ainda abertos com uma nota automática (QUESTION-019). Ausente = `false`: os alertas continuam abertos.
+             * @default false
+             */
+            resolverAlertasAoEncerrar: boolean;
         };
         HorarioAtendimento: {
             /** @description 0 = domingo */
@@ -1955,6 +1963,10 @@ export interface components {
                 mensagemForaDoHorario: string | null;
                 avisoUrgencia: string | null;
             };
+            /** @description Presente quando o módulo `acompanhamento` está contratado. */
+            acompanhamento?: {
+                resolverAlertasAoEncerrar: boolean;
+            };
             acoesPermitidas: "EDITAR"[];
         };
         OrganizacaoEdicao: {
@@ -1972,6 +1984,10 @@ export interface components {
                 horarioAtendimento?: components["schemas"]["HorarioAtendimento"][];
                 mensagemForaDoHorario?: string | null;
                 avisoUrgencia?: string | null;
+            };
+            /** @description Exige o módulo `acompanhamento` (senão `MODULO_NAO_CONTRATADO`). */
+            acompanhamento?: {
+                resolverAlertasAoEncerrar?: boolean;
             };
         };
     };
