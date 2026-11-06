@@ -1,6 +1,6 @@
 # Backend de referência
 
-Implementação do contrato (`contrato/openapi.yaml`) em Node 22 + Fastify + PostgreSQL. Decisões em [ADR-0013](../docs/adr/0013-backend-de-referencia.md). Fase atual: **F1** (núcleo — público, autenticação, sessão, pacientes, formulários, arquivos, equipe, notificações, eventos). Operações de F2/F3 respondem 404 `Operação ainda não implementada`.
+Implementação do contrato (`contrato/openapi.yaml`) em Node 22 + Fastify + PostgreSQL. Decisões em [ADR-0013](../docs/adr/0013-backend-de-referencia.md) (núcleo) e [ADR-0014](../docs/adr/0014-jobs-push-e-email.md) (jobs, push, e-mail). Fase atual: **F2** — todas as operações da v1 do contrato: núcleo (F1) mais protocolos, acompanhamentos, check-ins, alertas, chat, jobs agendados, Web Push e e-mail SMTP.
 
 ## Subir localmente
 
@@ -9,23 +9,27 @@ psql -U postgres -f scripts/papeis.sql          # uma vez: papéis clinica_dono 
 cp .env.exemplo .env                             # ajuste e exporte (ex.: set -a; . ./.env; set +a)
 pnpm migrar                                      # como clinica_dono
 pnpm org:criar --todos                           # os 3 cenários de contrato/exemplos/cenarios
-pnpm dev                                         # http://localhost:4020/o/{slug}
+pnpm dev                                         # API + worker de jobs em http://localhost:4020/o/{slug}
 ```
+
+O seed reproduz a linha do tempo dos cenários (respostas, alertas, mensagens) até agora, deslocada em dias inteiros para que "hoje" seja o dia de referência do mock (2026-11-08); o que fica no futuro vira job agendado. `CENARIO_DESLOCAR=0` mantém as datas absolutas.
+
+Frontend apontando para este backend: `VITE_DIRETORIO_URL=http://localhost:4020/diretorio pnpm --filter frontend dev` (backend com `MODO_TESTE_CODIGO_EMAIL=123456` e `MODO_TESTE_TOTP=000000` para entrar com os códigos fixos).
 
 Uma organização nova: `pnpm org:criar --arquivo org.json` (mesmo formato dos cenários); mudanças de configuração: `pnpm org:atualizar --arquivo org.json`. Chaves de produção: `pnpm chaves`.
 
 ## Testes
 
 ```bash
-pnpm test        # isolamento entre organizações (banco e HTTP) e eventos — precisa do banco semeado
+pnpm test        # isolamento (banco e HTTP), eventos, jobs do acompanhamento, concorrência e Web Push — precisa do banco semeado
 pnpm typecheck
 ```
 
 Conformidade contra este backend (com `MODO_TESTE_CODIGO_EMAIL=123456`):
 
 ```bash
-cd ../conformidade && CONF_DIRETORIO_URL=http://localhost:4020/diretorio CONF_SLUG=modelo-otorrino \
-  npx vitest run testes/01* testes/02* testes/03* testes/04* testes/06* testes/08* testes/09*
+cd .. && CONF_DIRETORIO_URL=http://localhost:4020/diretorio CONF_SLUG=modelo-otorrino pnpm conformidade
+node frontend/e2e/backend-real.mjs     # frontend real contra este backend (precisa do frontend em :5173)
 ```
 
 A suíte consome a conta de primeiro acesso: para repetir, recrie o banco (ou `org:atualizar` não basta — a conta já está ativa).
@@ -36,3 +40,5 @@ A suíte consome a conta de primeiro acesso: para repetir, recrie o banco (ou `o
 - Recurso de outra organização ou invisível ao usuário: 404 igual ao inexistente.
 - Respostas são validadas contra o contrato fora de produção (`VALIDAR_RESPOSTA`): violação vira 500 com `X-Violacao-Contrato`.
 - `MODO_TESTE_*` impede o boot com `NODE_ENV=production`.
+- Efeito agendado é job (`agendar()` na MESMA transação da regra), com id determinístico e handler idempotente que confere o estado antes de agir. Nunca `setTimeout` para regra de negócio.
+- Push e e-mail nunca levam conteúdo clínico nem nome de paciente (RN-NOT-002): só o texto discreto e o destino.

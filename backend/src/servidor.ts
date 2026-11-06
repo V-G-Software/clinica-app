@@ -1,4 +1,4 @@
-// Backend de referência (F1). Diretório em /diretorio, cada organização em /o/{slug} (urlApi).
+// Backend de referência (F1–F2). Diretório em /diretorio, cada organização em /o/{slug} (urlApi).
 // Cada requisição: operação do contrato → validação → uma transação com o contexto da organização
 // (RLS) → handler → validação da resposta. A organização vem do caminho e é conferida contra o token.
 import { createHash } from 'node:crypto';
@@ -11,7 +11,9 @@ import { ErroApi, STATUS_POR_CODIGO } from './erros.ts';
 import { adicionarOuvinte, escutarEventos } from './eventos.ts';
 import type { Handler, Req, Res } from './http.ts';
 import { autenticar, hashCorpo, orgPorDominio, orgPorSlug, type Org } from './nucleo.ts';
+import { handlersAcompanhamento } from './modulos/acompanhamento.ts';
 import { handlersArquivos } from './modulos/arquivos.ts';
+import { handlersChat } from './modulos/chat.ts';
 import { handlersAuth } from './modulos/auth.ts';
 import { eventosDepois, handlersEventos, serEvento } from './modulos/eventos.ts';
 import { handlersEquipe } from './modulos/equipe.ts';
@@ -20,9 +22,12 @@ import { handlersNotificacoes } from './modulos/notificacoes.ts';
 import { handlersPacientes } from './modulos/pacientes.ts';
 import { handlersPublico } from './modulos/publico.ts';
 import { handlersSessao } from './modulos/sessao.ts';
-import { storageLocal } from './servicos/storage.ts';
+import { storage, storageLocal } from './servicos/storage.ts';
+import './servicos/acompanhamento.ts'; // registra os jobs do acompanhamento
+import './servicos/push.ts'; // registra o job de push
+import { iniciarWorker, pararWorker } from './servicos/jobs.ts';
 
-const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe };
+const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat };
 const PUBLICAS_COM_LOGIN = new Set(['authSair']);
 
 export function criarServidor() {
@@ -108,7 +113,7 @@ export function criarServidor() {
     const op = achada.operacao;
     const handler = handlers[op.operationId];
     try {
-      if (!handler) throw new ErroApi('RECURSO_NAO_ENCONTRADO', 'Operação ainda não implementada neste backend.');
+      if (!handler && op.operationId !== 'eventosStream') throw new ErroApi('RECURSO_NAO_ENCONTRADO', 'Operação ainda não implementada neste backend.');
       if (op.tag !== 'publico' && org.status === 'MANUTENCAO') throw new ErroApi('INDISPONIVEL_TEMPORARIAMENTE', org.mensagemStatus ?? 'Em manutenção.');
       if (op.tag !== 'publico' && org.status === 'SUSPENSA') throw new ErroApi('ORGANIZACAO_SUSPENSA');
       const temCorpo = req.body !== undefined && !Buffer.isBuffer(req.body);
@@ -201,16 +206,22 @@ async function limpar() {
       await tx.query("DELETE FROM tentativas WHERE organizacao_id = $1 AND em < now() - interval '1 day'", [id]);
       await tx.query('DELETE FROM desafios WHERE organizacao_id = $1 AND expira_em < now()', [id]);
       await tx.query('DELETE FROM codigos_email WHERE organizacao_id = $1 AND expira_em < now()', [id]);
+      // Envios não usados (14.3): nunca concluídos, ou fotos de check-in/chat que não foram anexadas em 24 h.
+      const descartados = await tx.query(`UPDATE arquivos SET status = 'REJEITADO', motivo_rejeicao = 'Descartado: não foi usado em 24 horas.'
+        WHERE organizacao_id = $1 AND criado_em < now() - interval '24 hours' AND usado_em IS NULL
+          AND (status IN ('AGUARDANDO_ENVIO','PROCESSANDO') OR (status = 'DISPONIVEL' AND finalidade IN ('CHECKIN','CHAT'))) RETURNING id, chave_storage`, [id]);
+      for (const a of descartados.rows) { await storage.remover(a.chave_storage).catch(() => undefined); await storage.remover(`final/${id}/${a.id}`).catch(() => undefined); }
     });
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const app = criarServidor();
   await escutarEventos(app.log);
+  if (process.env.JOBS !== '0') iniciarWorker(app.log); // JOBS=0: instância só de API (o worker roda em outra)
   setInterval(() => void limpar().catch((e) => app.log.error({ err: e.message }, 'limpeza falhou')), 10 * 60_000).unref();
   await app.listen({ port: config.porta, host: process.env.HOST ?? '0.0.0.0' });
   app.log.info(`Backend de referência (contrato ${versaoContrato}) em ${config.urlPublica}`);
-  const fechar = async () => { await app.close(); await pool.end(); process.exit(0); };
+  const fechar = async () => { pararWorker(); await app.close(); await pool.end(); process.exit(0); };
   process.on('SIGTERM', fechar); process.on('SIGINT', fechar);
 }
 export { STATUS_POR_CODIGO };

@@ -32,8 +32,8 @@ O mesmo código serve todas as organizações por configuração (seção 19). O
 ## Consequências e limitações conhecidas
 - **Uma chave JWT só, sem `kid`.** Rotacionar invalida os tokens de acesso em uso (no máximo 15 min; o frontend renova pelo cookie). Para rotação sem atrito: `kid` + conjunto de chaves públicas — aditivo, sem mudar o contrato.
 - **Limpeza de metadados não recodifica a imagem** (QUESTION-022).
-- **Processamento de arquivo síncrono** no `concluir`; com imagens grandes e muito tráfego, vira fila (pg-boss, F2).
+- **Processamento de arquivo síncrono** no `concluir`; com imagens grandes e muito tráfego, vira job (ADR-0014).
 - `NOTIFY` aceita até 8000 bytes e, acima disso, **desfaz a transação da requisição**. Eventos até ~7 kB vão inteiros; maiores vão só como referência (`seq`) e cada instância lê do banco (`testes/eventos.test.ts`).
 - Enquanto a conexão `LISTEN` de uma instância está caindo/reconectando, os SSE dela perdem eventos ao vivo; o cliente se recupera ao reconectar com `Last-Event-ID`.
-- Push e e-mail SMTP chegam na F2/F3 (QUESTION-023); até lá `notificar` grava a notificação, emite o evento e registra o push como enfileirado.
+- Push e e-mail SMTP: implementados na F2 (ADR-0014).
 - `MODO_TESTE_CODIGO_EMAIL`/`MODO_TESTE_TOTP` existem só para a suíte e **impedem o boot** com `NODE_ENV=production` (QUESTION-024).

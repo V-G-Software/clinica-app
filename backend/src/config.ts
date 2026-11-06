@@ -36,6 +36,9 @@ export const config = {
   storageDir: e.STORAGE_DIR ?? './.dados/arquivos',
   s3: { endpoint: e.S3_ENDPOINT, bucket: e.S3_BUCKET ?? 'clinica', regiao: e.S3_REGIAO ?? 'us-east-1' },
   email: (e.EMAIL ?? 'log') as 'log' | 'arquivo' | 'smtp',
+  smtp: { url: e.SMTP_URL ?? null, remetente: e.EMAIL_REMETENTE ?? 'nao-responda@exemplo.com.br' },
+  // Web Push: sem as três variáveis, o manifesto anuncia push NENHUM (o app usa e-mail e a central).
+  push: e.VAPID_CHAVE_PUBLICA && e.VAPID_CHAVE_PRIVADA ? { publica: e.VAPID_CHAVE_PUBLICA, privada: e.VAPID_CHAVE_PRIVADA, assunto: e.VAPID_ASSUNTO ?? 'mailto:suporte@exemplo.com.br' } : null,
   dominioErros: e.DOMINIO_ERROS ?? 'https://exemplo.com.br/erros',
   modoTeste: { codigoEmail: e.MODO_TESTE_CODIGO_EMAIL ?? null, totp: e.MODO_TESTE_TOTP ?? null },
   validarResposta: e.VALIDAR_RESPOSTA ? e.VALIDAR_RESPOSTA === '1' : !producao,
@@ -43,3 +46,5 @@ export const config = {
 };
 if (config.producao && (config.modoTeste.codigoEmail || config.modoTeste.totp)) throw new Error('MODO_TESTE_* não pode ser usado em produção');
 if (config.producao && !config.segredoAssinatura) throw new Error('SEGREDO_ASSINATURA é obrigatório em produção');
+if (config.email === 'smtp' && !config.smtp.url) throw new Error('EMAIL=smtp exige SMTP_URL (ex.: smtp://usuario:senha@host:587)');
+if (config.producao && config.email === 'arquivo') throw new Error('EMAIL=arquivo é só para desenvolvimento');
