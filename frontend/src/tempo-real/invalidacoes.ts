@@ -13,6 +13,8 @@ export function invalidacoesPara(e: EventoApp): ChaveConsulta[] {
     case 'acompanhamento.alerta.criado': return [['alertas'], ['acompanhamento', d.acompanhamentoId], ['acompanhamentos'], ['inicio']];
     case 'acompanhamento.alerta.resolvido': return [['alertas'], ['acompanhamentos'], ['inicio']];
     case 'acompanhamento.acompanhamento.atualizado': return [['acompanhamento', d.acompanhamentoId], ['acompanhamentos'], ['checkins'], ['inicio']];
+    case 'agenda.agendamento.criado':
+    case 'agenda.agendamento.atualizado': return [['agendamento', d.agendamentoId], ['agendamentos'], ['agenda-horarios'], ['inicio']];
     case 'notificacao.criada': return [['notificacoes']];
     case 'arquivo.processado': return [['arquivo', d.arquivoId]];
     default: return [];

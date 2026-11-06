@@ -26,6 +26,13 @@ export type Mensagem = S['Mensagem'];
 export type Notificacao = S['Notificacao'];
 export type Arquivo = S['Arquivo'];
 export type Membro = S['Membro'];
+export type Servico = S['Servico'];
+export type Grade = S['Grade'];
+export type Bloqueio = S['Bloqueio'];
+export type HorarioLivre = S['HorarioLivre'];
+export type Agendamento = S['Agendamento'];
+export type AgendamentoResumo = S['AgendamentoResumo'];
+export type ConfigAgenda = S['ConfigAgenda'];
 
 // Catálogos fechados (7.2). O frontend ignora valores fora deles (compatibilidade para frente).
 export type Perfil = S['Perfil'];

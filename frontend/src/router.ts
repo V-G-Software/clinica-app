@@ -28,6 +28,9 @@ export function telaPermitida(d: DefinicaoTela, s: ReturnType<typeof useSessaoSt
   if (d.publico === 'equipe' && s.ehPaciente) return false;
   if (d.publico === 'paciente' && !s.ehPaciente) return false;
   if (d.tela === 'equipe.lista') return s.pode('equipe.membro.gerenciar');
+  if (d.tela === 'agenda.novo') return s.pode('agenda.agendamento.criar');
+  if (d.tela === 'agenda.marcar') return s.pode('agenda.agendamento.criar');
+  if (d.tela === 'agenda.servicos' || d.tela === 'agenda.grade') return s.pode('agenda.configuracao.gerenciar');
   if (d.tela === 'organizacao.configuracao') return s.pode('organizacao.configuracao.editar');
   return true;
 }

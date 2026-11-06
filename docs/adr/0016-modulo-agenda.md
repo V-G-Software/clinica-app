@@ -84,6 +84,13 @@ O paciente recebe `ler` e `criar`. O backend ainda confere o autoagendamento e s
   - `modulos/agenda.ts` (handlers e seções da tela inicial).
   - A violação da constraint de exclusão (SQLSTATE `23P01`) vira 409 `HORARIO_INDISPONIVEL`.
   - `testes/agenda.test.ts` prova a concorrência: de três marcações simultâneas, só uma passa. Prova também o ciclo do lembrete e o seed.
+- **Implementado no frontend (etapa 3):**
+  - 7 telas em `src/telas/agenda/`, mais o componente `EscolherHorario`;
+  - seções `PROXIMA_CONSULTA` e `AGENDA_DO_DIA` na tela inicial;
+  - bloco da agenda nas configurações;
+  - invalidação por `agenda.agendamento.*`.
+  - Conversão data/hora local → UTC em `telas/agenda/util.ts`, no fuso da organização e com duas passadas por causa do horário de verão. Nunca no fuso do aparelho.
+  - Botões só pelo `acoesPermitidas`: o prazo de cancelamento do paciente é decidido pelo backend, e o app só orienta a falar com a equipe.
 - Contrato `1.1.0-rc.1`, minor e só com adições, conforme a regra 4.2.
 - O backend precisa da extensão `btree_gist`, que existe no Postgres gerenciado (RDS, Cloud SQL, Neon).
 - Integração com ERP e agenda externa (Google Calendar, ERP GeneXus): fora do escopo; vira módulo de integração depois.

@@ -46,6 +46,8 @@ const CENARIOS = [
   ['fisio-movimento', 'pedro@fisio-movimento.exemplo', 'fernanda@exemplo.com'],
   ['vet-amigo', 'renata@vet-amigo.exemplo', 'laura@exemplo.com'],
 ];
+/** Título da tela já roteada (a inicialização mostra um h1 "Carregando…" antes do guarda do router). */
+const titulo = (p) => p.getByRole('heading', { level: 1 }).filter({ hasNotText: 'Carregando' }).first().waitFor();
 for (const esquema of ['light', 'dark']) {
   for (const [slug, equipe, paciente] of CENARIOS) {
     const novo = () => browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme: esquema, locale: 'pt-BR' });
@@ -63,6 +65,12 @@ for (const esquema of ['light', 'dark']) {
     await conv.waitFor({ timeout: 5000 }).catch(() => undefined);
     if (await conv.count()) { await conv.click(); await p.getByRole('textbox', { name: 'Mensagem' }).waitFor({ timeout: 5000 }).catch(() => undefined); graves += await auditar(p, `${slug}/${esquema} conversa paciente`); }
     await p.goto(`${APP}/perfil`); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} perfil`);
+    for (const [rota, nome] of [['/agenda/minhas', 'minhas consultas'], ['/agenda/marcar', 'marcar consulta']]) {
+      await p.goto(`${APP}${rota}`);
+      await titulo(p);
+      if (p.url().includes('/indisponivel')) continue; // sem agenda ou sem autoagendamento
+      await p.locator('.animate-pulse').first().waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined); graves += await auditar(p, `${slug}/${esquema} ${nome}`);
+    }
     await ctx.close();
     // Equipe (desktop)
     ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, colorScheme: esquema, locale: 'pt-BR' }); p = await ctx.newPage();
@@ -76,10 +84,20 @@ for (const esquema of ['light', 'dark']) {
     await acp.waitFor({ timeout: 5000 }).catch(() => undefined);
     if (await acp.count()) { await acp.click(); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} acompanhamento`); }
     await p.goto(`${APP}/pacientes/novo`); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} novo paciente`);
-    for (const [rota, nome] of [['/conversas', 'conversas equipe'], ['/configuracoes', 'configurações'], ['/equipe', 'equipe']]) {
+    await p.goto(`${APP}/agenda`);
+    await titulo(p);
+    if (!p.url().includes('/indisponivel')) {
+      await p.getByRole('button', { name: 'Semana', exact: true }).click();
+      const agd = p.locator('main a[href^="/agenda/agd_"]').first();
+      await agd.waitFor({ timeout: 5000 }).catch(() => undefined);
+      if (await agd.count()) { await agd.click(); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} agendamento`); }
+    }
+    for (const [rota, nome] of [['/conversas', 'conversas equipe'], ['/configuracoes', 'configurações'], ['/equipe', 'equipe'], ['/agenda', 'agenda'], ['/agenda/novo', 'nova consulta'], ['/agenda/servicos', 'serviços'], ['/agenda/grade', 'horários e bloqueios']]) {
       await p.goto(`${APP}${rota}`);
-      if (await p.getByRole('heading', { name: 'Página indisponível' }).isVisible().catch(() => false)) continue; // módulo/perfil sem acesso
-      await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} ${nome}`);
+      await titulo(p);
+      if (p.url().includes('/indisponivel')) continue; // módulo/perfil sem acesso
+      await p.locator('.animate-pulse').first().waitFor({ state: 'detached', timeout: 8000 }).catch(() => undefined);
+      graves += await auditar(p, `${slug}/${esquema} ${nome}`);
     }
     await ctx.close();
   }

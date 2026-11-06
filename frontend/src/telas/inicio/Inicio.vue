@@ -7,6 +7,9 @@ import { useI18n } from 'vue-i18n';
 import { api, ok } from '@/api';
 import { caminhoDe } from '@/catalogo/telas';
 import { useSessaoStore } from '@/sessao/store';
+import { useAppStore } from '@/app/store';
+import { formatarDataHora, formatarHora } from '@/i18n/datas';
+import { STATUS } from '@/telas/agenda/util';
 import { capitalizar, contar, nenhum, TERMOS_PADRAO, type Termo } from '@/i18n/termos';
 import Cartao from '@/ds/Cartao.vue';
 import Aviso from '@/ds/Aviso.vue';
@@ -15,9 +18,11 @@ import EstadoConsulta from '@/ds/EstadoConsulta.vue';
 
 const { t } = useI18n();
 const sessao = useSessaoStore();
+const app = useAppStore();
+const quando = (iso: string) => capitalizar(formatarDataHora(iso, app.fuso, app.locale, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }));
 const termo = (k: string): Termo => ((sessao.termos as Record<string, Termo> | undefined)?.[k] ?? TERMOS_PADRAO[k]);
 const { data, isPending, error, refetch } = useQuery({ queryKey: ['inicio'], queryFn: () => ok(api().GET('/v1/inicio', {})) });
-const CONHECIDAS = new Set(['ACOMPANHAMENTO_ATUAL', 'CHECKINS_PENDENTES', 'ALERTAS_ABERTOS', 'CHECKINS_DO_DIA', 'ACOMPANHAMENTOS_ATIVOS', 'CONVERSAS_RECENTES', 'ATALHOS', 'AVISO', 'CONTATO_ORGANIZACAO']);
+const CONHECIDAS = new Set(['ACOMPANHAMENTO_ATUAL', 'CHECKINS_PENDENTES', 'ALERTAS_ABERTOS', 'CHECKINS_DO_DIA', 'ACOMPANHAMENTOS_ATIVOS', 'CONVERSAS_RECENTES', 'ATALHOS', 'AVISO', 'CONTATO_ORGANIZACAO', 'PROXIMA_CONSULTA', 'AGENDA_DO_DIA']);
 const secoes = computed(() => (data.value?.secoes ?? []).filter((s) => CONHECIDAS.has(s.tipo as string)) as Array<{ id: string; tipo: string; titulo?: string; dados: any }>);
 // Com mais de um paciente vinculado (tutora com dois pets), o título "nome da clínica" (RN-CHA-003)
 // fica ambíguo: mostramos o nome do paciente. Ver QUESTION-016.
@@ -39,6 +44,22 @@ const primeiroNome = computed(() => sessao.manifesto?.usuario.nomeExibicao.split
         <div class="mt-2 h-2 rounded-full bg-marca-100"><div class="h-2 rounded-full bg-acao" :style="{ width: `${Math.max(0, Math.min(100, (s.dados.diaAtual / s.dados.totalDias) * 100))}%` }" /></div>
         <p v-if="s.dados.orientacaoDoDia" class="mt-3 rounded-lg bg-marca-50 p-3 text-sm dark:bg-zinc-700">{{ s.dados.orientacaoDoDia }}</p>
       </Cartao></RouterLink>
+      <RouterLink v-else-if="s.tipo === 'PROXIMA_CONSULTA'" :to="`/agenda/${s.dados.agendamento.id}`" class="block"><Cartao class="hover:border-acao">
+        <p class="text-sm text-secundario">{{ s.titulo ?? `Próxim${termo('consulta').genero === 'F' ? 'a' : 'o'} ${termo('consulta').singular}` }}</p>
+        <h2 class="text-lg font-bold">{{ quando(s.dados.agendamento.inicioEm) }}</h2>
+        <p>{{ s.dados.agendamento.servico.nome }} · {{ s.dados.agendamento.profissional.nome }}<template v-if="(sessao.manifesto?.pacientesVinculados?.length ?? 0) > 1"> · {{ s.dados.agendamento.paciente.nome }}</template></p>
+        <p v-if="s.dados.agendamento.local" class="text-sm">{{ s.dados.agendamento.local }}</p>
+        <p v-if="s.dados.agendamento.acoesPermitidas.includes('CONFIRMAR')" class="mt-2 flex min-h-12 items-center justify-center rounded-lg bg-acao px-4 font-semibold text-acao-texto">Confirmar presença</p>
+        <p v-else class="mt-1 text-sm font-semibold">{{ STATUS[s.dados.agendamento.status as keyof typeof STATUS]?.rotulo }}</p>
+      </Cartao></RouterLink>
+      <Cartao v-else-if="s.tipo === 'AGENDA_DO_DIA'">
+        <h2 class="font-bold">{{ s.titulo ?? 'Agenda de hoje' }} ({{ s.dados.total }})</h2>
+        <p v-if="!s.dados.itens.length" class="text-secundario">{{ capitalizar(nenhum(termo('consulta'))) }} hoje.</p>
+        <ul class="mt-1"><li v-for="a in s.dados.itens" :key="a.id"><RouterLink :to="`/agenda/${a.id}`" class="flex min-h-11 items-center gap-3 py-1 text-sm" :class="a.status === 'CANCELADO' && 'line-through'">
+          <strong class="w-12">{{ formatarHora(a.inicioEm, app.fuso, app.locale) }}</strong><span class="flex-1">{{ a.paciente.nome }} · {{ a.servico.nome }}</span><span class="text-secundario">{{ STATUS[a.status as keyof typeof STATUS]?.rotulo }}</span>
+        </RouterLink></li></ul>
+        <RouterLink to="/agenda" class="text-sm text-acao underline">Ver agenda</RouterLink>
+      </Cartao>
       <Cartao v-else-if="s.tipo === 'CHECKINS_PENDENTES'">
         <h2 class="font-bold">{{ capitalizar(termo('checkin').plural) }} para responder</h2>
         <p v-if="!s.dados.itens.length" class="text-secundario">{{ capitalizar(nenhum(termo('checkin'))) }} pendente.</p>

@@ -6,7 +6,7 @@ Construído a partir de `docs/PROMPT_FRONTEND.md`, sobre o contrato (`@clinica/c
 pnpm mock                          # http://localhost:4010
 pnpm --filter frontend dev         # http://localhost:5173/?org=modelo-otorrino
 pnpm --filter frontend test        # unitários (Vitest)
-pnpm --filter frontend e2e         # E2E FE0–FE3 com Playwright (mock e dev server no ar)
+pnpm --filter frontend e2e         # E2E FE0–FE4 com Playwright (mock e dev server no ar)
 pnpm --filter frontend e2e:a11y    # auditoria de acessibilidade (axe-core)
 pnpm --filter frontend build:homologacao && pnpm --filter frontend preview:homologacao  # produção + CSP em :4173
 pnpm --filter frontend e2e:csp     # fluxos com a CSP ativa
@@ -16,6 +16,20 @@ pnpm --filter frontend build       # build de produção + service worker
 Em desenvolvimento, `?org=` escolhe a organização (fica lembrado) e o botão de chave inglesa troca de organização e avança o relógio do mock. Logins de teste: `mock/README.md`.
 
 ## Estado
+
+### F4 · agenda (ADR-0016)
+| Critério de saída | Situação |
+|---|---|
+| Equipe: agenda do dia e da semana, marcar (horário livre ou fora da grade), encaixe, remarcar, cancelar, realizar, falta | `e2e/fe4.mjs` |
+| Conflito 409 `HORARIO_INDISPONIVEL` tratado (sugere encaixe à equipe; paciente escolhe outro horário) | `e2e/fe4.mjs` |
+| Gestor: serviços (arquivar não apaga), grade semanal com If-Match, bloqueios da organização e do profissional, configuração da agenda | `e2e/fe4.mjs` |
+| Paciente: "Próxima consulta" no início, confirmar presença, marcar sozinho, cancelar dentro do prazo | `e2e/fe4.mjs` |
+| Sem autoagendamento (vet) e sem o módulo (fisio): rota bloqueada e nada no menu | `e2e/fe4.mjs` |
+| Datas no fuso da organização, não do aparelho | `e2e/fe4.mjs` roda com o aparelho em Tóquio; `tests/unit/agenda.test.ts` cobre a conversão e o horário de verão |
+| Troca do mock para o backend real só pelo endereço do diretório | `e2e/backend-real.mjs` (marca, paciente confirma, equipe vê em tempo real) |
+| Acessibilidade | `e2e/acessibilidade.mjs` inclui as 8 telas da agenda: zero violações graves |
+
+Barra inferior no celular: no máximo 5 posições **contando o "Mais"**. Quando há itens secundários, o 5º item principal do manifesto desce para o "Mais". Cinco rótulos longos ("Meu pós-operatório", "Minhas consultas") não cabem em 360 px.
 
 ### FE3 · pronto para o piloto: critérios técnicos concluídos
 | Critério de saída | Situação |

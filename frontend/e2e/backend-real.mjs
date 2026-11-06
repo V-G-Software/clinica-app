@@ -111,6 +111,26 @@ await marcos.getByText(t2).waitFor({ timeout: 6000 }).then(() => ok(true, 'chat:
 ok(await marcos.getByText(/Dia 1 ·/).count() > 0, 'chat: check-in respondido aparece na conversa (RN-ACO-007)');
 await foto(marcos, 'real-4-chat-paciente');
 
+// ─── Agenda (F4): equipe marca no horário livre; paciente confirma; equipe vê sem recarregar ───
+await ana.goto(`${APP}/agenda/novo?pacienteId=pac_marcos`);
+await ana.getByText('Marcos Souza').waitFor();
+await ana.getByLabel('Serviço').selectOption({ label: 'Consulta otorrinolaringológica (30 min)' });
+await ana.getByRole('button', { name: 'Próxima semana' }).click();
+await ana.getByRole('button', { name: /^\d{2}:\d{2}/ }).first().click();
+await ana.getByRole('button', { name: 'Marcar', exact: true }).click();
+await ana.waitForURL(/\/agenda\/agd_/);
+const agendamentoId = ana.url().split('/').pop();
+await ana.getByText('Agendado', { exact: true }).waitFor({ timeout: 8000 })
+  .then(() => ok(true, 'agenda: equipe marca no horário livre (backend real)'), () => ok(false, 'agenda: equipe marca no horário livre (backend real)'));
+await marcos.goto(`${APP}/agenda/${agendamentoId}`);
+await marcos.getByRole('button', { name: 'Confirmar presença' }).click();
+await marcos.getByText('Confirmado', { exact: true }).first().waitFor({ timeout: 8000 })
+  .then(() => ok(true, 'agenda: paciente confirma presença'), () => ok(false, 'agenda: paciente confirma presença'));
+await ana.getByText('Confirmado', { exact: true }).first().waitFor({ timeout: 8000 })
+  .then(() => ok(true, 'agenda: confirmação chega à equipe em tempo real'), () => ok(false, 'agenda: confirmação chega à equipe em tempo real'));
+await foto(ana, 'real-5-agenda-confirmada');
+await api('POST', `/v1/agendamentos/${agendamentoId}/cancelar`, { token: tokenAna, body: { motivo: 'E2E concluído.' } });
+
 // Limpeza: encerra o acompanhamento de teste.
 await api('POST', `/v1/acompanhamentos/${acp.id}/encerrar`, { token: tokenAna, body: { motivo: 'E2E concluído.' } });
 await browser.close();

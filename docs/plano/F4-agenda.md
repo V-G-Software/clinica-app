@@ -21,7 +21,7 @@ Desenho em [ADR-0016](../adr/0016-modulo-agenda.md).
 |---|---|---|---|
 | 1 ✅ | Contrato, mock e conformidade | endpoints, schemas, permissões, telas, seções, notificações, eventos e erro novos; cenários com serviços, grades e agendamentos; mock; testes de conformidade; CHANGELOG | — |
 | 2 ✅ | Backend | migração 0005 (serviços, grades, bloqueios, agendamentos com `EXCLUDE USING gist`), regras, jobs de lembrete, notificações, seções da tela inicial, isolamento | 1 |
-| 3 | Frontend | equipe: agenda do dia e da semana, novo agendamento, detalhe e ações, serviços, grade e bloqueios. Paciente: minhas consultas, marcar, confirmar, cancelar, seção "Próxima consulta". E2E contra mock e backend | 1 (mock), 2 (real) |
+| 3 ✅ | Frontend | equipe: agenda do dia e da semana, novo agendamento, detalhe e ações, serviços, grade e bloqueios. Paciente: minhas consultas, marcar, confirmar, cancelar, seção "Próxima consulta". E2E contra mock e backend | 1 (mock), 2 (real) |
 | 4 | Cirurgia ↔ acompanhamento | criar o acompanhamento (pós-operatório) a partir do procedimento; remarcação e cancelamento propagam para ele (QUESTION-032) | 2, 3 |
 
 ## Depois da agenda (ordem proposta)

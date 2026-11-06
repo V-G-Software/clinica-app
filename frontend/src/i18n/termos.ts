@@ -7,6 +7,8 @@ export type Termos = Manifesto['termos'];
 
 const g = (t: Termo, m: string, f: string) => (t.genero === 'F' ? f : m);
 export const capitalizar = (s: string) => (s ? s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1) : s);
+/** Escolhe a forma pelo gênero do termo: flexao(consulta, 'meus', 'minhas'). */
+export const flexao = g;
 export const artigo = (t: Termo) => g(t, 'o', 'a');
 export const artigoPlural = (t: Termo) => g(t, 'os', 'as');
 export const novo = (t: Termo) => `${g(t, 'novo', 'nova')} ${t.singular}`;
@@ -28,4 +30,5 @@ export const TERMOS_PADRAO: Record<string, Termo> = {
   procedimento: { singular: 'procedimento', plural: 'procedimentos', genero: 'M' },
   checkin: { singular: 'check-in', plural: 'check-ins', genero: 'M' },
   conversa: { singular: 'conversa', plural: 'conversas', genero: 'F' },
+  consulta: { singular: 'consulta', plural: 'consultas', genero: 'F' },
 };
