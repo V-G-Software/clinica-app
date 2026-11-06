@@ -12,6 +12,7 @@ import { adicionarOuvinte, escutarEventos } from './eventos.ts';
 import type { Handler, Req, Res } from './http.ts';
 import { autenticar, hashCorpo, orgPorDominio, orgPorSlug, type Org } from './nucleo.ts';
 import { handlersAcompanhamento } from './modulos/acompanhamento.ts';
+import { handlersAgenda } from './modulos/agenda.ts';
 import { handlersArquivos } from './modulos/arquivos.ts';
 import { handlersChat } from './modulos/chat.ts';
 import { handlersAuth } from './modulos/auth.ts';
@@ -31,7 +32,7 @@ import { LIMITES, contar } from './servicos/limites.ts';
 /** Ids de módulo do catálogo do contrato (`ModuloId`); a tag da operação diz a que módulo ela pertence. */
 const MODULOS_DO_CONTRATO = new Set<string>(contrato.components.schemas.ModuloId.enum);
 
-const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat };
+const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat, ...handlersAgenda };
 const PUBLICAS_COM_LOGIN = new Set(['authSair']);
 
 export function criarServidor() {

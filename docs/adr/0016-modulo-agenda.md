@@ -78,6 +78,12 @@ O paciente recebe `ler` e `criar`. O backend ainda confere o autoagendamento e s
 - **Pedido de horário pelo paciente com aprovação da equipe:** mais um estado e mais uma fila para a secretaria. Fica como opção futura de configuração, se uma clínica pedir.
 
 ## Consequências
+- **Implementado no backend (etapa 2):**
+  - migração `0005_agenda.sql`;
+  - `servicos/agenda.ts` (regras, horários livres, job `agenda.lembrete`);
+  - `modulos/agenda.ts` (handlers e seções da tela inicial).
+  - A violação da constraint de exclusão (SQLSTATE `23P01`) vira 409 `HORARIO_INDISPONIVEL`.
+  - `testes/agenda.test.ts` prova a concorrência: de três marcações simultâneas, só uma passa. Prova também o ciclo do lembrete e o seed.
 - Contrato `1.1.0-rc.1`, minor e só com adições, conforme a regra 4.2.
 - O backend precisa da extensão `btree_gist`, que existe no Postgres gerenciado (RDS, Cloud SQL, Neon).
 - Integração com ERP e agenda externa (Google Calendar, ERP GeneXus): fora do escopo; vira módulo de integração depois.

@@ -1,6 +1,6 @@
 # Backend de referência
 
-Implementação do contrato (`contrato/openapi.yaml`) em Node 22 + Fastify + PostgreSQL. Decisões em [ADR-0013](../docs/adr/0013-backend-de-referencia.md) (núcleo) e [ADR-0014](../docs/adr/0014-jobs-push-e-email.md) (jobs, push, e-mail) e [ADR-0015](../docs/adr/0015-seguranca-para-o-piloto.md) (segurança do piloto). Fase atual: **F3** — todas as operações da v1 do contrato: núcleo (F1) mais protocolos, acompanhamentos, check-ins, alertas, chat, jobs agendados, Web Push e e-mail SMTP.
+Implementação do contrato (`contrato/openapi.yaml`) em Node 22 + Fastify + PostgreSQL. Decisões em [ADR-0013](../docs/adr/0013-backend-de-referencia.md) (núcleo) e [ADR-0014](../docs/adr/0014-jobs-push-e-email.md) (jobs, push, e-mail) e [ADR-0015](../docs/adr/0015-seguranca-para-o-piloto.md) (segurança do piloto) e [ADR-0016](../docs/adr/0016-modulo-agenda.md) (agenda). Fase atual: **F4** — todas as operações do contrato 1.1: núcleo (F1), protocolos, acompanhamentos, check-ins, alertas, chat, jobs agendados, Web Push, e-mail SMTP (F2–F3) e o módulo agenda (consultas e cirurgias).
 
 ## Subir localmente
 
@@ -23,7 +23,7 @@ Uma organização nova: `pnpm org:criar --arquivo org.json` (mesmo formato dos c
 ## Testes
 
 ```bash
-pnpm test        # isolamento, eventos, jobs, concorrência, Web Push, imagem, JWT, cabeçalhos e limites — precisa do banco semeado
+pnpm test        # isolamento, eventos, jobs, concorrência, Web Push, imagem, JWT, cabeçalhos, limites e agenda — precisa do banco semeado
 pnpm typecheck
 ```
 

@@ -11,6 +11,7 @@ import type { Log } from '../src/http.ts';
 import type { Org } from '../src/nucleo.ts';
 import { criarAcompanhamento, criarAlerta, encerrarAcompanhamento, resolverAlerta, responderCheckin } from '../src/servicos/acompanhamento.ts';
 import { postarMensagem } from '../src/servicos/chat.ts';
+import * as agenda from '../src/servicos/agenda.ts';
 import { storage } from '../src/servicos/storage.ts';
 
 const silencioso: Log = { info: () => undefined, warn: () => undefined, error: (o, m) => console.error(m, o) };
@@ -53,6 +54,14 @@ export function deslocarCenario(cen: any, fuso: string, agora = Date.now()) {
       arquivarConversaEm: ms(a.arquivarConversaEm), encerrar: a.encerrar && { ...a.encerrar, em: ms(a.encerrar.em) },
     })),
     conversas: (cen.conversas ?? []).map((c: any) => ({ ...c, criadoEm: ms(c.criadoEm), mensagens: comEm(c.mensagens) })),
+    ...(cen.agenda ? { agenda: {
+      ...cen.agenda,
+      bloqueios: (cen.agenda.bloqueios ?? []).map((b: any) => ({ ...b, inicioEm: ms(b.inicioEm), fimEm: ms(b.fimEm) })),
+      agendamentos: (cen.agenda.agendamentos ?? []).map((x: any) => ({
+        ...x, inicioEm: ms(x.inicioEm), criadoEm: ms(x.criadoEm),
+        ...Object.fromEntries(['confirmar', 'cancelar', 'realizar', 'falta'].filter((k) => x[k]).map((k) => [k, { ...x[k], em: ms(x[k].em) }])),
+      })),
+    } } : {}),
   };
 }
 
@@ -110,6 +119,29 @@ export async function semearF2(c: pg.Client, org: Org, cenario: any, agora = Dat
       const acp = (await tx.query('SELECT * FROM acompanhamentos WHERE organizacao_id = $1 AND id = $2', [org.id, a.id])).rows[0];
       if (acp.status === 'ATIVO' || acp.status === 'AGENDADO') await encerrarAcompanhamento(tx, org, acp, a.encerrar.motivo, a.encerrar.por, silencioso);
     } });
+  }
+  // Agenda (ADR-0016): serviços, grades e bloqueios direto; agendamentos pela mesma regra da API, na linha do tempo.
+  if (cen.agenda && org.modulos.some((m) => m.id === 'agenda')) {
+    for (const sv of cen.agenda.servicos ?? [])
+      await tx.query(`INSERT INTO servicos (organizacao_id, id, nome, categoria, duracao_minutos, autoagendavel, profissionais_ids, orientacoes)
+                      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [org.id, sv.id, sv.nome, sv.categoria, sv.duracaoMinutos, sv.autoagendavel, sv.profissionaisIds, sv.orientacoes ?? null]);
+    for (const [prof, itens] of Object.entries<any[]>(cen.agenda.grades ?? {}))
+      await tx.query('INSERT INTO grades (organizacao_id, profissional_id, itens) VALUES ($1,$2,$3)', [org.id, prof, JSON.stringify(itens.map((i) => ({ ...i, servicosIds: i.servicosIds ?? null })))]);
+    for (const b of cen.agenda.bloqueios ?? [])
+      await tx.query('INSERT INTO bloqueios (organizacao_id, id, profissional_id, inicio_em, fim_em, motivo, criado_por) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+        [org.id, b.id, b.profissionalId ?? null, b.inicioEm, b.fimEm, b.motivo ?? null, 'sistema']);
+    const ag = async (id: string) => (await tx.query('SELECT * FROM agendamentos WHERE organizacao_id = $1 AND id = $2 FOR UPDATE', [org.id, id])).rows[0];
+    for (const x of cen.agenda.agendamentos ?? []) {
+      passos.push({ em: Date.parse(x.criadoEm), sempre: true, fazer: async () => {
+        const sv = (await tx.query('SELECT * FROM servicos WHERE organizacao_id = $1 AND id = $2', [org.id, x.servicoId])).rows[0];
+        await agenda.criarAgendamento(tx, org, { id: x.id, pacienteId: x.pacienteId, servico: sv, profissionalId: x.profissionalId, inicio: new Date(x.inicioEm),
+          duracaoMinutos: x.duracaoMinutos, origem: x.origem ?? 'EQUIPE', porId: x.criadoPor, local: x.local, observacao: x.observacao, encaixe: x.encaixe, criadoEm: new Date(x.criadoEm) }, silencioso);
+      } });
+      if (x.confirmar) passos.push({ em: Date.parse(x.confirmar.em), fazer: async () => { await agenda.confirmar(tx, org, await ag(x.id), x.confirmar.por ?? null); } });
+      if (x.cancelar) passos.push({ em: Date.parse(x.cancelar.em), fazer: async () => { await agenda.cancelar(tx, org, await ag(x.id), x.cancelar.por, x.cancelar.motivo, !!x.cancelar.peloPaciente, silencioso); } });
+      if (x.realizar) passos.push({ em: Date.parse(x.realizar.em), fazer: async () => { await agenda.finalizar(tx, org, await ag(x.id), x.realizar.por, 'REALIZADO'); } });
+      if (x.falta) passos.push({ em: Date.parse(x.falta.em), fazer: async () => { await agenda.finalizar(tx, org, await ag(x.id), x.falta.por, 'FALTOU'); } });
+    }
   }
   for (const cv of cen.conversas ?? []) {
     passos.push({ em: Date.parse(cv.criadoEm) - 1, fazer: async () => {
