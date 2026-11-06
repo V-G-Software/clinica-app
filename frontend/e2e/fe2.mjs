@@ -190,6 +190,8 @@ await ctxAna.close();
   await p.getByRole('button', { name: 'Thor' }).click();
   await espera(p.getByText(/Thor · Em andamento/), 'tutora: filtro mostra o do Thor');
   await p.getByRole('link', { name: /Conversas/ }).first().click();
+  // Espera a rota trocar: a tela de conversas é carregada sob demanda e, até lá, o card "Thor" de /meus ainda está no DOM.
+  await p.waitForURL(/\/conversas$/);
   await p.getByRole('link', { name: /Thor/ }).first().click();
   await p.waitForURL(/\/conversas\/.+/);
   const conversaId = p.url().split('/').pop();
