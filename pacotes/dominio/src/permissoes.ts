@@ -11,21 +11,23 @@ export const TODAS_PERMISSOES = [
   'acompanhamento.checkin.responder', 'acompanhamento.alerta.ler', 'acompanhamento.alerta.resolver',
   'chat.conversa.ler', 'chat.conversa.criar', 'chat.conversa.gerenciar', 'chat.mensagem.enviar',
   'equipe.membro.ler', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar',
+  'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
 ] as const;
 
 /** Tabela da seção 9.6. [DECISÃO 3]: secretária vê check-ins e alertas por padrão. */
 export const PERMISSOES_POR_PERFIL: Record<Perfil, readonly string[]> = {
   GESTOR: TODAS_PERMISSOES.filter((p) => p !== 'acompanhamento.checkin.responder'),
-  PROFISSIONAL: TODAS_PERMISSOES.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar'].includes(p)),
+  PROFISSIONAL: TODAS_PERMISSOES.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar', 'agenda.configuracao.gerenciar'].includes(p)),
   SECRETARIA: [
     'pacientes.paciente.ler', 'pacientes.paciente.criar', 'pacientes.paciente.editar', 'pacientes.paciente.convidar',
     'acompanhamento.protocolo.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.acompanhamento.criar',
     'acompanhamento.checkin.ler', 'acompanhamento.alerta.ler', 'chat.conversa.ler', 'chat.conversa.criar',
     'chat.conversa.gerenciar', 'chat.mensagem.enviar', 'equipe.membro.ler',
+    'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
   ],
   PACIENTE: [
     'pacientes.paciente.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.checkin.ler',
-    'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar',
+    'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar', 'agenda.agendamento.ler',
   ],
 };
 export const temModulo = (modulos: ModuloAtivo[], id: string) => modulos.some((m) => m.id === id);
@@ -35,5 +37,6 @@ export const configModulo = (modulos: ModuloAtivo[], id: string) => modulos.find
 export function permissoesDe(modulos: ModuloAtivo[], perfil: Perfil): string[] {
   const base = [...PERMISSOES_POR_PERFIL[perfil]];
   if (perfil === 'PACIENTE' && configModulo(modulos, 'chat').pacientePodeIniciar) base.push('chat.conversa.criar');
+  if (perfil === 'PACIENTE' && configModulo(modulos, 'agenda').autoagendamento) base.push('agenda.agendamento.criar');
   return base.filter((p) => { const m = p.split('.')[0]; return m === 'organizacao' || temModulo(modulos, m); });
 }

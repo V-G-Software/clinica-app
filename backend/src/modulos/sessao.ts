@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { secoesInicioAcompanhamento } from './acompanhamento.ts';
 import { secoesInicioChat } from './chat.ts';
+import { secoesInicioAgenda } from './agenda.ts';
 import { capacidadePush } from '../servicos/push.ts';
 import { montarNavegacao, temModulo, type Termo } from '@clinica/dominio';
 import { versaoContrato } from '@clinica/contrato-validador';
@@ -78,12 +79,14 @@ export const handlersSessao: Record<string, Handler> = {
     const org = q.org;
     const secoes: any[] = [];
     if (org.configuracao.avisoInicio) secoes.push({ id: 'aviso', tipo: 'AVISO', dados: org.configuracao.avisoInicio });
-    secoes.push(...await secoesInicioAcompanhamento(q.tx, ctx), ...await secoesInicioChat(q.tx, ctx));
+    secoes.push(...await secoesInicioAgenda(q.tx, ctx), ...await secoesInicioAcompanhamento(q.tx, ctx), ...await secoesInicioChat(q.tx, ctx));
     if (ehEquipeCtx(ctx)) {
       const t = org.termos as Record<string, Termo>;
       const g = (x: Termo, m: string, f: string) => (x.genero === 'F' ? f : m);
       const atalhos: any[] = [];
       if (ctx.perms.has('pacientes.paciente.criar')) atalhos.push({ rotulo: `${g(t.paciente, 'Novo', 'Nova')} ${t.paciente.singular}`, icone: 'user-plus', destino: { tela: 'pacientes.novo' } });
+      const consulta = t.consulta ?? { singular: 'consulta', plural: 'consultas', genero: 'F' };
+      if (temModulo(org.modulos, 'agenda') && ctx.perms.has('agenda.agendamento.criar')) atalhos.push({ rotulo: `${g(consulta, 'Novo', 'Nova')} ${consulta.singular}`, icone: 'calendar-plus', destino: { tela: 'agenda.novo' } });
       if (ctx.perms.has('acompanhamento.acompanhamento.criar') && t.acompanhamento) atalhos.push({ rotulo: `${g(t.acompanhamento, 'Novo', 'Nova')} ${t.acompanhamento.singular}`, icone: 'activity', destino: { tela: 'acompanhamento.novo' } });
       if (atalhos.length) secoes.push({ id: 'atalhos', tipo: 'ATALHOS', dados: { itens: atalhos } });
     } else {

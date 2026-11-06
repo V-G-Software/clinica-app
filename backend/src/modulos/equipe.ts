@@ -23,10 +23,12 @@ function orgConfig(ctx: Ctx) {
   const c = ctx.org.configuracao;
   const chat = ctx.org.modulos.find((m) => m.id === 'chat')?.config ?? {};
   const acomp = ctx.org.modulos.find((m) => m.id === 'acompanhamento');
+  const agenda = ctx.org.modulos.find((m) => m.id === 'agenda');
   return {
     nome: ctx.org.nome, contato: c.contato, tema: { corMarca: c.tema.corMarca, logoUrl: c.tema.logoUrl ?? null }, textos: c.textos,
     chat: { horarioAtendimento: chat.horarioAtendimento ?? [], mensagemForaDoHorario: chat.mensagemForaDoHorario ?? null, avisoUrgencia: chat.avisoUrgencia ?? null },
     ...(acomp ? { acompanhamento: { resolverAlertasAoEncerrar: !!acomp.config?.resolverAlertasAoEncerrar } } : {}),
+    ...(agenda ? { agenda: { ...agenda.config } } : {}),
     acoesPermitidas: ctx.perms.has('organizacao.configuracao.editar') ? ['EDITAR'] : [],
   };
 }
@@ -111,6 +113,11 @@ export const handlersEquipe: Record<string, Handler> = {
       const acomp = modulos.find((m) => m.id === 'acompanhamento');
       if (!acomp) throw new ErroApi('MODULO_NAO_CONTRATADO');
       acomp.config = { ...acomp.config, ...q.body.acompanhamento };
+    }
+    if (q.body.agenda) {
+      const agenda = modulos.find((m) => m.id === 'agenda');
+      if (!agenda) throw new ErroApi('MODULO_NAO_CONTRATADO');
+      agenda.config = { ...agenda.config, ...q.body.agenda };
     }
     // UPDATE com versão (otimista): concorrência entre dois gestores vira 412.
     const r = await q.tx.query('UPDATE organizacoes SET nome = $2, configuracao = $3, modulos = $4, versao = versao + 1 WHERE id = $1 AND versao = $5 RETURNING versao',
