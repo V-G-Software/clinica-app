@@ -20,6 +20,13 @@ const CENARIOS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const [acao, ...args] = process.argv.slice(2);
 const arg = (n: string) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
 
+/** Módulos que este backend implementa. Os demais do cenário (ex.: `agenda`, F4) ficam de fora até a etapa do backend. */
+export const MODULOS_IMPLEMENTADOS = new Set(['pacientes', 'acompanhamento', 'chat', 'equipe']);
+function modulosSuportados(cen: any, log: (m: string) => void = console.log) {
+  const fora = cen.modulos.filter((m: any) => !MODULOS_IMPLEMENTADOS.has(m.id)).map((m: any) => m.id);
+  if (fora.length) log(`aviso: ${cen.organizacao.slug}: módulo(s) ${fora.join(', ')} ainda não implementado(s) neste backend — ignorado(s)`);
+  return JSON.stringify(cen.modulos.filter((m: any) => MODULOS_IMPLEMENTADOS.has(m.id)));
+}
 function configuracao(o: any) {
   return { contato: o.contato, tema: o.tema, pwa: o.pwa, autenticacao: o.autenticacao, textos: o.textos, links: o.links, mapaUrl: o.mapaUrl ?? null };
 }
@@ -31,7 +38,7 @@ export async function criarOrganizacao(c: pg.Client, cen: any, log = console.log
   try {
     await c.query(`INSERT INTO organizacoes (id, slug, nome, fuso, locale, status, mensagem_status, dominios, url_api, configuracao, termos, modulos, capacidades)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, [o.id, o.slug, o.nome, o.fuso, o.locale, o.status, o.mensagemStatus, o.dominios ?? [], urlApi,
-      configuracao(o), cen.termos, JSON.stringify(cen.modulos), cen.capacidades]);
+      configuracao(o), cen.termos, modulosSuportados(cen, log), cen.capacidades]);
     await c.query("SELECT set_config('app.organizacao_id', $1, true)", [o.id]);
     const termos = o.autenticacao.termosVersao;
     for (const f of cen.formularios ?? [])
@@ -73,7 +80,7 @@ export async function atualizarOrganizacao(c: pg.Client, cen: any, opcoes: { avi
     const antes = (await c.query(`SELECT id, configuracao->'autenticacao'->>'termosVersao' AS termos FROM organizacoes WHERE slug = $1 FOR UPDATE`, [o.slug])).rows[0];
     if (!antes) { await c.query('ROLLBACK'); log(`organização não encontrada: ${o.slug}`); return { avisados: 0 }; }
     const r = (await c.query('UPDATE organizacoes SET nome = $2, fuso = $3, locale = $4, status = $5, mensagem_status = $6, dominios = $7, configuracao = $8, termos = $9, modulos = $10, capacidades = $11, versao = versao + 1 WHERE slug = $1 RETURNING *',
-      [o.slug, o.nome, o.fuso, o.locale, o.status, o.mensagemStatus, o.dominios ?? [], configuracao(o), cen.termos, JSON.stringify(cen.modulos), cen.capacidades])).rows[0];
+      [o.slug, o.nome, o.fuso, o.locale, o.status, o.mensagemStatus, o.dominios ?? [], configuracao(o), cen.termos, modulosSuportados(cen, log), cen.capacidades])).rows[0];
     let avisados = 0;
     if (antes.termos !== o.autenticacao.termosVersao) {
       await c.query("SELECT set_config('app.organizacao_id', $1, true)", [r.id]);

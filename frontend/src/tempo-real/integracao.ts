@@ -28,6 +28,7 @@ export function ligarTempoReal() {
 
   watch(() => sessao.logado && sessao.manifesto?.usuario.id, (usuario) => {
     desligar?.(); desligar = null;
+    delete document.documentElement.dataset.tempoReal;
     if (!usuario || !app.organizacao || !sessao.manifesto) return;
     const tr = sessao.manifesto.capacidades.tempoReal;
     desligar = iniciarTempoReal({
@@ -36,7 +37,8 @@ export function ligarTempoReal() {
       renovar: async () => !!(await sessao.renovar()),
       aoEvento: tratar,
       aoCursorExpirado: () => { void clienteConsultas.invalidateQueries(); void atualizarContadores(); },
-      aoEstado: (s) => (estadoTempoReal.atual = s),
+      // Estado também no <html data-tempo-real>: diagnóstico em produção e espera determinística nos E2E.
+      aoEstado: (s) => { estadoTempoReal.atual = s; document.documentElement.dataset.tempoReal = s; },
     });
   }, { immediate: true });
 

@@ -1,0 +1,38 @@
+{
+  "requisicao": "GET /v1/agenda/grades/usr_ana",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "profissional": {
+      "usuarioId": "usr_ana",
+      "nome": "Dra. Ana Lima",
+      "perfil": "PROFISSIONAL"
+    },
+    "itens": [
+      {
+        "diaSemana": 1,
+        "inicio": "08:00",
+        "fim": "12:00"
+      },
+      {
+        "diaSemana": 3,
+        "inicio": "08:00",
+        "fim": "12:00"
+      },
+      {
+        "diaSemana": 5,
+        "inicio": "08:00",
+        "fim": "12:00"
+      },
+      {
+        "diaSemana": 2,
+        "inicio": "14:00",
+        "fim": "18:00",
+        "servicosIds": [
+          "srv_retorno"
+        ]
+      }
+    ],
+    "acoesPermitidas": []
+  }
+}

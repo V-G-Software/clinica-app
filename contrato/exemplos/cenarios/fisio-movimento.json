@@ -57,7 +57,8 @@
     "protocolo": { "singular": "programa", "plural": "programas", "genero": "M" },
     "procedimento": { "singular": "sessão", "plural": "sessões", "genero": "F" },
     "checkin": { "singular": "registro diário", "plural": "registros diários", "genero": "M" },
-    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" }
+    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" },
+    "consulta": { "singular": "sessão", "plural": "sessões", "genero": "F" }
   },
   "modulos": [
     { "id": "pacientes", "versao": "1.0", "config": { "formularioCadastroId": null, "relacoesPermitidas": ["PROPRIO", "DEPENDENTE"] } },

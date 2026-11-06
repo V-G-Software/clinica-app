@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { operacoes, validarResposta, validarSchema } from '@clinica/contrato-validador';
+import { contrato, operacoes, validarResposta, validarSchema } from '@clinica/contrato-validador';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let falhas = 0, total = 0;
@@ -24,7 +24,9 @@ for (const arq of readdirSync(path.join(raiz, 'exemplos/cenarios')).filter((f) =
   checar(`${arq}: tema`, validarSchema('Tema', o.tema));
   checar(`${arq}: contato`, validarSchema('ContatoOrganizacao', o.contato));
   for (const [k, t] of Object.entries(c.termos)) checar(`${arq}: termo ${k}`, validarSchema('Termo', t));
-  checar(`${arq}: termos completos`, validarSchema('TermoChave', Object.keys(c.termos).length === 9 ? 'organizacao' : 'faltando'));
+  // Todo termo do catálogo precisa estar no cenário (o catálogo cresce com os módulos: `consulta` veio na 1.1).
+  const faltando = contrato.components.schemas.TermoChave.enum.find((k) => !(k in c.termos));
+  checar(`${arq}: termos completos`, validarSchema('TermoChave', faltando ? `faltando:${faltando}` : 'organizacao'));
   for (const m of c.modulos) checar(`${arq}: módulo ${m.id}`, validarSchema('Modulo', m));
   checar(`${arq}: capacidades`, validarSchema('Capacidades', c.capacidades));
   for (const f of c.formularios) checar(`${arq}: formulário ${f.id}`, validarSchema('Formulario', ignorar(f)));

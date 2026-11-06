@@ -5,7 +5,7 @@
   "corpo": {
     "itens": [
       {
-        "id": "cnv_0mw28tpc00004b",
+        "id": "cnv_0mw28tpc00004p",
         "titulo": "Marcos Souza",
         "paciente": {
           "id": "pac_marcos",
@@ -18,23 +18,23 @@
             "usuarioId": "usr_ana",
             "nome": "Dra. Ana Lima",
             "perfil": "PROFISSIONAL",
-            "lidoAte": "msg_0mw6fxio00006x"
+            "lidoAte": "msg_0mw6fxio00007l"
           },
           {
             "usuarioId": "usr_julia",
             "nome": "Júlia Ramos",
             "perfil": "SECRETARIA",
-            "lidoAte": "msg_0mw6f1d9c0006v"
+            "lidoAte": "msg_0mw6f1d9c0007j"
           },
           {
             "usuarioId": "usr_marcos",
             "nome": "Marcos Souza",
             "perfil": "PACIENTE",
-            "lidoAte": "msg_0mw6gcy800006z"
+            "lidoAte": "msg_0mw6gcy800007n"
           }
         ],
         "ultimaMensagem": {
-          "id": "msg_0mw7s5mo000088",
+          "id": "msg_0mw7s5mo00008y",
           "resumo": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
           "autorNome": null,
           "enviadoEm": "2026-11-08T12:00:00Z"
@@ -49,7 +49,7 @@
         ]
       },
       {
-        "id": "cnv_0mw53peo00005j",
+        "id": "cnv_0mw53peo000065",
         "titulo": "Rafael Mendes",
         "paciente": {
           "id": "pac_rafael",
@@ -78,7 +78,7 @@
           }
         ],
         "ultimaMensagem": {
-          "id": "msg_0mw6w08000007r",
+          "id": "msg_0mw6w08000008h",
           "resumo": "Mantenha a cabeceira elevada e evite assoar o nariz.",
           "autorNome": null,
           "enviadoEm": "2026-11-07T21:00:00Z"
@@ -93,7 +93,7 @@
         ]
       },
       {
-        "id": "cnv_0mw3o9k000004m",
+        "id": "cnv_0mw3o9k0000054",
         "titulo": "Sônia Ribeiro",
         "paciente": {
           "id": "pac_sonia",
@@ -118,11 +118,11 @@
             "usuarioId": "usr_sonia",
             "nome": "Sônia Ribeiro",
             "perfil": "PACIENTE",
-            "lidoAte": "msg_0mw6h03k00007h"
+            "lidoAte": "msg_0mw6h03k000087"
           }
         ],
         "ultimaMensagem": {
-          "id": "msg_0mw6h03k00007h",
+          "id": "msg_0mw6h03k000087",
           "resumo": "Dia 1 · dor 4 · noite regular · sangramento não",
           "autorNome": "Sônia Ribeiro",
           "enviadoEm": "2026-11-07T14:00:00Z"

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://exemplo.com.br/contrato/v1/problema.schema.json",
   "title": "Erro RFC 9457 com codigo estável",
-  "x-gerado-de": "contrato/openapi.yaml#/$defs/Problema (1.0.0-rc.3)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Problema (1.1.0-rc.1)",
   "type": "object",
   "description": "RFC 9457. Nunca stack trace, SQL ou nome de tabela.",
   "required": [
@@ -93,7 +93,8 @@
         "ARQUIVO_REJEITADO",
         "CURSOR_EXPIRADO",
         "ULTIMO_GESTOR",
-        "INDISPONIVEL_TEMPORARIAMENTE"
+        "INDISPONIVEL_TEMPORARIAMENTE",
+        "HORARIO_INDISPONIVEL"
       ]
     }
   }

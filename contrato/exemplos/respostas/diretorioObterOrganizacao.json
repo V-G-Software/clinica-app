@@ -6,7 +6,7 @@
     "slug": "modelo-otorrino",
     "nome": "Clínica Modelo Otorrino",
     "urlApi": "http://localhost:4010/o/modelo-otorrino",
-    "contratoVersao": "1.0.0-rc.2",
+    "contratoVersao": "1.1.0-rc.1",
     "status": "ATIVA"
   }
 }

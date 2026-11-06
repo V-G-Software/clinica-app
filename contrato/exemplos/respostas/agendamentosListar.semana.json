@@ -1,0 +1,254 @@
+{
+  "requisicao": "GET /v1/agendamentos?de=2026-11-09&ate=2026-11-15",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "agd_paulo_consulta",
+        "paciente": {
+          "id": "pac_paulo",
+          "nome": "Paulo Teixeira"
+        },
+        "profissional": {
+          "usuarioId": "usr_ana",
+          "nome": "Dra. Ana Lima",
+          "perfil": "PROFISSIONAL"
+        },
+        "servico": {
+          "id": "srv_consulta",
+          "nome": "Consulta otorrinolaringológica",
+          "categoria": "CONSULTA"
+        },
+        "inicioEm": "2026-11-09T12:00:00Z",
+        "fimEm": "2026-11-09T12:30:00Z",
+        "status": "CANCELADO",
+        "origem": "EQUIPE",
+        "encaixe": false,
+        "local": null,
+        "orientacoes": "Traga seus exames anteriores, se tiver.",
+        "observacao": null,
+        "motivoCancelamento": "Paciente pediu para remarcar por telefone.",
+        "historico": [
+          {
+            "ocorridoEm": "2026-11-04T14:00:00Z",
+            "acao": "CRIADO",
+            "por": {
+              "usuarioId": "usr_julia",
+              "nome": "Júlia Ramos",
+              "perfil": "SECRETARIA"
+            }
+          },
+          {
+            "ocorridoEm": "2026-11-06T18:00:00Z",
+            "acao": "CANCELADO",
+            "por": {
+              "usuarioId": "usr_julia",
+              "nome": "Júlia Ramos",
+              "perfil": "SECRETARIA"
+            },
+            "detalhe": "Paciente pediu para remarcar por telefone."
+          }
+        ],
+        "criadoEm": "2026-11-04T14:00:00Z",
+        "acoesPermitidas": []
+      },
+      {
+        "id": "agd_beatriz_cirurgia",
+        "paciente": {
+          "id": "pac_beatriz",
+          "nome": "Beatriz Costa"
+        },
+        "profissional": {
+          "usuarioId": "usr_ana",
+          "nome": "Dra. Ana Lima",
+          "perfil": "PROFISSIONAL"
+        },
+        "servico": {
+          "id": "srv_rinoplastia",
+          "nome": "Rinoplastia",
+          "categoria": "PROCEDIMENTO"
+        },
+        "inicioEm": "2026-11-10T10:00:00Z",
+        "fimEm": "2026-11-10T13:00:00Z",
+        "status": "CONFIRMADO",
+        "origem": "EQUIPE",
+        "encaixe": false,
+        "local": "Hospital Santa Clara — centro cirúrgico, 2º andar",
+        "orientacoes": "Jejum de 8 horas. Chegue ao hospital 1 hora antes, com documento e exames pré-operatórios.",
+        "observacao": null,
+        "motivoCancelamento": null,
+        "historico": [
+          {
+            "ocorridoEm": "2026-10-28T13:00:00Z",
+            "acao": "CRIADO",
+            "por": {
+              "usuarioId": "usr_julia",
+              "nome": "Júlia Ramos",
+              "perfil": "SECRETARIA"
+            }
+          },
+          {
+            "ocorridoEm": "2026-11-07T15:00:00Z",
+            "acao": "CONFIRMADO",
+            "por": {
+              "usuarioId": "usr_beatriz",
+              "nome": "Beatriz Costa",
+              "perfil": "PACIENTE"
+            }
+          }
+        ],
+        "criadoEm": "2026-10-28T13:00:00Z",
+        "acoesPermitidas": [
+          "EDITAR",
+          "REMARCAR",
+          "CANCELAR",
+          "ABRIR_CONVERSA"
+        ]
+      },
+      {
+        "id": "agd_marcos_retorno",
+        "paciente": {
+          "id": "pac_marcos",
+          "nome": "Marcos Souza"
+        },
+        "profissional": {
+          "usuarioId": "usr_carlos",
+          "nome": "Dr. Carlos Nogueira",
+          "perfil": "PROFISSIONAL"
+        },
+        "servico": {
+          "id": "srv_retorno",
+          "nome": "Retorno pós-operatório",
+          "categoria": "CONSULTA"
+        },
+        "inicioEm": "2026-11-10T13:00:00Z",
+        "fimEm": "2026-11-10T13:20:00Z",
+        "status": "CONFIRMADO",
+        "origem": "EQUIPE",
+        "encaixe": false,
+        "local": null,
+        "orientacoes": null,
+        "observacao": null,
+        "motivoCancelamento": null,
+        "historico": [
+          {
+            "ocorridoEm": "2026-11-05T14:00:00Z",
+            "acao": "CRIADO",
+            "por": {
+              "usuarioId": "usr_julia",
+              "nome": "Júlia Ramos",
+              "perfil": "SECRETARIA"
+            }
+          },
+          {
+            "ocorridoEm": "2026-11-08T11:00:00Z",
+            "acao": "CONFIRMADO",
+            "por": {
+              "usuarioId": "usr_marcos",
+              "nome": "Marcos Souza",
+              "perfil": "PACIENTE"
+            }
+          }
+        ],
+        "criadoEm": "2026-11-05T14:00:00Z",
+        "acoesPermitidas": [
+          "EDITAR",
+          "REMARCAR",
+          "CANCELAR",
+          "ABRIR_CONVERSA"
+        ]
+      },
+      {
+        "id": "agd_rafael_retorno",
+        "paciente": {
+          "id": "pac_rafael",
+          "nome": "Rafael Mendes"
+        },
+        "profissional": {
+          "usuarioId": "usr_ana",
+          "nome": "Dra. Ana Lima",
+          "perfil": "PROFISSIONAL"
+        },
+        "servico": {
+          "id": "srv_retorno",
+          "nome": "Retorno pós-operatório",
+          "categoria": "CONSULTA"
+        },
+        "inicioEm": "2026-11-11T12:00:00Z",
+        "fimEm": "2026-11-11T12:20:00Z",
+        "status": "AGENDADO",
+        "origem": "EQUIPE",
+        "encaixe": false,
+        "local": null,
+        "orientacoes": null,
+        "observacao": null,
+        "motivoCancelamento": null,
+        "historico": [
+          {
+            "ocorridoEm": "2026-11-07T14:00:00Z",
+            "acao": "CRIADO",
+            "por": {
+              "usuarioId": "usr_julia",
+              "nome": "Júlia Ramos",
+              "perfil": "SECRETARIA"
+            }
+          }
+        ],
+        "criadoEm": "2026-11-07T14:00:00Z",
+        "acoesPermitidas": [
+          "EDITAR",
+          "REMARCAR",
+          "CANCELAR",
+          "CONFIRMAR",
+          "ABRIR_CONVERSA"
+        ]
+      },
+      {
+        "id": "agd_paulo_consulta2",
+        "paciente": {
+          "id": "pac_paulo",
+          "nome": "Paulo Teixeira"
+        },
+        "profissional": {
+          "usuarioId": "usr_ana",
+          "nome": "Dra. Ana Lima",
+          "perfil": "PROFISSIONAL"
+        },
+        "servico": {
+          "id": "srv_consulta",
+          "nome": "Consulta otorrinolaringológica",
+          "categoria": "CONSULTA"
+        },
+        "inicioEm": "2026-11-13T12:00:00Z",
+        "fimEm": "2026-11-13T12:30:00Z",
+        "status": "AGENDADO",
+        "origem": "EQUIPE",
+        "encaixe": false,
+        "local": null,
+        "orientacoes": "Traga seus exames anteriores, se tiver.",
+        "observacao": null,
+        "motivoCancelamento": null,
+        "historico": [
+          {
+            "ocorridoEm": "2026-11-06T18:05:00Z",
+            "acao": "CRIADO",
+            "por": {
+              "usuarioId": "usr_julia",
+              "nome": "Júlia Ramos",
+              "perfil": "SECRETARIA"
+            }
+          }
+        ],
+        "criadoEm": "2026-11-06T18:05:00Z",
+        "acoesPermitidas": [
+          "EDITAR",
+          "REMARCAR",
+          "CANCELAR",
+          "CONFIRMAR"
+        ]
+      }
+    ],
+    "proximoCursor": null
+  }
+}

@@ -11,8 +11,8 @@ await fetch(`${MOCK}/__mock/reiniciar`, { method: 'POST' });
 rmSync(dir, { recursive: true, force: true });
 mkdirSync(dir, { recursive: true });
 const cont = {};
-async function cap(base, metodo, caminho, { token, body, sufixo } = {}) {
-  const r = await fetch(base + caminho, { method: metodo, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}), 'X-Cliente': 'NATIVO' }, body: body ? JSON.stringify(body) : undefined });
+async function cap(base, metodo, caminho, { token, body, sufixo, idem } = {}) {
+  const r = await fetch(base + caminho, { method: metodo, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}), 'X-Cliente': 'NATIVO', ...(idem ? { 'Idempotency-Key': crypto.randomUUID() } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const ct = r.headers.get('content-type')?.split(';')[0];
   const texto = await r.text();
   const corpo = texto ? JSON.parse(texto) : undefined;
@@ -50,6 +50,13 @@ await cap(O, 'GET', `/v1/conversas/${conv.itens[0].id}/mensagens?limite=10`, { t
 await cap(O, 'GET', '/v1/notificacoes?limite=5', { token: marcos });
 await cap(O, 'GET', '/v1/equipe/membros', { token: ana });
 await cap(O, 'POST', `/v1/checkins/${acp.proximoCheckin.id}/respostas`, { token: marcos, body: { respostas: { dor: 11 } }, sufixo: 'erro-validacao' });
+// Agenda (1.1 — ADR-0016).
+await cap(O, 'GET', '/v1/agenda/servicos', { token: ana });
+await cap(O, 'GET', '/v1/agenda/grades/usr_ana', { token: ana });
+await cap(O, 'GET', '/v1/agendamentos?de=2026-11-09&ate=2026-11-15', { token: ana, sufixo: 'semana' });
+await cap(O, 'GET', '/v1/agendamentos/agd_beatriz_cirurgia', { token: ana, sufixo: 'cirurgia' });
+await cap(O, 'GET', '/v1/agenda/horarios?servicoId=srv_consulta&de=2026-11-09&ate=2026-11-09', { token: marcos, sufixo: 'paciente' });
+await cap(O, 'POST', '/v1/agendamentos', { token: ana, body: { pacienteId: 'pac_marcos', servicoId: 'srv_consulta', profissionalId: 'usr_ana', inicioEm: '2026-11-10T10:00:00Z' }, sufixo: 'erro-horario-indisponivel', idem: true });
 const vet = `${MOCK}/o/vet-amigo`;
 const laura = (await (await fetch(`${vet}/v1/auth/codigo/solicitar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'laura@exemplo.com' }) }), await (await fetch(`${vet}/v1/auth/codigo/verificar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'laura@exemplo.com', codigo: '123456' }) })).json())).tokenAcesso;
 await cap(vet, 'GET', '/v1/sessao', { token: laura, sufixo: 'tutora-dois-pets' });

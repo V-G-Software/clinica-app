@@ -93,6 +93,7 @@ function orgConfig(ctx: Ctx) {
     nome: o.nome, contato: o.contato, tema: { corMarca: o.tema.corMarca, logoUrl: o.tema.logoUrl ?? null }, textos: o.textos,
     chat: { horarioAtendimento: chat.horarioAtendimento ?? [], mensagemForaDoHorario: chat.mensagemForaDoHorario ?? null, avisoUrgencia: chat.avisoUrgencia ?? null },
     ...(r.temModulo(ctx.org, 'acompanhamento') ? { acompanhamento: { resolverAlertasAoEncerrar: !!r.configModulo(ctx.org, 'acompanhamento').resolverAlertasAoEncerrar } } : {}),
+    ...(r.temModulo(ctx.org, 'agenda') ? { agenda: { ...r.configModulo(ctx.org, 'agenda') } } : {}),
     acoesPermitidas: ctx.perms.has('organizacao.configuracao.editar') ? ['EDITAR'] : [],
   };
 }
@@ -112,7 +113,10 @@ const ASSINATURAS: Record<string, (b: Buffer) => boolean> = {
   'image/webp': (b) => b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP',
 };
 
+import { handlersAgenda } from './agenda.ts';
+
 export const handlers: Record<string, Handler> = {
+  ...(handlersAgenda as Record<string, Handler>),
   // ─────────── Público ───────────
   publicoObterConfiguracao: (q) => {
     const o = q.org.config;
@@ -744,6 +748,10 @@ export const handlers: Record<string, Handler> = {
     if (q.body.acompanhamento) {
       if (!r.temModulo(q.org, 'acompanhamento')) throw new ErroApi('MODULO_NAO_CONTRATADO');
       Object.assign(q.org.modulos.find((m) => m.id === 'acompanhamento').config, q.body.acompanhamento);
+    }
+    if (q.body.agenda) {
+      if (!r.temModulo(q.org, 'agenda')) throw new ErroApi('MODULO_NAO_CONTRATADO');
+      Object.assign(q.org.modulos.find((m) => m.id === 'agenda').config, q.body.agenda);
     }
     q.org._vConfig++;
     avisarManifesto(q.org); // RN-EQP-004

@@ -12,6 +12,7 @@ import {
   agendar, caixaEmails, caixaPush, ErroApi, eventoPublico, limparJobs, reiniciarIds, listarJobs, novaOrg, novoId, orgs, processarJobsAte, STATUS_POR_CODIGO, type Org,
 } from './estado.ts';
 import { handlers, type Res } from './handlers.ts';
+import { carregarAgenda } from './agenda.ts';
 import * as r from './regras.ts';
 import { agoraIso, agoraMs, comRelogioForcado, DIA, definirRelogio, HORA, iso, RELOGIO_INICIAL } from './tempo.ts';
 
@@ -59,6 +60,7 @@ function carregarCenario(cenario: any) {
     if (a.arquivarConversaEm) agendar(`seed:${a.id}:arquivar`, Date.parse(a.arquivarConversaEm), () => { const c = org.conversas.get(org.acompanhamentos.get(a.id).conversaId); if (c) c.status = 'ARQUIVADA'; });
     if (a.encerrar) agendar(`seed:${a.id}:encerrar`, Date.parse(a.encerrar.em), () => r.encerrarAcompanhamento(org, org.acompanhamentos.get(a.id), a.encerrar.motivo, a.encerrar.por));
   }
+  carregarAgenda(org, cenario);
   for (const c of cenario.conversas ?? []) {
     agendar(`seed:${c.id}:criar`, Date.parse(c.criadoEm), () => {
       const conv = r.criarConversa(org, c.pacienteId, c.participantesIds);

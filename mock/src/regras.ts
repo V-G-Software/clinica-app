@@ -6,6 +6,7 @@ import {
   type Perfil, type Usuario,
 } from './estado.ts';
 import { agoraIso, agoraMs, diferencaDias, HORA, hojeLocal, iso, localParaUtc, MINUTO, partesLocais, somarDias } from './tempo.ts';
+import * as agenda from './agenda.ts';
 
 export const BASE_PUBLICA = (process.env.MOCK_URL_PUBLICA ?? `http://localhost:${process.env.PORT ?? 4010}`).replace(/\/$/, '');
 export const urlApi = (org: Org) => `${BASE_PUBLICA}/o/${org.slug}`;
@@ -22,20 +23,22 @@ const TODAS = [
   'acompanhamento.checkin.responder', 'acompanhamento.alerta.ler', 'acompanhamento.alerta.resolver',
   'chat.conversa.ler', 'chat.conversa.criar', 'chat.conversa.gerenciar', 'chat.mensagem.enviar',
   'equipe.membro.ler', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar',
+  'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
 ];
 const PERMISSOES: Record<Perfil, string[]> = {
   GESTOR: TODAS.filter((p) => p !== 'acompanhamento.checkin.responder'),
-  PROFISSIONAL: TODAS.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar'].includes(p)),
+  PROFISSIONAL: TODAS.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar', 'agenda.configuracao.gerenciar'].includes(p)),
   // [DECISÃO 3] secretária vê check-ins e alertas por padrão.
   SECRETARIA: [
     'pacientes.paciente.ler', 'pacientes.paciente.criar', 'pacientes.paciente.editar', 'pacientes.paciente.convidar',
     'acompanhamento.protocolo.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.acompanhamento.criar',
     'acompanhamento.checkin.ler', 'acompanhamento.alerta.ler', 'chat.conversa.ler', 'chat.conversa.criar',
     'chat.conversa.gerenciar', 'chat.mensagem.enviar', 'equipe.membro.ler',
+    'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
   ],
   PACIENTE: [
     'pacientes.paciente.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.checkin.ler',
-    'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar',
+    'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar', 'agenda.agendamento.ler',
   ],
 };
 export const temModulo = (org: Org, id: string) => org.modulos.some((m) => m.id === id);
@@ -44,6 +47,7 @@ export const configModulo = (org: Org, id: string) => org.modulos.find((m) => m.
 export function permissoesDe(org: Org, perfil: Perfil): string[] {
   const base = [...PERMISSOES[perfil]];
   if (perfil === 'PACIENTE' && configModulo(org, 'chat').pacientePodeIniciar) base.push('chat.conversa.criar');
+  if (perfil === 'PACIENTE' && configModulo(org, 'agenda').autoagendamento) base.push('agenda.agendamento.criar');
   return base.filter((p) => {
     const modulo = p.split('.')[0];
     return modulo === 'organizacao' || temModulo(org, modulo);
@@ -726,22 +730,29 @@ export function navegacao(ctx: Ctx) {
   const t = (k: string) => termo(org, k);
   const itens: any[] = [{ id: 'inicio', rotulo: 'Início', icone: 'house', grupo: 'PRINCIPAL', destino: { tela: 'inicio' } }];
   const animal = (configModulo(org, 'pacientes').relacoesPermitidas ?? []).every((r: string) => r === 'ANIMAL');
+  const consulta = t('consulta') ?? { singular: 'consulta', plural: 'consultas', genero: 'F' };
   if (ehEquipe(ctx)) {
+    if (perms.has('agenda.agendamento.ler')) itens.push({ id: 'agenda', rotulo: 'Agenda', icone: 'calendar', grupo: 'PRINCIPAL', destino: { tela: 'agenda.lista' } });
     if (perms.has('acompanhamento.acompanhamento.ler'))
       itens.push({ id: 'acompanhamentos', rotulo: cap(t('acompanhamento').plural), icone: 'activity', grupo: 'PRINCIPAL', destino: { tela: 'acompanhamento.lista' }, ...(perms.has('acompanhamento.alerta.ler') ? { contador: 'acompanhamento.alertasAbertos' } : {}) });
     if (perms.has('chat.conversa.ler')) itens.push({ id: 'conversas', rotulo: cap(t('conversa').plural), icone: 'message-circle', grupo: 'PRINCIPAL', destino: { tela: 'chat.lista' }, contador: 'chat.naoLidas' });
     if (perms.has('pacientes.paciente.ler')) itens.push({ id: 'pacientes', rotulo: cap(t('paciente').plural), icone: animal ? 'paw-print' : 'users', grupo: 'PRINCIPAL', destino: { tela: 'pacientes.lista' } });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'SECUNDARIO', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
     if (perms.has('acompanhamento.protocolo.ler')) itens.push({ id: 'protocolos', rotulo: cap(t('protocolo').plural), icone: 'clipboard-list', grupo: 'SECUNDARIO', destino: { tela: 'acompanhamento.protocolos' } });
+    if (perms.has('agenda.configuracao.gerenciar')) itens.push({ id: 'agenda-servicos', rotulo: 'Serviços e horários', icone: 'calendar-clock', grupo: 'SECUNDARIO', destino: { tela: 'agenda.servicos' } });
     if (perms.has('equipe.membro.gerenciar')) itens.push({ id: 'equipe', rotulo: 'Equipe', icone: 'stethoscope', grupo: 'SECUNDARIO', destino: { tela: 'equipe.lista' } });
     if (perms.has('organizacao.configuracao.editar')) itens.push({ id: 'organizacao', rotulo: `Configurações ${flex(t('organizacao').genero, 'do', 'da')} ${t('organizacao').singular}`, icone: 'settings', grupo: 'SECUNDARIO', destino: { tela: 'organizacao.configuracao' } });
   } else {
     const a = t('acompanhamento');
     if (perms.has('acompanhamento.acompanhamento.ler')) itens.push({ id: 'meus-acompanhamentos', rotulo: `${flex(a.genero, 'Meu', 'Minha')} ${a.singular}`, icone: 'heart-pulse', grupo: 'PRINCIPAL', destino: { tela: 'acompanhamento.meus' }, contador: 'acompanhamento.checkinsPendentes' });
+    if (perms.has('agenda.agendamento.ler')) itens.push({ id: 'minhas-consultas', rotulo: `${flex(consulta.genero, 'Meus', 'Minhas')} ${consulta.plural}`, icone: 'calendar', grupo: 'PRINCIPAL', destino: { tela: 'agenda.meus' } });
     if (perms.has('chat.conversa.ler')) itens.push({ id: 'conversas', rotulo: cap(t('conversa').plural), icone: 'message-circle', grupo: 'PRINCIPAL', destino: { tela: 'chat.lista' }, contador: 'chat.naoLidas' });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'PRINCIPAL', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
   }
   itens.push({ id: 'perfil', rotulo: 'Meu perfil', icone: 'user', grupo: ehEquipe(ctx) ? 'SECUNDARIO' : 'PRINCIPAL', destino: { tela: 'perfil' } });
+  // No máximo 5 itens PRINCIPAL (barra inferior do celular): os últimos vão para "Mais", na ordem.
+  const principais = itens.filter((i) => i.grupo === 'PRINCIPAL');
+  for (const i of principais.slice(5)) i.grupo = 'SECUNDARIO';
   return itens;
 }
 
@@ -780,6 +791,7 @@ export function telaInicial(ctx: Ctx) {
   const secoes: any[] = [];
   const hoje = hojeLocal(org.config.fuso);
   if (org.config.avisoInicio) secoes.push({ id: 'aviso', tipo: 'AVISO', dados: org.config.avisoInicio });
+  secoes.push(...agenda.secoesInicio(ctx));
   if (ehEquipe(ctx)) {
     if (temModulo(org, 'acompanhamento') && ctx.perms.has('acompanhamento.alerta.ler')) {
       const ordem: Record<string, number> = { ALTA: 0, MEDIA: 1, BAIXA: 2 };
@@ -822,6 +834,7 @@ export function telaInicial(ctx: Ctx) {
   if (ehEquipe(ctx)) {
     const atalhos: any[] = [];
     if (ctx.perms.has('pacientes.paciente.criar')) atalhos.push({ rotulo: `${flex(termo(org, 'paciente').genero, 'Novo', 'Nova')} ${termo(org, 'paciente').singular}`, icone: 'user-plus', destino: { tela: 'pacientes.novo' } });
+    if (temModulo(org, 'agenda') && ctx.perms.has('agenda.agendamento.criar')) { const c = termo(org, 'consulta') ?? { singular: 'consulta', genero: 'F' }; atalhos.push({ rotulo: `${flex(c.genero, 'Novo', 'Nova')} ${c.singular}`, icone: 'calendar-plus', destino: { tela: 'agenda.novo' } }); }
     if (ctx.perms.has('acompanhamento.acompanhamento.criar')) atalhos.push({ rotulo: `${flex(termo(org, 'acompanhamento').genero, 'Novo', 'Nova')} ${termo(org, 'acompanhamento').singular}`, icone: 'activity', destino: { tela: 'acompanhamento.novo' } });
     if (atalhos.length) secoes.push({ id: 'atalhos', tipo: 'ATALHOS', dados: { itens: atalhos } });
   } else {

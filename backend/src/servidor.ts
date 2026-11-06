@@ -3,7 +3,7 @@
 // (RLS) → handler → validação da resposta. A organização vem do caminho e é conferida contra o token.
 import { createHash } from 'node:crypto';
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
-import { encontrarOperacao, validarRequisicao, validarResposta, versaoContrato } from '@clinica/contrato-validador';
+import { contrato, encontrarOperacao, validarRequisicao, validarResposta, versaoContrato } from '@clinica/contrato-validador';
 import { config } from './config.ts';
 import { iguais, assinarUrl } from './cripto.ts';
 import { comOrg, global, pool, um } from './db.ts';
@@ -27,6 +27,9 @@ import './servicos/acompanhamento.ts'; // registra os jobs do acompanhamento
 import './servicos/push.ts'; // registra o job de push
 import { iniciarWorker, pararWorker } from './servicos/jobs.ts';
 import { LIMITES, contar } from './servicos/limites.ts';
+
+/** Ids de módulo do catálogo do contrato (`ModuloId`); a tag da operação diz a que módulo ela pertence. */
+const MODULOS_DO_CONTRATO = new Set<string>(contrato.components.schemas.ModuloId.enum);
 
 const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat };
 const PUBLICAS_COM_LOGIN = new Set(['authSair']);
@@ -133,7 +136,11 @@ export function criarServidor() {
     const op = achada.operacao;
     const handler = handlers[op.operationId];
     try {
-      if (!handler && op.operationId !== 'eventosStream') throw new ErroApi('RECURSO_NAO_ENCONTRADO', 'Operação ainda não implementada neste backend.');
+      if (!handler && op.operationId !== 'eventosStream') {
+        // Módulo do contrato que esta organização não tem (ou que este backend ainda não implementa).
+        if (op.tag && MODULOS_DO_CONTRATO.has(op.tag) && !org.modulos.some((m) => m.id === op.tag)) throw new ErroApi('MODULO_NAO_CONTRATADO', `O módulo ${op.tag} não está ativo nesta organização.`);
+        throw new ErroApi('RECURSO_NAO_ENCONTRADO', 'Operação ainda não implementada neste backend.');
+      }
       if (op.tag !== 'publico' && org.status === 'MANUTENCAO') throw new ErroApi('INDISPONIVEL_TEMPORARIAMENTE', org.mensagemStatus ?? 'Em manutenção.');
       if (op.tag !== 'publico' && org.status === 'SUSPENSA') throw new ErroApi('ORGANIZACAO_SUSPENSA');
       const temCorpo = req.body !== undefined && !Buffer.isBuffer(req.body);

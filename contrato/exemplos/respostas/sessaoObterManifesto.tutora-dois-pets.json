@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.0.0-rc.2"
+      "versao": "1.1.0-rc.1"
     },
     "organizacao": {
       "id": "org_vet",
@@ -81,6 +81,11 @@
         "singular": "conversa",
         "plural": "conversas",
         "genero": "F"
+      },
+      "consulta": {
+        "singular": "consulta",
+        "plural": "consultas",
+        "genero": "F"
       }
     },
     "modulos": [
@@ -147,6 +152,18 @@
         "id": "equipe",
         "versao": "1.0",
         "config": {}
+      },
+      {
+        "id": "agenda",
+        "versao": "1.0",
+        "config": {
+          "autoagendamento": false,
+          "antecedenciaMinimaHoras": 4,
+          "janelaDias": 60,
+          "cancelamentoAteHoras": 12,
+          "lembreteHorasAntes": 24,
+          "intervaloMinutos": 30
+        }
       }
     ],
     "navegacao": [
@@ -168,6 +185,15 @@
           "tela": "acompanhamento.meus"
         },
         "contador": "acompanhamento.checkinsPendentes"
+      },
+      {
+        "id": "minhas-consultas",
+        "rotulo": "Minhas consultas",
+        "icone": "calendar",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "agenda.meus"
+        }
       },
       {
         "id": "conversas",
@@ -193,7 +219,7 @@
         "id": "perfil",
         "rotulo": "Meu perfil",
         "icone": "user",
-        "grupo": "PRINCIPAL",
+        "grupo": "SECUNDARIO",
         "destino": {
           "tela": "perfil"
         }
@@ -205,7 +231,8 @@
       "acompanhamento.checkin.ler",
       "acompanhamento.checkin.responder",
       "chat.conversa.ler",
-      "chat.mensagem.enviar"
+      "chat.mensagem.enviar",
+      "agenda.agendamento.ler"
     ],
     "capacidades": {
       "tempoReal": {
@@ -226,7 +253,7 @@
       }
     },
     "contadores": {
-      "notificacoes.naoLidas": 13,
+      "notificacoes.naoLidas": 15,
       "chat.naoLidas": 3,
       "acompanhamento.alertasAbertos": 0,
       "acompanhamento.checkinsPendentes": 0

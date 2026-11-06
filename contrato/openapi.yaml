@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Contrato da API — {{PRODUTO}}
-  version: 1.0.0-rc.3
+  version: 1.1.0-rc.1
   summary: Padrão que todo backend de organização segue para atender o frontend único (PWA).
   description: |
     Fonte da verdade do contrato v1. Spec-first (ADR-0001): tipos, cliente, mock e suíte
@@ -52,6 +52,8 @@ tags:
     description: Módulo `chat` — conversa por paciente (seção 9.4).
   - name: equipe
     description: Módulo `equipe` e configuração da organização (seção 9.5).
+  - name: agenda
+    description: Módulo `agenda` — consultas, procedimentos (cirurgias), grade, bloqueios e autoagendamento (ADR-0016).
 security:
   - bearer: []
 
@@ -1759,7 +1761,7 @@ paths:
     patch:
       operationId: organizacaoEditar
       tags: [equipe]
-      summary: Edita nome, contato, marca, textos, regras do chat e do acompanhamento
+      summary: Edita nome, contato, marca, textos e regras do chat, do acompanhamento e da agenda
       description: Mudança que afeta o manifesto emite `sessao.manifesto.alterado` (RN-EQP-004).
       parameters:
         - $ref: '#/components/parameters/IfMatch'
@@ -1776,6 +1778,449 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/OrganizacaoConfiguracao' }
+        default: { $ref: '#/components/responses/Erro' }
+
+  # ─────────── Módulo agenda (1.1 — ADR-0016) ───────────
+  /v1/agenda/servicos:
+    get:
+      operationId: agendaListarServicos
+      tags: [agenda]
+      summary: Tipos de atendimento (consultas e procedimentos)
+      description: O paciente só vê os serviços ativos e autoagendáveis, e só com `autoagendamento` ligado.
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusServico' }
+      responses:
+        '200':
+          description: Serviços, por nome
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [itens]
+                properties:
+                  itens: { type: array, items: { $ref: '#/components/schemas/Servico' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: agendaCriarServico
+      tags: [agenda]
+      summary: Cria tipo de atendimento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ServicoEdicao' }
+      responses:
+        '201':
+          description: Serviço criado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Servico' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agenda/servicos/{servicoId}:
+    get:
+      operationId: agendaObterServico
+      tags: [agenda]
+      summary: Detalhe do serviço
+      parameters:
+        - $ref: '#/components/parameters/ServicoId'
+      responses:
+        '200':
+          description: Serviço
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Servico' }
+        default: { $ref: '#/components/responses/Erro' }
+    put:
+      operationId: agendaEditarServico
+      tags: [agenda]
+      summary: Edita o serviço (não altera agendamentos já marcados)
+      parameters:
+        - $ref: '#/components/parameters/ServicoId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ServicoEdicao' }
+      responses:
+        '200':
+          description: Serviço atualizado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Servico' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agenda/servicos/{servicoId}/arquivar:
+    post:
+      operationId: agendaArquivarServico
+      tags: [agenda]
+      summary: Deixa de aparecer para novos agendamentos
+      parameters:
+        - $ref: '#/components/parameters/ServicoId'
+      responses:
+        '200':
+          description: Serviço arquivado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Servico' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agenda/grades/{profissionalId}:
+    get:
+      operationId: agendaObterGrade
+      tags: [agenda]
+      summary: Horários semanais de atendimento do profissional
+      parameters:
+        - $ref: '#/components/parameters/ProfissionalId'
+      responses:
+        '200':
+          description: Grade (vazia se o profissional ainda não tem horários)
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Grade' }
+        default: { $ref: '#/components/responses/Erro' }
+    put:
+      operationId: agendaSalvarGrade
+      tags: [agenda]
+      summary: Substitui a grade (não altera agendamentos já marcados)
+      parameters:
+        - $ref: '#/components/parameters/ProfissionalId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [itens]
+              properties:
+                itens:
+                  type: array
+                  maxItems: 50
+                  items: { $ref: '#/components/schemas/ItemGrade' }
+      responses:
+        '200':
+          description: Grade salva
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Grade' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agenda/bloqueios:
+    get:
+      operationId: agendaListarBloqueios
+      tags: [agenda]
+      summary: Bloqueios (férias, feriados) que tocam o período
+      parameters:
+        - $ref: '#/components/parameters/De'
+        - $ref: '#/components/parameters/Ate'
+        - name: profissionalId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+      responses:
+        '200':
+          description: Bloqueios, por início
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [itens]
+                properties:
+                  itens: { type: array, items: { $ref: '#/components/schemas/Bloqueio' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: agendaCriarBloqueio
+      tags: [agenda]
+      summary: Bloqueia um período (não cancela agendamentos já marcados)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [profissionalId, inicioEm, fimEm]
+              properties:
+                profissionalId: { $ref: '#/components/schemas/IdOuNulo', description: '`null` bloqueia a organização inteira (feriado).' }
+                inicioEm: { $ref: '#/components/schemas/DataHora' }
+                fimEm: { $ref: '#/components/schemas/DataHora' }
+                motivo: { type: [string, 'null'], maxLength: 200 }
+      responses:
+        '201':
+          description: Bloqueio criado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Bloqueio' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agenda/bloqueios/{bloqueioId}:
+    delete:
+      operationId: agendaRemoverBloqueio
+      tags: [agenda]
+      summary: Remove o bloqueio (libera os horários)
+      parameters:
+        - $ref: '#/components/parameters/BloqueioId'
+      responses:
+        '204': { description: Removido }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agenda/horarios:
+    get:
+      operationId: agendaListarHorarios
+      tags: [agenda]
+      summary: Horários livres para um serviço (RN-AGE-002)
+      description: |
+        Já descontados grade, bloqueios, ocupação e, para o paciente, a antecedência mínima e a janela
+        de dias. No máximo 31 dias por consulta.
+      parameters:
+        - name: servicoId
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: profissionalId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - $ref: '#/components/parameters/De'
+        - $ref: '#/components/parameters/Ate'
+      responses:
+        '200':
+          description: Horários livres, em ordem
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [itens]
+                properties:
+                  itens:
+                    type: array
+                    items: { $ref: '#/components/schemas/HorarioLivre' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agendamentos:
+    get:
+      operationId: agendamentosListar
+      tags: [agenda]
+      summary: Agendamentos do período (paciente vê só os seus)
+      parameters:
+        - $ref: '#/components/parameters/De'
+        - $ref: '#/components/parameters/Ate'
+        - name: profissionalId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: pacienteId
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/Id' }
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/StatusAgendamento' }
+        - name: categoria
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/CategoriaServico' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Agendamentos, do início mais cedo para o mais tarde
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    required: [itens]
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/Agendamento' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: agendamentosCriar
+      tags: [agenda]
+      summary: Marca consulta ou procedimento (RN-AGE-001..003)
+      description: |
+        Equipe: qualquer serviço ativo, inclusive fora da grade; `encaixe` permite sobrepor outro agendamento.
+        Paciente: só serviço autoagendável, em horário devolvido por `GET /v1/agenda/horarios`, para um
+        paciente vinculado à conta. Horário ocupado → 409 `HORARIO_INDISPONIVEL`.
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [pacienteId, servicoId, profissionalId, inicioEm]
+              properties:
+                pacienteId: { $ref: '#/components/schemas/Id' }
+                servicoId: { $ref: '#/components/schemas/Id' }
+                profissionalId: { $ref: '#/components/schemas/Id' }
+                inicioEm: { $ref: '#/components/schemas/DataHora' }
+                duracaoMinutos: { type: integer, minimum: 5, maximum: 720, description: 'Só equipe; o padrão é a duração do serviço.' }
+                local: { type: [string, 'null'], maxLength: 200, description: 'Só equipe (por exemplo, o hospital do procedimento).' }
+                observacao: { type: [string, 'null'], maxLength: 2000, description: Só equipe; o paciente não vê. }
+                encaixe: { type: boolean, default: false, description: Só equipe. }
+      responses:
+        '201':
+          description: Agendamento criado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Agendamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agendamentos/{agendamentoId}:
+    get:
+      operationId: agendamentosObter
+      tags: [agenda]
+      summary: Detalhe, com histórico
+      parameters:
+        - $ref: '#/components/parameters/AgendamentoId'
+      responses:
+        '200':
+          description: Agendamento
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Agendamento' }
+        default: { $ref: '#/components/responses/Erro' }
+    patch:
+      operationId: agendamentosEditar
+      tags: [agenda]
+      summary: Ajusta local ou observação (equipe)
+      parameters:
+        - $ref: '#/components/parameters/AgendamentoId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                local: { type: [string, 'null'], maxLength: 200 }
+                observacao: { type: [string, 'null'], maxLength: 2000 }
+      responses:
+        '200':
+          description: Agendamento atualizado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Agendamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agendamentos/{agendamentoId}/confirmar:
+    post:
+      operationId: agendamentosConfirmar
+      tags: [agenda]
+      summary: Confirma presença (paciente ou equipe); repetir não muda nada
+      parameters:
+        - $ref: '#/components/parameters/AgendamentoId'
+      responses:
+        '200':
+          description: Agendamento confirmado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Agendamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agendamentos/{agendamentoId}/cancelar:
+    post:
+      operationId: agendamentosCancelar
+      tags: [agenda]
+      summary: Cancela (RN-AGE-004); o histórico fica
+      parameters:
+        - $ref: '#/components/parameters/AgendamentoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [motivo]
+              properties:
+                motivo: { type: string, minLength: 3, maxLength: 1000 }
+      responses:
+        '200':
+          description: Agendamento cancelado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Agendamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agendamentos/{agendamentoId}/remarcar:
+    post:
+      operationId: agendamentosRemarcar
+      tags: [agenda]
+      summary: Muda data, hora ou profissional (equipe); volta para AGENDADO
+      parameters:
+        - $ref: '#/components/parameters/AgendamentoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [inicioEm]
+              properties:
+                inicioEm: { $ref: '#/components/schemas/DataHora' }
+                profissionalId: { $ref: '#/components/schemas/Id' }
+                duracaoMinutos: { type: integer, minimum: 5, maximum: 720 }
+                encaixe: { type: boolean, default: false }
+                motivo: { type: [string, 'null'], maxLength: 1000 }
+      responses:
+        '200':
+          description: Agendamento remarcado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Agendamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agendamentos/{agendamentoId}/realizar:
+    post:
+      operationId: agendamentosRealizar
+      tags: [agenda]
+      summary: Marca como realizado (equipe, depois do início — RN-AGE-006)
+      parameters:
+        - $ref: '#/components/parameters/AgendamentoId'
+      responses:
+        '200':
+          description: Agendamento realizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Agendamento' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/agendamentos/{agendamentoId}/falta:
+    post:
+      operationId: agendamentosRegistrarFalta
+      tags: [agenda]
+      summary: Registra que o paciente não compareceu (equipe, depois do início)
+      parameters:
+        - $ref: '#/components/parameters/AgendamentoId'
+      responses:
+        '200':
+          description: Falta registrada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Agendamento' }
         default: { $ref: '#/components/responses/Erro' }
 
 components:
@@ -1869,6 +2314,38 @@ components:
       in: path
       required: true
       schema: { $ref: '#/components/schemas/Id' }
+    ServicoId:
+      name: servicoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    ProfissionalId:
+      name: profissionalId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    BloqueioId:
+      name: bloqueioId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    AgendamentoId:
+      name: agendamentoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    De:
+      name: de
+      in: query
+      required: true
+      description: Primeiro dia do período (inclusive), no fuso da organização.
+      schema: { $ref: '#/components/schemas/Data' }
+    Ate:
+      name: ate
+      in: query
+      required: true
+      description: Último dia do período (inclusive), no fuso da organização. No máximo 366 dias depois de `de` (31 em `horarios`).
+      schema: { $ref: '#/components/schemas/Data' }
 
   responses:
     Erro:
@@ -2007,7 +2484,7 @@ components:
     ModuloId:
       type: string
       x-catalogo-nomes: true
-      enum: [pacientes, acompanhamento, chat, equipe]
+      enum: [pacientes, acompanhamento, chat, equipe, agenda]
     Tela:
       type: string
       x-catalogo-nomes: true
@@ -2029,10 +2506,17 @@ components:
         - chat.conversa
         - equipe.lista
         - organizacao.configuracao
+        - agenda.lista
+        - agenda.novo
+        - agenda.detalhe
+        - agenda.servicos
+        - agenda.grade
+        - agenda.meus
+        - agenda.marcar
     TermoChave:
       type: string
       x-catalogo-nomes: true
-      enum: [organizacao, paciente, responsavel, profissional, acompanhamento, protocolo, procedimento, checkin, conversa]
+      enum: [organizacao, paciente, responsavel, profissional, acompanhamento, protocolo, procedimento, checkin, conversa, consulta]
     ContadorChave:
       type: string
       x-catalogo-nomes: true
@@ -2041,7 +2525,7 @@ components:
       type: string
       x-catalogo-nomes: true
       description: Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.
-      enum: [house, users, user, user-plus, activity, heart-pulse, message-circle, bell, settings, clipboard-list, calendar, stethoscope, paw-print, circle-alert, file-text, camera, credit-card, circle-help, log-out]
+      enum: [house, users, user, user-plus, activity, heart-pulse, message-circle, bell, settings, clipboard-list, calendar, stethoscope, paw-print, circle-alert, file-text, camera, credit-card, circle-help, log-out, calendar-plus, calendar-check, calendar-clock]
     CodigoErro:
       type: string
       enum:
@@ -2069,9 +2553,10 @@ components:
         - CURSOR_EXPIRADO
         - ULTIMO_GESTOR
         - INDISPONIVEL_TEMPORARIAMENTE
+        - HORARIO_INDISPONIVEL
     TipoNotificacao:
       type: string
-      enum: [CHAT_MENSAGEM, CHECKIN_DISPONIVEL, CHECKIN_LEMBRETE, ALERTA_CRIADO, ACOMPANHAMENTO_INICIADO, ACOMPANHAMENTO_CONCLUIDO, CONVITE_ACEITO, SISTEMA]
+      enum: [CHAT_MENSAGEM, CHECKIN_DISPONIVEL, CHECKIN_LEMBRETE, ALERTA_CRIADO, ACOMPANHAMENTO_INICIADO, ACOMPANHAMENTO_CONCLUIDO, CONVITE_ACEITO, SISTEMA, AGENDAMENTO_CRIADO, AGENDAMENTO_ALTERADO, AGENDAMENTO_LEMBRETE]
     TipoEvento:
       type: string
       x-catalogo-nomes: true
@@ -2088,9 +2573,11 @@ components:
         - arquivo.processado
         - sessao.manifesto.alterado
         - sessao.encerrada
+        - agenda.agendamento.criado
+        - agenda.agendamento.atualizado
     TipoSecao:
       type: string
-      enum: [ACOMPANHAMENTO_ATUAL, CHECKINS_PENDENTES, ALERTAS_ABERTOS, CHECKINS_DO_DIA, ACOMPANHAMENTOS_ATIVOS, CONVERSAS_RECENTES, ATALHOS, AVISO, CONTATO_ORGANIZACAO]
+      enum: [ACOMPANHAMENTO_ATUAL, CHECKINS_PENDENTES, ALERTAS_ABERTOS, CHECKINS_DO_DIA, ACOMPANHAMENTOS_ATIVOS, CONVERSAS_RECENTES, ATALHOS, AVISO, CONTATO_ORGANIZACAO, PROXIMA_CONSULTA, AGENDA_DO_DIA]
     Severidade:
       type: string
       enum: [BAIXA, MEDIA, ALTA]
@@ -2371,6 +2858,8 @@ components:
           then: { properties: { config: { $ref: '#/components/schemas/ConfigAcompanhamento' } } }
         - if: { properties: { id: { const: chat } } }
           then: { properties: { config: { $ref: '#/components/schemas/ConfigChat' } } }
+        - if: { properties: { id: { const: agenda } } }
+          then: { properties: { config: { $ref: '#/components/schemas/ConfigAgenda' } } }
     ConfigPacientes:
       type: object
       additionalProperties: false
@@ -2497,6 +2986,10 @@ components:
         - equipe.membro.ler
         - equipe.membro.gerenciar
         - organizacao.configuracao.editar
+        - agenda.agendamento.ler
+        - agenda.agendamento.criar
+        - agenda.agendamento.gerenciar
+        - agenda.configuracao.gerenciar
     Capacidades:
       type: object
       additionalProperties: false
@@ -2654,6 +3147,24 @@ components:
                   telefone: { type: [string, 'null'] }
                   endereco: { type: [string, 'null'] }
                   mapaUrl: { type: [string, 'null'], format: uri }
+        - if: { properties: { tipo: { const: PROXIMA_CONSULTA } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [agendamento]
+                properties:
+                  agendamento: { $ref: '#/components/schemas/Agendamento' }
+        - if: { properties: { tipo: { const: AGENDA_DO_DIA } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [data, total, itens]
+                properties:
+                  data: { $ref: '#/components/schemas/Data' }
+                  total: { type: integer, minimum: 0 }
+                  itens: { type: array, items: { $ref: '#/components/schemas/AgendamentoResumo' } }
 
     # ─────────── Notificações ───────────
     Notificacao:
@@ -2775,6 +3286,8 @@ components:
           then: { properties: { dados: { required: [arquivoId, status] } } }
         - if: { properties: { tipo: { const: sessao.encerrada } } }
           then: { properties: { dados: { required: [motivo] } } }
+        - if: { properties: { tipo: { anyOf: [{ const: agenda.agendamento.criado }, { const: agenda.agendamento.atualizado }] } } }
+          then: { properties: { dados: { required: [agendamentoId] } } }
 
     # ─────────── Pacientes ───────────
     TipoPaciente:
@@ -3301,6 +3814,177 @@ components:
         acoesPermitidas:
           type: array
           items: { type: string, enum: [EDITAR, SUSPENDER, DESLIGAR, REATIVAR] }
+    # ─────────── Agenda (1.1 — ADR-0016) ───────────
+    CategoriaServico:
+      type: string
+      enum: [CONSULTA, PROCEDIMENTO]
+    StatusServico:
+      type: string
+      enum: [ATIVO, ARQUIVADO]
+    StatusAgendamento:
+      type: string
+      enum: [AGENDADO, CONFIRMADO, REALIZADO, CANCELADO, FALTOU]
+    ServicoEdicao:
+      type: object
+      additionalProperties: false
+      required: [nome, categoria, duracaoMinutos, autoagendavel, profissionaisIds]
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 120 }
+        categoria: { $ref: '#/components/schemas/CategoriaServico' }
+        duracaoMinutos: { type: integer, minimum: 5, maximum: 720 }
+        autoagendavel:
+          type: boolean
+          description: Paciente pode marcar sozinho. Sempre `false` em `PROCEDIMENTO`.
+        profissionaisIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: '#/components/schemas/Id' }
+        orientacoes:
+          type: [string, 'null']
+          maxLength: 2000
+          description: 'Preparo mostrado ao paciente (por exemplo, "jejum de 8 horas").'
+    Servico:
+      type: object
+      additionalProperties: false
+      required: [id, nome, categoria, duracaoMinutos, autoagendavel, profissionais, orientacoes, status, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        nome: { type: string }
+        categoria: { $ref: '#/components/schemas/CategoriaServico' }
+        duracaoMinutos: { type: integer, minimum: 5 }
+        autoagendavel: { type: boolean }
+        profissionais:
+          type: array
+          items: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        orientacoes: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/StatusServico' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR, ARQUIVAR, AGENDAR] }
+    ItemGrade:
+      type: object
+      additionalProperties: false
+      required: [diaSemana, inicio, fim]
+      properties:
+        diaSemana: { type: integer, minimum: 0, maximum: 6, description: 0 = domingo }
+        inicio: { $ref: '#/components/schemas/Hora' }
+        fim: { $ref: '#/components/schemas/Hora' }
+        servicosIds:
+          type: [array, 'null']
+          items: { $ref: '#/components/schemas/Id' }
+          description: '`null` ou ausente = todos os serviços do profissional.'
+    Grade:
+      type: object
+      additionalProperties: false
+      required: [profissional, itens, acoesPermitidas]
+      properties:
+        profissional: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        itens:
+          type: array
+          items: { $ref: '#/components/schemas/ItemGrade' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR] }
+    Bloqueio:
+      type: object
+      additionalProperties: false
+      required: [id, profissional, inicioEm, fimEm, motivo, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        profissional:
+          oneOf:
+            - $ref: '#/components/schemas/ReferenciaUsuario'
+            - type: 'null'
+          description: '`null` = a organização inteira.'
+        inicioEm: { $ref: '#/components/schemas/DataHora' }
+        fimEm: { $ref: '#/components/schemas/DataHora' }
+        motivo: { type: [string, 'null'] }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [REMOVER] }
+    HorarioLivre:
+      type: object
+      additionalProperties: false
+      required: [inicioEm, fimEm, profissional]
+      properties:
+        inicioEm: { $ref: '#/components/schemas/DataHora' }
+        fimEm: { $ref: '#/components/schemas/DataHora' }
+        profissional: { $ref: '#/components/schemas/ReferenciaUsuario' }
+    EventoAgendamento:
+      type: object
+      additionalProperties: false
+      required: [ocorridoEm, acao, por]
+      properties:
+        ocorridoEm: { $ref: '#/components/schemas/DataHora' }
+        acao: { type: string, enum: [CRIADO, CONFIRMADO, REMARCADO, CANCELADO, REALIZADO, FALTOU] }
+        por:
+          oneOf:
+            - $ref: '#/components/schemas/ReferenciaUsuario'
+            - type: 'null'
+          description: '`null` = ação automática.'
+        detalhe: { type: [string, 'null'], description: Motivo do cancelamento ou da remarcação. }
+    Agendamento:
+      type: object
+      additionalProperties: false
+      required: [id, paciente, profissional, servico, inicioEm, fimEm, status, origem, encaixe, local, orientacoes, observacao, motivoCancelamento, historico, criadoEm, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        profissional: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        servico:
+          type: object
+          additionalProperties: false
+          required: [id, nome, categoria]
+          properties:
+            id: { $ref: '#/components/schemas/Id' }
+            nome: { type: string }
+            categoria: { $ref: '#/components/schemas/CategoriaServico' }
+        inicioEm: { $ref: '#/components/schemas/DataHora' }
+        fimEm: { $ref: '#/components/schemas/DataHora' }
+        status: { $ref: '#/components/schemas/StatusAgendamento' }
+        origem: { type: string, enum: [EQUIPE, PACIENTE] }
+        encaixe: { type: boolean }
+        local: { type: [string, 'null'] }
+        orientacoes: { type: [string, 'null'], description: Preparo copiado do serviço na hora da marcação. }
+        observacao: { type: [string, 'null'], description: 'Interna da equipe; sempre `null` para o paciente.' }
+        motivoCancelamento: { type: [string, 'null'] }
+        historico:
+          type: array
+          items: { $ref: '#/components/schemas/EventoAgendamento' }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR, CONFIRMAR, CANCELAR, REMARCAR, REALIZAR, REGISTRAR_FALTA, ABRIR_CONVERSA] }
+    AgendamentoResumo:
+      type: object
+      additionalProperties: false
+      required: [id, inicioEm, fimEm, status, servico, profissional, paciente]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        inicioEm: { $ref: '#/components/schemas/DataHora' }
+        fimEm: { $ref: '#/components/schemas/DataHora' }
+        status: { $ref: '#/components/schemas/StatusAgendamento' }
+        servico:
+          type: object
+          additionalProperties: false
+          required: [nome, categoria]
+          properties:
+            nome: { type: string }
+            categoria: { $ref: '#/components/schemas/CategoriaServico' }
+        profissional: { $ref: '#/components/schemas/Referencia' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+    ConfigAgenda:
+      type: object
+      additionalProperties: false
+      required: [autoagendamento, antecedenciaMinimaHoras, janelaDias, cancelamentoAteHoras, lembreteHorasAntes, intervaloMinutos]
+      properties:
+        autoagendamento: { type: boolean, description: Paciente marca sozinho os serviços autoagendáveis. }
+        antecedenciaMinimaHoras: { type: integer, minimum: 0, maximum: 720 }
+        janelaDias: { type: integer, minimum: 1, maximum: 365 }
+        cancelamentoAteHoras: { type: integer, minimum: 0, maximum: 720, description: Até quantas horas antes o paciente cancela pelo app. }
+        lembreteHorasAntes: { type: integer, minimum: 1, maximum: 168 }
+        intervaloMinutos: { type: integer, enum: [5, 10, 15, 20, 30, 60], description: Passo dos horários oferecidos. }
     OrganizacaoConfiguracao:
       type: object
       additionalProperties: false
@@ -3339,6 +4023,9 @@ components:
           required: [resolverAlertasAoEncerrar]
           properties:
             resolverAlertasAoEncerrar: { type: boolean }
+        agenda:
+          description: Presente quando o módulo `agenda` está contratado.
+          $ref: '#/components/schemas/ConfigAgenda'
         acoesPermitidas:
           type: array
           items: { type: string, enum: [EDITAR] }
@@ -3378,3 +4065,15 @@ components:
           minProperties: 1
           properties:
             resolverAlertasAoEncerrar: { type: boolean }
+        agenda:
+          type: object
+          description: 'Exige o módulo `agenda` (senão `MODULO_NAO_CONTRATADO`).'
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            autoagendamento: { type: boolean }
+            antecedenciaMinimaHoras: { type: integer, minimum: 0, maximum: 720 }
+            janelaDias: { type: integer, minimum: 1, maximum: 365 }
+            cancelamentoAteHoras: { type: integer, minimum: 0, maximum: 720 }
+            lembreteHorasAntes: { type: integer, minimum: 1, maximum: 168 }
+            intervaloMinutos: { type: integer, enum: [5, 10, 15, 20, 30, 60] }

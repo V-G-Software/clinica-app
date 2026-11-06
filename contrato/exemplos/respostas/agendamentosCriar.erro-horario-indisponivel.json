@@ -1,0 +1,14 @@
+{
+  "requisicao": "POST /v1/agendamentos",
+  "status": 409,
+  "contentType": "application/problem+json",
+  "corpo": {
+    "type": "https://exemplo.com.br/erros/horario-indisponivel",
+    "title": "Horário indisponível",
+    "status": 409,
+    "detail": "Já existe um agendamento neste horário. Escolha outro ou marque como encaixe.",
+    "instance": "http://localhost:4010/o/modelo-otorrino/v1/agendamentos",
+    "codigo": "HORARIO_INDISPONIVEL",
+    "requestId": "req_0mw7vddh5000ae"
+  }
+}

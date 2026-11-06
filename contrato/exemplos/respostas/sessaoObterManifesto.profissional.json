@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.0.0-rc.2"
+      "versao": "1.1.0-rc.1"
     },
     "organizacao": {
       "id": "org_otorrino",
@@ -85,6 +85,11 @@
         "singular": "conversa",
         "plural": "conversas",
         "genero": "F"
+      },
+      "consulta": {
+        "singular": "consulta",
+        "plural": "consultas",
+        "genero": "F"
       }
     },
     "modulos": [
@@ -147,6 +152,18 @@
         "id": "equipe",
         "versao": "1.0",
         "config": {}
+      },
+      {
+        "id": "agenda",
+        "versao": "1.0",
+        "config": {
+          "autoagendamento": true,
+          "antecedenciaMinimaHoras": 2,
+          "janelaDias": 30,
+          "cancelamentoAteHoras": 24,
+          "lembreteHorasAntes": 24,
+          "intervaloMinutos": 30
+        }
       }
     ],
     "navegacao": [
@@ -157,6 +174,15 @@
         "grupo": "PRINCIPAL",
         "destino": {
           "tela": "inicio"
+        }
+      },
+      {
+        "id": "agenda",
+        "rotulo": "Agenda",
+        "icone": "calendar",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "agenda.lista"
         }
       },
       {
@@ -234,7 +260,10 @@
       "chat.conversa.criar",
       "chat.conversa.gerenciar",
       "chat.mensagem.enviar",
-      "equipe.membro.ler"
+      "equipe.membro.ler",
+      "agenda.agendamento.ler",
+      "agenda.agendamento.criar",
+      "agenda.agendamento.gerenciar"
     ],
     "capacidades": {
       "tempoReal": {
