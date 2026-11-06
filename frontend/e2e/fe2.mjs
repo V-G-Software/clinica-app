@@ -74,6 +74,10 @@ await ana.waitForURL(/\/acompanhamentos\/acp_rafael/);
 const checkinRafael = await ana.locator('a[href^="/checkins/"]').first().getAttribute('href');
 await ana.goto(`${APP}/`);
 await ola(ana);
+// O evento só chega em tempo real com o canal aberto: espera o SSE conectar antes de simular a resposta.
+const estadoTr = await ana.locator('html[data-tempo-real="conectado"]').waitFor({ state: 'attached', timeout: 15000 })
+  .then(() => 'conectado', () => ana.evaluate(() => document.documentElement.dataset.tempoReal ?? 'desligado'));
+ok(estadoTr === 'conectado', `tempo real: SSE conectado antes do evento (estado: ${estadoTr})`);
 await post('/__mock/simular/checkin', { org: 'modelo-otorrino', checkinId: checkinRafael.split('/').pop(), respostas: { dor: 9, noite: 'MAL', sangramento: 'LEVE', mediuTemperatura: false } });
 await espera(ana.getByText(/Rafael Mendes — Dor 8 ou mais relatada/), 'tempo real: alerta do Rafael aparece no início sem recarregar');
 await ana.getByText(/Rafael Mendes — Dor 8 ou mais relatada/).click();
