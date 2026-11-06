@@ -5,6 +5,63 @@
   "corpo": {
     "secoes": [
       {
+        "id": "proxima-consulta",
+        "tipo": "PROXIMA_CONSULTA",
+        "dados": {
+          "agendamento": {
+            "id": "agd_marcos_retorno",
+            "paciente": {
+              "id": "pac_marcos",
+              "nome": "Marcos Souza"
+            },
+            "profissional": {
+              "usuarioId": "usr_carlos",
+              "nome": "Dr. Carlos Nogueira",
+              "perfil": "PROFISSIONAL"
+            },
+            "servico": {
+              "id": "srv_retorno",
+              "nome": "Retorno pós-operatório",
+              "categoria": "CONSULTA"
+            },
+            "inicioEm": "2026-11-10T13:00:00Z",
+            "fimEm": "2026-11-10T13:20:00Z",
+            "status": "CONFIRMADO",
+            "origem": "EQUIPE",
+            "encaixe": false,
+            "local": null,
+            "orientacoes": null,
+            "observacao": null,
+            "motivoCancelamento": null,
+            "historico": [
+              {
+                "ocorridoEm": "2026-11-05T14:00:00Z",
+                "acao": "CRIADO",
+                "por": {
+                  "usuarioId": "usr_julia",
+                  "nome": "Júlia Ramos",
+                  "perfil": "SECRETARIA"
+                }
+              },
+              {
+                "ocorridoEm": "2026-11-08T11:00:00Z",
+                "acao": "CONFIRMADO",
+                "por": {
+                  "usuarioId": "usr_marcos",
+                  "nome": "Marcos Souza",
+                  "perfil": "PACIENTE"
+                }
+              }
+            ],
+            "criadoEm": "2026-11-05T14:00:00Z",
+            "acoesPermitidas": [
+              "CANCELAR",
+              "ABRIR_CONVERSA"
+            ]
+          }
+        }
+      },
+      {
         "id": "acompanhamento-atual-acp_marcos",
         "tipo": "ACOMPANHAMENTO_ATUAL",
         "dados": {
@@ -15,7 +72,7 @@
           "totalDias": 7,
           "status": "ATIVO",
           "proximoCheckin": {
-            "id": "chk_0mw28tpc000046",
+            "id": "chk_0mw28tpc00004k",
             "acompanhamentoId": "acp_marcos",
             "paciente": {
               "id": "pac_marcos",
@@ -35,7 +92,7 @@
         "dados": {
           "itens": [
             {
-              "id": "chk_0mw28tpc000046",
+              "id": "chk_0mw28tpc00004k",
               "acompanhamentoId": "acp_marcos",
               "paciente": {
                 "id": "pac_marcos",
@@ -55,7 +112,7 @@
         "dados": {
           "itens": [
             {
-              "id": "cnv_0mw28tpc00004b",
+              "id": "cnv_0mw28tpc00004p",
               "titulo": "Clínica Modelo Otorrino",
               "paciente": {
                 "id": "pac_marcos",
@@ -68,23 +125,23 @@
                   "usuarioId": "usr_ana",
                   "nome": "Dra. Ana Lima",
                   "perfil": "PROFISSIONAL",
-                  "lidoAte": "msg_0mw6fxio00006x"
+                  "lidoAte": "msg_0mw6fxio00007l"
                 },
                 {
                   "usuarioId": "usr_julia",
                   "nome": "Júlia Ramos",
                   "perfil": "SECRETARIA",
-                  "lidoAte": "msg_0mw6f1d9c0006v"
+                  "lidoAte": "msg_0mw6f1d9c0007j"
                 },
                 {
                   "usuarioId": "usr_marcos",
                   "nome": "Marcos Souza",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw6gcy800006z"
+                  "lidoAte": "msg_0mw6gcy800007n"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw7s5mo000088",
+                "id": "msg_0mw7s5mo00008y",
                 "resumo": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
                 "autorNome": null,
                 "enviadoEm": "2026-11-08T12:00:00Z"

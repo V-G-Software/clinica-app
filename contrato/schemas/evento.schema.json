@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://exemplo.com.br/contrato/v1/evento.schema.json",
   "title": "Evento de tempo real (SSE e GET /v1/eventos)",
-  "x-gerado-de": "contrato/openapi.yaml#/$defs/Evento (1.0.0-rc.3)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Evento (1.1.0-rc.1)",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -215,6 +215,31 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "tipo": {
+            "anyOf": [
+              {
+                "const": "agenda.agendamento.criado"
+              },
+              {
+                "const": "agenda.agendamento.atualizado"
+              }
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "dados": {
+            "required": [
+              "agendamentoId"
+            ]
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -240,7 +265,9 @@
         "contadores.alterados",
         "arquivo.processado",
         "sessao.manifesto.alterado",
-        "sessao.encerrada"
+        "sessao.encerrada",
+        "agenda.agendamento.criado",
+        "agenda.agendamento.atualizado"
       ]
     },
     "DataHora": {

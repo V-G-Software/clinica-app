@@ -1,0 +1,95 @@
+{
+  "requisicao": "GET /v1/agenda/servicos",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "srv_consulta",
+        "nome": "Consulta otorrinolaringológica",
+        "categoria": "CONSULTA",
+        "duracaoMinutos": 30,
+        "autoagendavel": true,
+        "profissionais": [
+          {
+            "usuarioId": "usr_ana",
+            "nome": "Dra. Ana Lima",
+            "perfil": "PROFISSIONAL"
+          },
+          {
+            "usuarioId": "usr_carlos",
+            "nome": "Dr. Carlos Nogueira",
+            "perfil": "PROFISSIONAL"
+          }
+        ],
+        "orientacoes": "Traga seus exames anteriores, se tiver.",
+        "status": "ATIVO",
+        "acoesPermitidas": [
+          "AGENDAR"
+        ]
+      },
+      {
+        "id": "srv_retorno",
+        "nome": "Retorno pós-operatório",
+        "categoria": "CONSULTA",
+        "duracaoMinutos": 20,
+        "autoagendavel": false,
+        "profissionais": [
+          {
+            "usuarioId": "usr_ana",
+            "nome": "Dra. Ana Lima",
+            "perfil": "PROFISSIONAL"
+          },
+          {
+            "usuarioId": "usr_carlos",
+            "nome": "Dr. Carlos Nogueira",
+            "perfil": "PROFISSIONAL"
+          }
+        ],
+        "orientacoes": null,
+        "status": "ATIVO",
+        "acoesPermitidas": [
+          "AGENDAR"
+        ]
+      },
+      {
+        "id": "srv_rinoplastia",
+        "nome": "Rinoplastia",
+        "categoria": "PROCEDIMENTO",
+        "duracaoMinutos": 180,
+        "autoagendavel": false,
+        "profissionais": [
+          {
+            "usuarioId": "usr_ana",
+            "nome": "Dra. Ana Lima",
+            "perfil": "PROFISSIONAL"
+          }
+        ],
+        "orientacoes": "Jejum de 8 horas. Chegue ao hospital 1 hora antes, com documento e exames pré-operatórios.",
+        "status": "ATIVO",
+        "acoesPermitidas": [
+          "AGENDAR"
+        ]
+      },
+      {
+        "id": "srv_septoplastia",
+        "nome": "Septoplastia",
+        "categoria": "PROCEDIMENTO",
+        "duracaoMinutos": 120,
+        "autoagendavel": false,
+        "profissionais": [
+          {
+            "usuarioId": "usr_ana",
+            "nome": "Dra. Ana Lima",
+            "perfil": "PROFISSIONAL"
+          }
+        ],
+        "orientacoes": "Jejum de 8 horas. Chegue ao hospital 1 hora antes, com documento e exames pré-operatórios.",
+        "status": "ATIVO",
+        "acoesPermitidas": [
+          "AGENDAR"
+        ]
+      }
+    ]
+  }
+}

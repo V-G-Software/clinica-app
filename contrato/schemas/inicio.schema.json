@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://exemplo.com.br/contrato/v1/inicio.schema.json",
   "title": "Tela inicial (GET /v1/inicio)",
-  "x-gerado-de": "contrato/openapi.yaml#/$defs/Inicio (1.0.0-rc.3)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Inicio (1.1.0-rc.1)",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -387,6 +387,66 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "PROXIMA_CONSULTA"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "agendamento"
+                ],
+                "properties": {
+                  "agendamento": {
+                    "$ref": "#/$defs/Agendamento"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tipo": {
+                "const": "AGENDA_DO_DIA"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dados": {
+                "type": "object",
+                "required": [
+                  "data",
+                  "total",
+                  "itens"
+                ],
+                "properties": {
+                  "data": {
+                    "$ref": "#/$defs/Data"
+                  },
+                  "total": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "itens": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/AgendamentoResumo"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -401,7 +461,9 @@
         "CONVERSAS_RECENTES",
         "ATALHOS",
         "AVISO",
-        "CONTATO_ORGANIZACAO"
+        "CONTATO_ORGANIZACAO",
+        "PROXIMA_CONSULTA",
+        "AGENDA_DO_DIA"
       ]
     },
     "Id": {
@@ -933,7 +995,10 @@
         "camera",
         "credit-card",
         "circle-help",
-        "log-out"
+        "log-out",
+        "calendar-plus",
+        "calendar-check",
+        "calendar-clock"
       ]
     },
     "Destino": {
@@ -974,8 +1039,246 @@
         "chat.lista",
         "chat.conversa",
         "equipe.lista",
-        "organizacao.configuracao"
+        "organizacao.configuracao",
+        "agenda.lista",
+        "agenda.novo",
+        "agenda.detalhe",
+        "agenda.servicos",
+        "agenda.grade",
+        "agenda.meus",
+        "agenda.marcar"
       ]
+    },
+    "Agendamento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "paciente",
+        "profissional",
+        "servico",
+        "inicioEm",
+        "fimEm",
+        "status",
+        "origem",
+        "encaixe",
+        "local",
+        "orientacoes",
+        "observacao",
+        "motivoCancelamento",
+        "historico",
+        "criadoEm",
+        "acoesPermitidas"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "paciente": {
+          "$ref": "#/$defs/Referencia"
+        },
+        "profissional": {
+          "$ref": "#/$defs/ReferenciaUsuario"
+        },
+        "servico": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "nome",
+            "categoria"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/Id"
+            },
+            "nome": {
+              "type": "string"
+            },
+            "categoria": {
+              "$ref": "#/$defs/CategoriaServico"
+            }
+          }
+        },
+        "inicioEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "fimEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "status": {
+          "$ref": "#/$defs/StatusAgendamento"
+        },
+        "origem": {
+          "type": "string",
+          "enum": [
+            "EQUIPE",
+            "PACIENTE"
+          ]
+        },
+        "encaixe": {
+          "type": "boolean"
+        },
+        "local": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "orientacoes": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Preparo copiado do serviço na hora da marcação."
+        },
+        "observacao": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Interna da equipe; sempre `null` para o paciente."
+        },
+        "motivoCancelamento": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "historico": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EventoAgendamento"
+          }
+        },
+        "criadoEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "acoesPermitidas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "EDITAR",
+              "CONFIRMAR",
+              "CANCELAR",
+              "REMARCAR",
+              "REALIZAR",
+              "REGISTRAR_FALTA",
+              "ABRIR_CONVERSA"
+            ]
+          }
+        }
+      }
+    },
+    "CategoriaServico": {
+      "type": "string",
+      "enum": [
+        "CONSULTA",
+        "PROCEDIMENTO"
+      ]
+    },
+    "StatusAgendamento": {
+      "type": "string",
+      "enum": [
+        "AGENDADO",
+        "CONFIRMADO",
+        "REALIZADO",
+        "CANCELADO",
+        "FALTOU"
+      ]
+    },
+    "EventoAgendamento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ocorridoEm",
+        "acao",
+        "por"
+      ],
+      "properties": {
+        "ocorridoEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "acao": {
+          "type": "string",
+          "enum": [
+            "CRIADO",
+            "CONFIRMADO",
+            "REMARCADO",
+            "CANCELADO",
+            "REALIZADO",
+            "FALTOU"
+          ]
+        },
+        "por": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ReferenciaUsuario"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`null` = ação automática."
+        },
+        "detalhe": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Motivo do cancelamento ou da remarcação."
+        }
+      }
+    },
+    "AgendamentoResumo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "inicioEm",
+        "fimEm",
+        "status",
+        "servico",
+        "profissional",
+        "paciente"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "inicioEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "fimEm": {
+          "$ref": "#/$defs/DataHora"
+        },
+        "status": {
+          "$ref": "#/$defs/StatusAgendamento"
+        },
+        "servico": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "nome",
+            "categoria"
+          ],
+          "properties": {
+            "nome": {
+              "type": "string"
+            },
+            "categoria": {
+              "$ref": "#/$defs/CategoriaServico"
+            }
+          }
+        },
+        "profissional": {
+          "$ref": "#/$defs/Referencia"
+        },
+        "paciente": {
+          "$ref": "#/$defs/Referencia"
+        }
+      }
     }
   }
 }

@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.0.0-rc.2"
+      "versao": "1.1.0-rc.1"
     },
     "organizacao": {
       "id": "org_otorrino",
@@ -81,6 +81,11 @@
         "singular": "conversa",
         "plural": "conversas",
         "genero": "F"
+      },
+      "consulta": {
+        "singular": "consulta",
+        "plural": "consultas",
+        "genero": "F"
       }
     },
     "modulos": [
@@ -143,6 +148,18 @@
         "id": "equipe",
         "versao": "1.0",
         "config": {}
+      },
+      {
+        "id": "agenda",
+        "versao": "1.0",
+        "config": {
+          "autoagendamento": true,
+          "antecedenciaMinimaHoras": 2,
+          "janelaDias": 30,
+          "cancelamentoAteHoras": 24,
+          "lembreteHorasAntes": 24,
+          "intervaloMinutos": 30
+        }
       }
     ],
     "navegacao": [
@@ -164,6 +181,15 @@
           "tela": "acompanhamento.meus"
         },
         "contador": "acompanhamento.checkinsPendentes"
+      },
+      {
+        "id": "minhas-consultas",
+        "rotulo": "Minhas consultas",
+        "icone": "calendar",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "agenda.meus"
+        }
       },
       {
         "id": "conversas",
@@ -189,7 +215,7 @@
         "id": "perfil",
         "rotulo": "Meu perfil",
         "icone": "user",
-        "grupo": "PRINCIPAL",
+        "grupo": "SECUNDARIO",
         "destino": {
           "tela": "perfil"
         }
@@ -201,7 +227,9 @@
       "acompanhamento.checkin.ler",
       "acompanhamento.checkin.responder",
       "chat.conversa.ler",
-      "chat.mensagem.enviar"
+      "chat.mensagem.enviar",
+      "agenda.agendamento.ler",
+      "agenda.agendamento.criar"
     ],
     "capacidades": {
       "tempoReal": {
@@ -222,7 +250,7 @@
       }
     },
     "contadores": {
-      "notificacoes.naoLidas": 5,
+      "notificacoes.naoLidas": 6,
       "chat.naoLidas": 1,
       "acompanhamento.alertasAbertos": 0,
       "acompanhamento.checkinsPendentes": 1

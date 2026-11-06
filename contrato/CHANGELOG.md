@@ -2,6 +2,34 @@
 
 Versionamento semântico (seção 4.2). Dentro de `1.x`, só mudanças aditivas.
 
+## 1.1.0-rc.1 — 2026-11-06 (F4, etapa 1)
+
+Módulo `agenda`: consultas e procedimentos (cirurgias), grade, bloqueios e autoagendamento ([ADR-0016](../docs/adr/0016-modulo-agenda.md)). Versão menor, só com adições. Organizações sem o módulo ficam idênticas.
+
+### Incluído
+- **Tag `agenda`, 18 operações:**
+  - serviços (`/v1/agenda/servicos`: listar, criar, obter, editar, arquivar);
+  - grade por profissional (`/v1/agenda/grades/{profissionalId}`);
+  - bloqueios (`/v1/agenda/bloqueios`);
+  - horários livres (`/v1/agenda/horarios`);
+  - agendamentos: listar, criar, obter, editar, `confirmar`, `cancelar`, `remarcar`, `realizar` e `falta`.
+- **Schemas:** `Servico`, `ServicoEdicao`, `ItemGrade`, `Grade`, `Bloqueio`, `HorarioLivre`, `Agendamento`, `AgendamentoResumo`, `EventoAgendamento`, `ConfigAgenda`, além dos enums `CategoriaServico`, `StatusServico` e `StatusAgendamento`.
+- **Parâmetros:** `ServicoId`, `ProfissionalId`, `BloqueioId`, `AgendamentoId`, `De` e `Ate` (datas locais, inclusivas).
+- **Catálogos:**
+  - `ModuloId.agenda`;
+  - 7 telas `agenda.*`;
+  - termo `consulta`, opcional no manifesto (o frontend usa o padrão);
+  - ícones `calendar-plus`, `calendar-check` e `calendar-clock`;
+  - erro `HORARIO_INDISPONIVEL` (409);
+  - notificações `AGENDAMENTO_CRIADO`, `AGENDAMENTO_ALTERADO` e `AGENDAMENTO_LEMBRETE`;
+  - eventos `agenda.agendamento.criado` e `agenda.agendamento.atualizado`;
+  - seções `PROXIMA_CONSULTA` e `AGENDA_DO_DIA`;
+  - 4 permissões `agenda.*`.
+- **Configuração da organização:** `OrganizacaoConfiguracao.agenda` e `OrganizacaoEdicao.agenda`.
+
+### Esclarecido
+- Menu com mais de 5 itens `PRINCIPAL`: o excedente vai para `SECUNDARIO`, na ordem. O paciente com agenda passa a ter "Meu perfil" em "Mais".
+
 ## 1.0.0-rc.3 — 2026-11-06
 
 Decisões de produto das QUESTION-010, 014, 016, 019 e 029. Só mudanças aditivas.

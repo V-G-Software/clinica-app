@@ -5,7 +5,7 @@
   "corpo": {
     "itens": [
       {
-        "id": "ntf_0mw414io00004u",
+        "id": "ntf_0mw414io00005c",
         "tipo": "CHAT_MENSAGEM",
         "titulo": "Clínica Modelo Otorrino",
         "texto": "Clínica Modelo Otorrino: Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
@@ -14,12 +14,12 @@
         "destino": {
           "tela": "chat.conversa",
           "parametros": {
-            "conversaId": "cnv_0mw28tpc00004b"
+            "conversaId": "cnv_0mw28tpc00004p"
           }
         }
       },
       {
-        "id": "ntf_0mw7s5mo000086",
+        "id": "ntf_0mw7s5mo00008w",
         "tipo": "CHECKIN_DISPONIVEL",
         "titulo": "Check-in disponível",
         "texto": "O check-in de hoje já pode ser respondido.",
@@ -28,12 +28,12 @@
         "destino": {
           "tela": "acompanhamento.checkin",
           "parametros": {
-            "checkinId": "chk_0mw28tpc000046"
+            "checkinId": "chk_0mw28tpc00004k"
           }
         }
       },
       {
-        "id": "ntf_0mw6cps000006h",
+        "id": "ntf_0mw6cps0000075",
         "tipo": "CHECKIN_DISPONIVEL",
         "titulo": "Check-in disponível",
         "texto": "O check-in de hoje já pode ser respondido.",
@@ -42,12 +42,12 @@
         "destino": {
           "tela": "acompanhamento.checkin",
           "parametros": {
-            "checkinId": "chk_0mw28tpc000045"
+            "checkinId": "chk_0mw28tpc00004j"
           }
         }
       },
       {
-        "id": "ntf_0mw4x9xc000054",
+        "id": "ntf_0mw4x9xc00005q",
         "tipo": "CHECKIN_DISPONIVEL",
         "titulo": "Check-in disponível",
         "texto": "O check-in de hoje já pode ser respondido.",
@@ -56,25 +56,25 @@
         "destino": {
           "tela": "acompanhamento.checkin",
           "parametros": {
-            "checkinId": "chk_0mw28tpc000044"
+            "checkinId": "chk_0mw28tpc00004i"
           }
         }
       },
       {
-        "id": "ntf_0mw28tpc00004d",
-        "tipo": "ACOMPANHAMENTO_INICIADO",
-        "titulo": "Septoplastia — 7 dias",
-        "texto": "A equipe iniciou o seu acompanhamento.",
-        "criadoEm": "2026-11-04T15:00:00Z",
+        "id": "ntf_0mw3m4e800004v",
+        "tipo": "AGENDAMENTO_CRIADO",
+        "titulo": "Consulta",
+        "texto": "Uma consulta foi marcada para você.",
+        "criadoEm": "2026-11-05T14:00:00Z",
         "lidoEm": null,
         "destino": {
-          "tela": "acompanhamento.detalhe",
+          "tela": "agenda.detalhe",
           "parametros": {
-            "acompanhamentoId": "acp_marcos"
+            "agendamentoId": "agd_marcos_retorno"
           }
         }
       }
     ],
-    "proximoCursor": null
+    "proximoCursor": "eyJvIjo1fQ"
   }
 }

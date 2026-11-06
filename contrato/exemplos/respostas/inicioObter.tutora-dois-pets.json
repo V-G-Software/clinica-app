@@ -5,6 +5,55 @@
   "corpo": {
     "secoes": [
       {
+        "id": "proxima-consulta",
+        "tipo": "PROXIMA_CONSULTA",
+        "dados": {
+          "agendamento": {
+            "id": "agd_thor_retorno",
+            "paciente": {
+              "id": "pac_thor",
+              "nome": "Thor"
+            },
+            "profissional": {
+              "usuarioId": "usr_renata",
+              "nome": "Dra. Renata Campos",
+              "perfil": "PROFISSIONAL"
+            },
+            "servico": {
+              "id": "srv_consulta_vet",
+              "nome": "Consulta veterinária",
+              "categoria": "CONSULTA"
+            },
+            "inicioEm": "2026-11-16T13:00:00Z",
+            "fimEm": "2026-11-16T13:30:00Z",
+            "status": "AGENDADO",
+            "origem": "EQUIPE",
+            "encaixe": false,
+            "local": null,
+            "orientacoes": "Traga a carteira de vacinação do pet.",
+            "observacao": null,
+            "motivoCancelamento": null,
+            "historico": [
+              {
+                "ocorridoEm": "2026-11-06T16:00:00Z",
+                "acao": "CRIADO",
+                "por": {
+                  "usuarioId": "usr_diego",
+                  "nome": "Diego Martins",
+                  "perfil": "SECRETARIA"
+                }
+              }
+            ],
+            "criadoEm": "2026-11-06T16:00:00Z",
+            "acoesPermitidas": [
+              "CONFIRMAR",
+              "CANCELAR",
+              "ABRIR_CONVERSA"
+            ]
+          }
+        }
+      },
+      {
         "id": "acompanhamento-atual-acp_thor",
         "tipo": "ACOMPANHAMENTO_ATUAL",
         "titulo": "Thor",
@@ -16,7 +65,7 @@
           "totalDias": 10,
           "status": "ATIVO",
           "proximoCheckin": {
-            "id": "chk_0mw53peo00005p",
+            "id": "chk_0mw53peo00006b",
             "acompanhamentoId": "acp_thor",
             "paciente": {
               "id": "pac_thor",
@@ -43,7 +92,7 @@
         "dados": {
           "itens": [
             {
-              "id": "cnv_0mw53peo00005x",
+              "id": "cnv_0mw53peo00006j",
               "titulo": "Clínica Vet Amigo",
               "paciente": {
                 "id": "pac_thor",
@@ -68,11 +117,11 @@
                   "usuarioId": "usr_laura",
                   "nome": "Laura Martins",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw7v6xuo0008m"
+                  "lidoAte": "msg_0mw7v6xuo0009c"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw7v6xuo0008m",
+                "id": "msg_0mw7v6xuo0009c",
                 "resumo": "Dia 2 · apetite normal · aspecto ferida vermelha ou inchada",
                 "autorNome": "Laura Martins",
                 "enviadoEm": "2026-11-08T13:25:00Z"

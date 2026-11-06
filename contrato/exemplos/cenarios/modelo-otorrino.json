@@ -57,7 +57,8 @@
     "protocolo": { "singular": "protocolo", "plural": "protocolos", "genero": "M" },
     "procedimento": { "singular": "cirurgia", "plural": "cirurgias", "genero": "F" },
     "checkin": { "singular": "check-in", "plural": "check-ins", "genero": "M" },
-    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" }
+    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" },
+    "consulta": { "singular": "consulta", "plural": "consultas", "genero": "F" }
   },
   "modulos": [
     { "id": "pacientes", "versao": "1.0", "config": { "formularioCadastroId": "frm_cadastro_basico", "relacoesPermitidas": ["PROPRIO", "DEPENDENTE"] } },
@@ -79,7 +80,8 @@
         "avisoUrgencia": "Em caso de sangramento intenso, falta de ar ou febre alta, procure um pronto-socorro ou ligue 192."
       }
     },
-    { "id": "equipe", "versao": "1.0", "config": {} }
+    { "id": "equipe", "versao": "1.0", "config": {} },
+    { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": true, "antecedenciaMinimaHoras": 2, "janelaDias": 30, "cancelamentoAteHoras": 24, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } }
   ],
   "capacidades": {
     "tempoReal": { "modo": "SSE", "intervaloPollingSegundos": 20 },
@@ -228,5 +230,54 @@
       "respostas": {
         "1": { "aposMinutos": 120, "respostas": { "dor": 4, "noite": "REGULAR", "sangramento": "NENHUM", "mediuTemperatura": true, "temperatura": 36.8 } }
       } }
-  ]
+  ],
+  "agenda": {
+    "$comentario": "Agenda (ADR-0016). Datas absolutas em torno do relógio inicial do mock (2026-11-08T13:30Z, domingo); o backend desloca para hoje.",
+    "servicos": [
+      { "id": "srv_consulta", "nome": "Consulta otorrinolaringológica", "categoria": "CONSULTA", "duracaoMinutos": 30, "autoagendavel": true,
+        "profissionaisIds": ["usr_ana", "usr_carlos"], "orientacoes": "Traga seus exames anteriores, se tiver." },
+      { "id": "srv_retorno", "nome": "Retorno pós-operatório", "categoria": "CONSULTA", "duracaoMinutos": 20, "autoagendavel": false,
+        "profissionaisIds": ["usr_ana", "usr_carlos"], "orientacoes": null },
+      { "id": "srv_septoplastia", "nome": "Septoplastia", "categoria": "PROCEDIMENTO", "duracaoMinutos": 120, "autoagendavel": false,
+        "profissionaisIds": ["usr_ana"], "orientacoes": "Jejum de 8 horas. Chegue ao hospital 1 hora antes, com documento e exames pré-operatórios." },
+      { "id": "srv_rinoplastia", "nome": "Rinoplastia", "categoria": "PROCEDIMENTO", "duracaoMinutos": 180, "autoagendavel": false,
+        "profissionaisIds": ["usr_ana"], "orientacoes": "Jejum de 8 horas. Chegue ao hospital 1 hora antes, com documento e exames pré-operatórios." }
+    ],
+    "grades": {
+      "usr_ana": [
+        { "diaSemana": 1, "inicio": "08:00", "fim": "12:00" }, { "diaSemana": 3, "inicio": "08:00", "fim": "12:00" },
+        { "diaSemana": 5, "inicio": "08:00", "fim": "12:00" }, { "diaSemana": 2, "inicio": "14:00", "fim": "18:00", "servicosIds": ["srv_retorno"] }
+      ],
+      "usr_carlos": [
+        { "diaSemana": 2, "inicio": "08:00", "fim": "12:00" }, { "diaSemana": 4, "inicio": "08:00", "fim": "12:00" },
+        { "diaSemana": 4, "inicio": "13:00", "fim": "17:00" }
+      ]
+    },
+    "bloqueios": [
+      { "id": "blq_feriado_20nov", "profissionalId": null, "inicioEm": "2026-11-20T03:00:00Z", "fimEm": "2026-11-21T03:00:00Z", "motivo": "Feriado — Dia da Consciência Negra" },
+      { "id": "blq_ana_congresso", "profissionalId": "usr_ana", "inicioEm": "2026-11-25T03:00:00Z", "fimEm": "2026-11-28T03:00:00Z", "motivo": "Congresso" }
+    ],
+    "agendamentos": [
+      { "id": "agd_helena_retorno", "pacienteId": "pac_helena", "servicoId": "srv_retorno", "profissionalId": "usr_ana", "inicioEm": "2026-10-28T12:00:00Z",
+        "criadoPor": "usr_julia", "criadoEm": "2026-10-21T14:00:00Z", "realizar": { "em": "2026-10-28T12:30:00Z", "por": "usr_ana" } },
+      { "id": "agd_sonia_consulta", "pacienteId": "pac_sonia", "servicoId": "srv_consulta", "profissionalId": "usr_carlos", "inicioEm": "2026-11-03T14:00:00Z",
+        "criadoPor": "usr_julia", "criadoEm": "2026-10-27T14:00:00Z", "falta": { "em": "2026-11-03T15:00:00Z", "por": "usr_julia" } },
+      { "id": "agd_rafael_cirurgia", "pacienteId": "pac_rafael", "servicoId": "srv_septoplastia", "profissionalId": "usr_ana", "inicioEm": "2026-11-07T10:00:00Z",
+        "local": "Hospital Santa Clara — centro cirúrgico, 2º andar", "observacao": "Anestesia geral. Internação de 1 dia.",
+        "criadoPor": "usr_julia", "criadoEm": "2026-10-25T13:00:00Z", "confirmar": { "em": "2026-11-06T12:00:00Z", "por": "usr_rafael" },
+        "realizar": { "em": "2026-11-07T13:30:00Z", "por": "usr_ana" } },
+      { "id": "agd_paulo_consulta", "pacienteId": "pac_paulo", "servicoId": "srv_consulta", "profissionalId": "usr_ana", "inicioEm": "2026-11-09T12:00:00Z",
+        "criadoPor": "usr_julia", "criadoEm": "2026-11-04T14:00:00Z",
+        "cancelar": { "em": "2026-11-06T18:00:00Z", "por": "usr_julia", "motivo": "Paciente pediu para remarcar por telefone." } },
+      { "id": "agd_paulo_consulta2", "pacienteId": "pac_paulo", "servicoId": "srv_consulta", "profissionalId": "usr_ana", "inicioEm": "2026-11-13T12:00:00Z",
+        "criadoPor": "usr_julia", "criadoEm": "2026-11-06T18:05:00Z" },
+      { "id": "agd_marcos_retorno", "pacienteId": "pac_marcos", "servicoId": "srv_retorno", "profissionalId": "usr_carlos", "inicioEm": "2026-11-10T13:00:00Z",
+        "criadoPor": "usr_julia", "criadoEm": "2026-11-05T14:00:00Z", "confirmar": { "em": "2026-11-08T11:00:00Z", "por": "usr_marcos" } },
+      { "id": "agd_beatriz_cirurgia", "pacienteId": "pac_beatriz", "servicoId": "srv_rinoplastia", "profissionalId": "usr_ana", "inicioEm": "2026-11-10T10:00:00Z",
+        "local": "Hospital Santa Clara — centro cirúrgico, 2º andar", "criadoPor": "usr_julia", "criadoEm": "2026-10-28T13:00:00Z",
+        "confirmar": { "em": "2026-11-07T15:00:00Z", "por": "usr_beatriz" } },
+      { "id": "agd_rafael_retorno", "pacienteId": "pac_rafael", "servicoId": "srv_retorno", "profissionalId": "usr_ana", "inicioEm": "2026-11-11T12:00:00Z",
+        "criadoPor": "usr_julia", "criadoEm": "2026-11-07T14:00:00Z" }
+    ]
+  }
 }

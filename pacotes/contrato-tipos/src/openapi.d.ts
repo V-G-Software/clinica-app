@@ -1174,10 +1174,266 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Edita nome, contato, marca, textos, regras do chat e do acompanhamento
+         * Edita nome, contato, marca, textos e regras do chat, do acompanhamento e da agenda
          * @description Mudança que afeta o manifesto emite `sessao.manifesto.alterado` (RN-EQP-004).
          */
         patch: operations["organizacaoEditar"];
+        trace?: never;
+    };
+    "/v1/agenda/servicos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tipos de atendimento (consultas e procedimentos)
+         * @description O paciente só vê os serviços ativos e autoagendáveis, e só com `autoagendamento` ligado.
+         */
+        get: operations["agendaListarServicos"];
+        put?: never;
+        /** Cria tipo de atendimento */
+        post: operations["agendaCriarServico"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agenda/servicos/{servicoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe do serviço */
+        get: operations["agendaObterServico"];
+        /** Edita o serviço (não altera agendamentos já marcados) */
+        put: operations["agendaEditarServico"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agenda/servicos/{servicoId}/arquivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deixa de aparecer para novos agendamentos */
+        post: operations["agendaArquivarServico"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agenda/grades/{profissionalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Horários semanais de atendimento do profissional */
+        get: operations["agendaObterGrade"];
+        /** Substitui a grade (não altera agendamentos já marcados) */
+        put: operations["agendaSalvarGrade"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agenda/bloqueios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bloqueios (férias, feriados) que tocam o período */
+        get: operations["agendaListarBloqueios"];
+        put?: never;
+        /** Bloqueia um período (não cancela agendamentos já marcados) */
+        post: operations["agendaCriarBloqueio"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agenda/bloqueios/{bloqueioId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove o bloqueio (libera os horários) */
+        delete: operations["agendaRemoverBloqueio"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agenda/horarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Horários livres para um serviço (RN-AGE-002)
+         * @description Já descontados grade, bloqueios, ocupação e, para o paciente, a antecedência mínima e a janela
+         *     de dias. No máximo 31 dias por consulta.
+         */
+        get: operations["agendaListarHorarios"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agendamentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agendamentos do período (paciente vê só os seus) */
+        get: operations["agendamentosListar"];
+        put?: never;
+        /**
+         * Marca consulta ou procedimento (RN-AGE-001..003)
+         * @description Equipe: qualquer serviço ativo, inclusive fora da grade; `encaixe` permite sobrepor outro agendamento.
+         *     Paciente: só serviço autoagendável, em horário devolvido por `GET /v1/agenda/horarios`, para um
+         *     paciente vinculado à conta. Horário ocupado → 409 `HORARIO_INDISPONIVEL`.
+         */
+        post: operations["agendamentosCriar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agendamentos/{agendamentoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe, com histórico */
+        get: operations["agendamentosObter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Ajusta local ou observação (equipe) */
+        patch: operations["agendamentosEditar"];
+        trace?: never;
+    };
+    "/v1/agendamentos/{agendamentoId}/confirmar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirma presença (paciente ou equipe); repetir não muda nada */
+        post: operations["agendamentosConfirmar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agendamentos/{agendamentoId}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancela (RN-AGE-004); o histórico fica */
+        post: operations["agendamentosCancelar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agendamentos/{agendamentoId}/remarcar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Muda data, hora ou profissional (equipe); volta para AGENDADO */
+        post: operations["agendamentosRemarcar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agendamentos/{agendamentoId}/realizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marca como realizado (equipe, depois do início — RN-AGE-006) */
+        post: operations["agendamentosRealizar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/agendamentos/{agendamentoId}/falta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Registra que o paciente não compareceu (equipe, depois do início) */
+        post: operations["agendamentosRegistrarFalta"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -1252,26 +1508,26 @@ export interface components {
         /** @enum {string} */
         PerfilEquipe: "GESTOR" | "PROFISSIONAL" | "SECRETARIA";
         /** @enum {string} */
-        ModuloId: "pacientes" | "acompanhamento" | "chat" | "equipe";
+        ModuloId: "pacientes" | "acompanhamento" | "chat" | "equipe" | "agenda";
         /** @enum {string} */
-        Tela: "inicio" | "notificacoes" | "perfil" | "pacientes.lista" | "pacientes.detalhe" | "pacientes.novo" | "acompanhamento.lista" | "acompanhamento.meus" | "acompanhamento.detalhe" | "acompanhamento.novo" | "acompanhamento.protocolos" | "acompanhamento.protocolo" | "acompanhamento.checkin" | "chat.lista" | "chat.conversa" | "equipe.lista" | "organizacao.configuracao";
+        Tela: "inicio" | "notificacoes" | "perfil" | "pacientes.lista" | "pacientes.detalhe" | "pacientes.novo" | "acompanhamento.lista" | "acompanhamento.meus" | "acompanhamento.detalhe" | "acompanhamento.novo" | "acompanhamento.protocolos" | "acompanhamento.protocolo" | "acompanhamento.checkin" | "chat.lista" | "chat.conversa" | "equipe.lista" | "organizacao.configuracao" | "agenda.lista" | "agenda.novo" | "agenda.detalhe" | "agenda.servicos" | "agenda.grade" | "agenda.meus" | "agenda.marcar";
         /** @enum {string} */
-        TermoChave: "organizacao" | "paciente" | "responsavel" | "profissional" | "acompanhamento" | "protocolo" | "procedimento" | "checkin" | "conversa";
+        TermoChave: "organizacao" | "paciente" | "responsavel" | "profissional" | "acompanhamento" | "protocolo" | "procedimento" | "checkin" | "conversa" | "consulta";
         /** @enum {string} */
         ContadorChave: "chat.naoLidas" | "notificacoes.naoLidas" | "acompanhamento.alertasAbertos" | "acompanhamento.checkinsPendentes";
         /**
          * @description Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.
          * @enum {string}
          */
-        Icone: "house" | "users" | "user" | "user-plus" | "activity" | "heart-pulse" | "message-circle" | "bell" | "settings" | "clipboard-list" | "calendar" | "stethoscope" | "paw-print" | "circle-alert" | "file-text" | "camera" | "credit-card" | "circle-help" | "log-out";
+        Icone: "house" | "users" | "user" | "user-plus" | "activity" | "heart-pulse" | "message-circle" | "bell" | "settings" | "clipboard-list" | "calendar" | "stethoscope" | "paw-print" | "circle-alert" | "file-text" | "camera" | "credit-card" | "circle-help" | "log-out" | "calendar-plus" | "calendar-check" | "calendar-clock";
         /** @enum {string} */
-        CodigoErro: "AUTENTICACAO_INVALIDA" | "CODIGO_INVALIDO" | "CODIGO_EXPIRADO" | "MUITAS_TENTATIVAS" | "SESSAO_EXPIRADA" | "SESSAO_REVOGADA" | "PERMISSAO_NEGADA" | "RECURSO_NAO_ENCONTRADO" | "VALIDACAO_FALHOU" | "CONFLITO_VERSAO" | "LIMITE_EXCEDIDO" | "CONVITE_INVALIDO" | "CONVITE_EXPIRADO" | "MODULO_NAO_CONTRATADO" | "ORGANIZACAO_SUSPENSA" | "CHECKIN_INDISPONIVEL" | "CHECKIN_JA_RESPONDIDO" | "CONVERSA_ARQUIVADA" | "ARQUIVO_MUITO_GRANDE" | "TIPO_ARQUIVO_NAO_PERMITIDO" | "ARQUIVO_REJEITADO" | "CURSOR_EXPIRADO" | "ULTIMO_GESTOR" | "INDISPONIVEL_TEMPORARIAMENTE";
+        CodigoErro: "AUTENTICACAO_INVALIDA" | "CODIGO_INVALIDO" | "CODIGO_EXPIRADO" | "MUITAS_TENTATIVAS" | "SESSAO_EXPIRADA" | "SESSAO_REVOGADA" | "PERMISSAO_NEGADA" | "RECURSO_NAO_ENCONTRADO" | "VALIDACAO_FALHOU" | "CONFLITO_VERSAO" | "LIMITE_EXCEDIDO" | "CONVITE_INVALIDO" | "CONVITE_EXPIRADO" | "MODULO_NAO_CONTRATADO" | "ORGANIZACAO_SUSPENSA" | "CHECKIN_INDISPONIVEL" | "CHECKIN_JA_RESPONDIDO" | "CONVERSA_ARQUIVADA" | "ARQUIVO_MUITO_GRANDE" | "TIPO_ARQUIVO_NAO_PERMITIDO" | "ARQUIVO_REJEITADO" | "CURSOR_EXPIRADO" | "ULTIMO_GESTOR" | "INDISPONIVEL_TEMPORARIAMENTE" | "HORARIO_INDISPONIVEL";
         /** @enum {string} */
-        TipoNotificacao: "CHAT_MENSAGEM" | "CHECKIN_DISPONIVEL" | "CHECKIN_LEMBRETE" | "ALERTA_CRIADO" | "ACOMPANHAMENTO_INICIADO" | "ACOMPANHAMENTO_CONCLUIDO" | "CONVITE_ACEITO" | "SISTEMA";
+        TipoNotificacao: "CHAT_MENSAGEM" | "CHECKIN_DISPONIVEL" | "CHECKIN_LEMBRETE" | "ALERTA_CRIADO" | "ACOMPANHAMENTO_INICIADO" | "ACOMPANHAMENTO_CONCLUIDO" | "CONVITE_ACEITO" | "SISTEMA" | "AGENDAMENTO_CRIADO" | "AGENDAMENTO_ALTERADO" | "AGENDAMENTO_LEMBRETE";
         /** @enum {string} */
-        TipoEvento: "chat.mensagem.criada" | "chat.conversa.atualizada" | "acompanhamento.checkin.disponivel" | "acompanhamento.checkin.respondido" | "acompanhamento.alerta.criado" | "acompanhamento.alerta.resolvido" | "acompanhamento.acompanhamento.atualizado" | "notificacao.criada" | "contadores.alterados" | "arquivo.processado" | "sessao.manifesto.alterado" | "sessao.encerrada";
+        TipoEvento: "chat.mensagem.criada" | "chat.conversa.atualizada" | "acompanhamento.checkin.disponivel" | "acompanhamento.checkin.respondido" | "acompanhamento.alerta.criado" | "acompanhamento.alerta.resolvido" | "acompanhamento.acompanhamento.atualizado" | "notificacao.criada" | "contadores.alterados" | "arquivo.processado" | "sessao.manifesto.alterado" | "sessao.encerrada" | "agenda.agendamento.criado" | "agenda.agendamento.atualizado";
         /** @enum {string} */
-        TipoSecao: "ACOMPANHAMENTO_ATUAL" | "CHECKINS_PENDENTES" | "ALERTAS_ABERTOS" | "CHECKINS_DO_DIA" | "ACOMPANHAMENTOS_ATIVOS" | "CONVERSAS_RECENTES" | "ATALHOS" | "AVISO" | "CONTATO_ORGANIZACAO";
+        TipoSecao: "ACOMPANHAMENTO_ATUAL" | "CHECKINS_PENDENTES" | "ALERTAS_ABERTOS" | "CHECKINS_DO_DIA" | "ACOMPANHAMENTOS_ATIVOS" | "CONVERSAS_RECENTES" | "ATALHOS" | "AVISO" | "CONTATO_ORGANIZACAO" | "PROXIMA_CONSULTA" | "AGENDA_DO_DIA";
         /** @enum {string} */
         Severidade: "BAIXA" | "MEDIA" | "ALTA";
         /** @enum {string} */
@@ -1458,7 +1714,7 @@ export interface components {
             id: components["schemas"]["ModuloId"];
             versao: string;
             config: Record<string, never>;
-        } & (unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown);
         ConfigPacientes: {
             formularioCadastroId: components["schemas"]["IdOuNulo"];
             relacoesPermitidas: components["schemas"]["RelacaoVinculo"][];
@@ -1522,7 +1778,7 @@ export interface components {
             pacientesVinculados?: components["schemas"]["PacienteVinculado"][];
         };
         /** @enum {string} */
-        Permissao: "pacientes.paciente.ler" | "pacientes.paciente.criar" | "pacientes.paciente.editar" | "pacientes.paciente.convidar" | "acompanhamento.protocolo.ler" | "acompanhamento.protocolo.gerenciar" | "acompanhamento.acompanhamento.ler" | "acompanhamento.acompanhamento.criar" | "acompanhamento.acompanhamento.encerrar" | "acompanhamento.checkin.ler" | "acompanhamento.checkin.responder" | "acompanhamento.alerta.ler" | "acompanhamento.alerta.resolver" | "chat.conversa.ler" | "chat.conversa.criar" | "chat.conversa.gerenciar" | "chat.mensagem.enviar" | "equipe.membro.ler" | "equipe.membro.gerenciar" | "organizacao.configuracao.editar";
+        Permissao: "pacientes.paciente.ler" | "pacientes.paciente.criar" | "pacientes.paciente.editar" | "pacientes.paciente.convidar" | "acompanhamento.protocolo.ler" | "acompanhamento.protocolo.gerenciar" | "acompanhamento.acompanhamento.ler" | "acompanhamento.acompanhamento.criar" | "acompanhamento.acompanhamento.encerrar" | "acompanhamento.checkin.ler" | "acompanhamento.checkin.responder" | "acompanhamento.alerta.ler" | "acompanhamento.alerta.resolver" | "chat.conversa.ler" | "chat.conversa.criar" | "chat.conversa.gerenciar" | "chat.mensagem.enviar" | "equipe.membro.ler" | "equipe.membro.gerenciar" | "organizacao.configuracao.editar" | "agenda.agendamento.ler" | "agenda.agendamento.criar" | "agenda.agendamento.gerenciar" | "agenda.configuracao.gerenciar";
         Capacidades: {
             tempoReal: {
                 /** @enum {string} */
@@ -1553,7 +1809,7 @@ export interface components {
             /** @description Opcional; o frontend tem um título padrão por tipo. */
             titulo?: string;
             dados: Record<string, never>;
-        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         Notificacao: {
             id: components["schemas"]["Id"];
             tipo: components["schemas"]["TipoNotificacao"];
@@ -1622,7 +1878,7 @@ export interface components {
             tipo: components["schemas"]["TipoEvento"];
             ocorridoEm: components["schemas"]["DataHora"];
             dados: Record<string, never>;
-        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         /** @enum {string} */
         TipoPaciente: "PESSOA" | "ANIMAL";
         /** @enum {string} */
@@ -1946,6 +2202,120 @@ export interface components {
             } | null;
             acoesPermitidas: ("EDITAR" | "SUSPENDER" | "DESLIGAR" | "REATIVAR")[];
         };
+        /** @enum {string} */
+        CategoriaServico: "CONSULTA" | "PROCEDIMENTO";
+        /** @enum {string} */
+        StatusServico: "ATIVO" | "ARQUIVADO";
+        /** @enum {string} */
+        StatusAgendamento: "AGENDADO" | "CONFIRMADO" | "REALIZADO" | "CANCELADO" | "FALTOU";
+        ServicoEdicao: {
+            nome: string;
+            categoria: components["schemas"]["CategoriaServico"];
+            duracaoMinutos: number;
+            /** @description Paciente pode marcar sozinho. Sempre `false` em `PROCEDIMENTO`. */
+            autoagendavel: boolean;
+            profissionaisIds: components["schemas"]["Id"][];
+            /** @description Preparo mostrado ao paciente (por exemplo, "jejum de 8 horas"). */
+            orientacoes?: string | null;
+        };
+        Servico: {
+            id: components["schemas"]["Id"];
+            nome: string;
+            categoria: components["schemas"]["CategoriaServico"];
+            duracaoMinutos: number;
+            autoagendavel: boolean;
+            profissionais: components["schemas"]["ReferenciaUsuario"][];
+            orientacoes: string | null;
+            status: components["schemas"]["StatusServico"];
+            acoesPermitidas: ("EDITAR" | "ARQUIVAR" | "AGENDAR")[];
+        };
+        ItemGrade: {
+            /** @description 0 = domingo */
+            diaSemana: number;
+            inicio: components["schemas"]["Hora"];
+            fim: components["schemas"]["Hora"];
+            /** @description `null` ou ausente = todos os serviços do profissional. */
+            servicosIds?: components["schemas"]["Id"][] | null;
+        };
+        Grade: {
+            profissional: components["schemas"]["ReferenciaUsuario"];
+            itens: components["schemas"]["ItemGrade"][];
+            acoesPermitidas: "EDITAR"[];
+        };
+        Bloqueio: {
+            id: components["schemas"]["Id"];
+            /** @description `null` = a organização inteira. */
+            profissional: components["schemas"]["ReferenciaUsuario"] | null;
+            inicioEm: components["schemas"]["DataHora"];
+            fimEm: components["schemas"]["DataHora"];
+            motivo: string | null;
+            acoesPermitidas: "REMOVER"[];
+        };
+        HorarioLivre: {
+            inicioEm: components["schemas"]["DataHora"];
+            fimEm: components["schemas"]["DataHora"];
+            profissional: components["schemas"]["ReferenciaUsuario"];
+        };
+        EventoAgendamento: {
+            ocorridoEm: components["schemas"]["DataHora"];
+            /** @enum {string} */
+            acao: "CRIADO" | "CONFIRMADO" | "REMARCADO" | "CANCELADO" | "REALIZADO" | "FALTOU";
+            /** @description `null` = ação automática. */
+            por: components["schemas"]["ReferenciaUsuario"] | null;
+            /** @description Motivo do cancelamento ou da remarcação. */
+            detalhe?: string | null;
+        };
+        Agendamento: {
+            id: components["schemas"]["Id"];
+            paciente: components["schemas"]["Referencia"];
+            profissional: components["schemas"]["ReferenciaUsuario"];
+            servico: {
+                id: components["schemas"]["Id"];
+                nome: string;
+                categoria: components["schemas"]["CategoriaServico"];
+            };
+            inicioEm: components["schemas"]["DataHora"];
+            fimEm: components["schemas"]["DataHora"];
+            status: components["schemas"]["StatusAgendamento"];
+            /** @enum {string} */
+            origem: "EQUIPE" | "PACIENTE";
+            encaixe: boolean;
+            local: string | null;
+            /** @description Preparo copiado do serviço na hora da marcação. */
+            orientacoes: string | null;
+            /** @description Interna da equipe; sempre `null` para o paciente. */
+            observacao: string | null;
+            motivoCancelamento: string | null;
+            historico: components["schemas"]["EventoAgendamento"][];
+            criadoEm: components["schemas"]["DataHora"];
+            acoesPermitidas: ("EDITAR" | "CONFIRMAR" | "CANCELAR" | "REMARCAR" | "REALIZAR" | "REGISTRAR_FALTA" | "ABRIR_CONVERSA")[];
+        };
+        AgendamentoResumo: {
+            id: components["schemas"]["Id"];
+            inicioEm: components["schemas"]["DataHora"];
+            fimEm: components["schemas"]["DataHora"];
+            status: components["schemas"]["StatusAgendamento"];
+            servico: {
+                nome: string;
+                categoria: components["schemas"]["CategoriaServico"];
+            };
+            profissional: components["schemas"]["Referencia"];
+            paciente: components["schemas"]["Referencia"];
+        };
+        ConfigAgenda: {
+            /** @description Paciente marca sozinho os serviços autoagendáveis. */
+            autoagendamento: boolean;
+            antecedenciaMinimaHoras: number;
+            janelaDias: number;
+            /** @description Até quantas horas antes o paciente cancela pelo app. */
+            cancelamentoAteHoras: number;
+            lembreteHorasAntes: number;
+            /**
+             * @description Passo dos horários oferecidos.
+             * @enum {integer}
+             */
+            intervaloMinutos: 5 | 10 | 15 | 20 | 30 | 60;
+        };
         OrganizacaoConfiguracao: {
             nome: string;
             contato: components["schemas"]["ContatoOrganizacao"];
@@ -1967,6 +2337,8 @@ export interface components {
             acompanhamento?: {
                 resolverAlertasAoEncerrar: boolean;
             };
+            /** @description Presente quando o módulo `agenda` está contratado. */
+            agenda?: components["schemas"]["ConfigAgenda"];
             acoesPermitidas: "EDITAR"[];
         };
         OrganizacaoEdicao: {
@@ -1988,6 +2360,16 @@ export interface components {
             /** @description Exige o módulo `acompanhamento` (senão `MODULO_NAO_CONTRATADO`). */
             acompanhamento?: {
                 resolverAlertasAoEncerrar?: boolean;
+            };
+            /** @description Exige o módulo `agenda` (senão `MODULO_NAO_CONTRATADO`). */
+            agenda?: {
+                autoagendamento?: boolean;
+                antecedenciaMinimaHoras?: number;
+                janelaDias?: number;
+                cancelamentoAteHoras?: number;
+                lembreteHorasAntes?: number;
+                /** @enum {integer} */
+                intervaloMinutos?: 5 | 10 | 15 | 20 | 30 | 60;
             };
         };
     };
@@ -2032,6 +2414,14 @@ export interface components {
         CheckinId: components["schemas"]["Id"];
         ConversaId: components["schemas"]["Id"];
         MembroId: components["schemas"]["Id"];
+        ServicoId: components["schemas"]["Id"];
+        ProfissionalId: components["schemas"]["Id"];
+        BloqueioId: components["schemas"]["Id"];
+        AgendamentoId: components["schemas"]["Id"];
+        /** @description Primeiro dia do período (inclusive), no fuso da organização. */
+        De: components["schemas"]["Data"];
+        /** @description Último dia do período (inclusive), no fuso da organização. No máximo 366 dias depois de `de` (31 em `horarios`). */
+        Ate: components["schemas"]["Data"];
     };
     requestBodies: never;
     headers: {
@@ -4124,6 +4514,573 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrganizacaoConfiguracao"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaListarServicos: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["StatusServico"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Serviços, por nome */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        itens: components["schemas"]["Servico"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaCriarServico: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServicoEdicao"];
+            };
+        };
+        responses: {
+            /** @description Serviço criado */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Servico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaObterServico: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                servicoId: components["parameters"]["ServicoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Serviço */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Servico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaEditarServico: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Valor do `ETag` lido. Desatualizado devolve 412 `CONFLITO_VERSAO`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                servicoId: components["parameters"]["ServicoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServicoEdicao"];
+            };
+        };
+        responses: {
+            /** @description Serviço atualizado */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Servico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaArquivarServico: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                servicoId: components["parameters"]["ServicoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Serviço arquivado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Servico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaObterGrade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profissionalId: components["parameters"]["ProfissionalId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Grade (vazia se o profissional ainda não tem horários) */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Grade"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaSalvarGrade: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Valor do `ETag` lido. Desatualizado devolve 412 `CONFLITO_VERSAO`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                profissionalId: components["parameters"]["ProfissionalId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    itens: components["schemas"]["ItemGrade"][];
+                };
+            };
+        };
+        responses: {
+            /** @description Grade salva */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Grade"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaListarBloqueios: {
+        parameters: {
+            query: {
+                /** @description Primeiro dia do período (inclusive), no fuso da organização. */
+                de: components["parameters"]["De"];
+                /** @description Último dia do período (inclusive), no fuso da organização. No máximo 366 dias depois de `de` (31 em `horarios`). */
+                ate: components["parameters"]["Ate"];
+                profissionalId?: components["schemas"]["Id"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bloqueios, por início */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        itens: components["schemas"]["Bloqueio"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaCriarBloqueio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description `null` bloqueia a organização inteira (feriado). */
+                    profissionalId: components["schemas"]["IdOuNulo"];
+                    inicioEm: components["schemas"]["DataHora"];
+                    fimEm: components["schemas"]["DataHora"];
+                    motivo?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Bloqueio criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bloqueio"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaRemoverBloqueio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bloqueioId: components["parameters"]["BloqueioId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removido */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendaListarHorarios: {
+        parameters: {
+            query: {
+                servicoId: components["schemas"]["Id"];
+                profissionalId?: components["schemas"]["Id"];
+                /** @description Primeiro dia do período (inclusive), no fuso da organização. */
+                de: components["parameters"]["De"];
+                /** @description Último dia do período (inclusive), no fuso da organização. No máximo 366 dias depois de `de` (31 em `horarios`). */
+                ate: components["parameters"]["Ate"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Horários livres, em ordem */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        itens: components["schemas"]["HorarioLivre"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosListar: {
+        parameters: {
+            query: {
+                /** @description Primeiro dia do período (inclusive), no fuso da organização. */
+                de: components["parameters"]["De"];
+                /** @description Último dia do período (inclusive), no fuso da organização. No máximo 366 dias depois de `de` (31 em `horarios`). */
+                ate: components["parameters"]["Ate"];
+                profissionalId?: components["schemas"]["Id"];
+                pacienteId?: components["schemas"]["Id"];
+                status?: components["schemas"]["StatusAgendamento"];
+                categoria?: components["schemas"]["CategoriaServico"];
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agendamentos, do início mais cedo para o mais tarde */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["Agendamento"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosCriar: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Chave única por operação lógica; repetir devolve a mesma resposta por 24 h. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    pacienteId: components["schemas"]["Id"];
+                    servicoId: components["schemas"]["Id"];
+                    profissionalId: components["schemas"]["Id"];
+                    inicioEm: components["schemas"]["DataHora"];
+                    /** @description Só equipe; o padrão é a duração do serviço. */
+                    duracaoMinutos?: number;
+                    /** @description Só equipe (por exemplo, o hospital do procedimento). */
+                    local?: string | null;
+                    /** @description Só equipe; o paciente não vê. */
+                    observacao?: string | null;
+                    /**
+                     * @description Só equipe.
+                     * @default false
+                     */
+                    encaixe?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Agendamento criado */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agendamento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosObter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agendamentoId: components["parameters"]["AgendamentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agendamento */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agendamento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosEditar: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Valor do `ETag` lido. Desatualizado devolve 412 `CONFLITO_VERSAO`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                agendamentoId: components["parameters"]["AgendamentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    local?: string | null;
+                    observacao?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Agendamento atualizado */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agendamento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosConfirmar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agendamentoId: components["parameters"]["AgendamentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agendamento confirmado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agendamento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosCancelar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agendamentoId: components["parameters"]["AgendamentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    motivo: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Agendamento cancelado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agendamento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosRemarcar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agendamentoId: components["parameters"]["AgendamentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    inicioEm: components["schemas"]["DataHora"];
+                    profissionalId?: components["schemas"]["Id"];
+                    duracaoMinutos?: number;
+                    /** @default false */
+                    encaixe?: boolean;
+                    motivo?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Agendamento remarcado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agendamento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosRealizar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agendamentoId: components["parameters"]["AgendamentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agendamento realizado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agendamento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    agendamentosRegistrarFalta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agendamentoId: components["parameters"]["AgendamentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Falta registrada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agendamento"];
                 };
             };
             default: components["responses"]["Erro"];

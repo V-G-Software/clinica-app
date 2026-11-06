@@ -13,7 +13,7 @@ export const STATUS_POR_CODIGO: Record<string, number> = {
   CONVITE_EXPIRADO: 410, MODULO_NAO_CONTRATADO: 404, ORGANIZACAO_SUSPENSA: 403, CHECKIN_INDISPONIVEL: 409,
   CHECKIN_JA_RESPONDIDO: 409, CONVERSA_ARQUIVADA: 409, ARQUIVO_MUITO_GRANDE: 413,
   TIPO_ARQUIVO_NAO_PERMITIDO: 415, ARQUIVO_REJEITADO: 422, CURSOR_EXPIRADO: 410, ULTIMO_GESTOR: 409,
-  INDISPONIVEL_TEMPORARIAMENTE: 503,
+  INDISPONIVEL_TEMPORARIAMENTE: 503, HORARIO_INDISPONIVEL: 409,
 };
 const TITULOS: Record<string, string> = {
   AUTENTICACAO_INVALIDA: 'E-mail ou senha incorretos', CODIGO_INVALIDO: 'Código inválido',
@@ -27,7 +27,7 @@ const TITULOS: Record<string, string> = {
   CONVERSA_ARQUIVADA: 'Conversa arquivada', ARQUIVO_MUITO_GRANDE: 'Arquivo muito grande',
   TIPO_ARQUIVO_NAO_PERMITIDO: 'Tipo de arquivo não permitido', ARQUIVO_REJEITADO: 'Arquivo rejeitado',
   CURSOR_EXPIRADO: 'Histórico expirado', ULTIMO_GESTOR: 'A organização precisa de ao menos um gestor',
-  INDISPONIVEL_TEMPORARIAMENTE: 'Indisponível no momento',
+  INDISPONIVEL_TEMPORARIAMENTE: 'Indisponível no momento', HORARIO_INDISPONIVEL: 'Horário indisponível',
 };
 
 export class ErroApi extends Error {
@@ -160,7 +160,7 @@ export function emitir(org: Org, tipo: string, dados: any, para: Iterable<string
 export const eventoPublico = (e: Evento) => ({ id: e.id, tipo: e.tipo, ocorridoEm: e.ocorridoEm, dados: e.dados });
 
 // ─────────── Notificações (RN-NOT-001..004) ───────────
-const TIPOS_EMAIL_SEM_PUSH = new Set(['CHECKIN_DISPONIVEL', 'CHECKIN_LEMBRETE', 'ALERTA_CRIADO']);
+const TIPOS_EMAIL_SEM_PUSH = new Set(['CHECKIN_DISPONIVEL', 'CHECKIN_LEMBRETE', 'ALERTA_CRIADO', 'AGENDAMENTO_LEMBRETE', 'AGENDAMENTO_ALTERADO']);
 const TEXTO_PUSH: Record<string, string> = {
   CHAT_MENSAGEM: 'Você tem uma nova mensagem',
   CHECKIN_DISPONIVEL: 'Seu check-in de hoje está disponível',
@@ -170,6 +170,8 @@ const TEXTO_PUSH: Record<string, string> = {
   ACOMPANHAMENTO_CONCLUIDO: 'Seu acompanhamento foi concluído',
   CONVITE_ACEITO: 'Um convite foi aceito',
   SISTEMA: 'Você tem um novo aviso',
+  AGENDAMENTO_CRIADO: 'Há um novo agendamento', AGENDAMENTO_ALTERADO: 'Um agendamento foi alterado',
+  AGENDAMENTO_LEMBRETE: 'Lembrete de agendamento',
 };
 const TAG_PUSH: Record<string, string> = { CHAT_MENSAGEM: 'chat', CHECKIN_DISPONIVEL: 'checkin', CHECKIN_LEMBRETE: 'checkin', ALERTA_CRIADO: 'alerta' };
 

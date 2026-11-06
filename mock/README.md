@@ -26,6 +26,16 @@ Senha da equipe: `Senha@12345`. **TOTP aceita `000000`** (ou o código real do s
 
 Primeiro acesso: `carlos@modelo-otorrino.exemplo` / `Provisoria@1` percorre `TROCAR_SENHA → CONFIGURAR_MFA → ACEITAR_TERMOS`. Convite pendente: Paulo Teixeira (`/__mock/cenarios` mostra o link).
 
+## Agenda (1.1 — ADR-0016)
+
+| Cenário | Módulo `agenda` | O que tem |
+|---|---|---|
+| `modelo-otorrino` | ligado, **com autoagendamento** | consulta (autoagendável), retorno, septoplastia e rinoplastia; grades da Ana e do Carlos; feriado de 20/11 e congresso da Ana; cirurgias de Rafael (realizada) e Beatriz (confirmada), retornos, uma falta e um cancelamento |
+| `vet-amigo` | ligado, **sem autoagendamento** (só a equipe marca) | consulta, vacinação e castração; castração da Nina realizada, retorno do Thor, vacina da Mel cancelada pela tutora |
+| `fisio-movimento` | desligado | rotas `agenda` respondem 404 `MODULO_NAO_CONTRATADO` |
+
+O lembrete sai `lembreteHorasAntes` antes do horário, como job `agendamento:{id}:lembrete`. Para vê-lo, avance o relógio.
+
 ## Relógio simulado e simuladores (fora do contrato)
 
 O relógio começa em `2026-11-08T13:30:00Z` (10:30 em São Paulo) e anda junto com o tempo real.

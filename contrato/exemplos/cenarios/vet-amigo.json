@@ -57,7 +57,8 @@
     "protocolo": { "singular": "protocolo", "plural": "protocolos", "genero": "M" },
     "procedimento": { "singular": "cirurgia", "plural": "cirurgias", "genero": "F" },
     "checkin": { "singular": "check-in", "plural": "check-ins", "genero": "M" },
-    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" }
+    "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" },
+    "consulta": { "singular": "consulta", "plural": "consultas", "genero": "F" }
   },
   "modulos": [
     { "id": "pacientes", "versao": "1.0", "config": { "formularioCadastroId": "frm_cadastro_pet", "relacoesPermitidas": ["ANIMAL"] } },
@@ -80,7 +81,8 @@
         "avisoUrgencia": "Sangramento, pontos abertos, vômitos repetidos ou apatia: procure o plantão veterinário 24 h."
       }
     },
-    { "id": "equipe", "versao": "1.0", "config": {} }
+    { "id": "equipe", "versao": "1.0", "config": {} },
+    { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": false, "antecedenciaMinimaHoras": 4, "janelaDias": 60, "cancelamentoAteHoras": 12, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } }
   ],
   "capacidades": {
     "tempoReal": { "modo": "POLLING", "intervaloPollingSegundos": 15 },
@@ -170,5 +172,36 @@
       "encerrar": { "em": "2026-10-14T15:00:00Z", "por": "usr_renata", "motivo": "Tutora preferiu acompanhamento presencial diário." } },
     { "id": "acp_nina", "pacienteId": "pac_nina", "protocoloId": "prt_castracao10", "dataInicio": "2026-11-07",
       "equipeIds": ["usr_renata", "usr_diego"], "criadoPor": "usr_diego", "criadoEm": "2026-11-07T14:00:00Z", "observacao": null }
-  ]
+  ],
+  "agenda": {
+    "$comentario": "Agenda (ADR-0016) sem autoagendamento: só a equipe marca; a tutora vê, confirma e cancela.",
+    "servicos": [
+      { "id": "srv_consulta_vet", "nome": "Consulta veterinária", "categoria": "CONSULTA", "duracaoMinutos": 30, "autoagendavel": true,
+        "profissionaisIds": ["usr_renata"], "orientacoes": "Traga a carteira de vacinação do pet." },
+      { "id": "srv_vacina", "nome": "Vacinação", "categoria": "CONSULTA", "duracaoMinutos": 20, "autoagendavel": true,
+        "profissionaisIds": ["usr_renata"], "orientacoes": null },
+      { "id": "srv_castracao", "nome": "Castração", "categoria": "PROCEDIMENTO", "duracaoMinutos": 90, "autoagendavel": false,
+        "profissionaisIds": ["usr_renata"], "orientacoes": "Jejum de 12 horas de comida e 6 horas de água." }
+    ],
+    "grades": {
+      "usr_renata": [
+        { "diaSemana": 1, "inicio": "09:00", "fim": "12:00" }, { "diaSemana": 1, "inicio": "14:00", "fim": "18:00" },
+        { "diaSemana": 2, "inicio": "09:00", "fim": "12:00" }, { "diaSemana": 2, "inicio": "14:00", "fim": "18:00" },
+        { "diaSemana": 3, "inicio": "09:00", "fim": "12:00" }, { "diaSemana": 3, "inicio": "14:00", "fim": "18:00" },
+        { "diaSemana": 4, "inicio": "09:00", "fim": "12:00" }, { "diaSemana": 4, "inicio": "14:00", "fim": "18:00" },
+        { "diaSemana": 5, "inicio": "09:00", "fim": "12:00" }, { "diaSemana": 5, "inicio": "14:00", "fim": "18:00" }
+      ]
+    },
+    "bloqueios": [],
+    "agendamentos": [
+      { "id": "agd_mel_vacina", "pacienteId": "pac_mel", "servicoId": "srv_vacina", "profissionalId": "usr_renata", "inicioEm": "2026-11-12T17:00:00Z",
+        "criadoPor": "usr_diego", "criadoEm": "2026-11-01T15:00:00Z",
+        "cancelar": { "em": "2026-11-05T12:00:00Z", "por": "usr_laura", "motivo": "Vou viajar nessa semana.", "peloPaciente": true } },
+      { "id": "agd_nina_castracao", "pacienteId": "pac_nina", "servicoId": "srv_castracao", "profissionalId": "usr_renata", "inicioEm": "2026-11-07T12:00:00Z",
+        "criadoPor": "usr_diego", "criadoEm": "2026-10-30T15:00:00Z", "confirmar": { "em": "2026-11-06T13:00:00Z", "por": "usr_caio" },
+        "realizar": { "em": "2026-11-07T14:00:00Z", "por": "usr_renata" } },
+      { "id": "agd_thor_retorno", "pacienteId": "pac_thor", "servicoId": "srv_consulta_vet", "profissionalId": "usr_renata", "inicioEm": "2026-11-16T13:00:00Z",
+        "criadoPor": "usr_diego", "criadoEm": "2026-11-06T16:00:00Z" }
+    ]
+  }
 }

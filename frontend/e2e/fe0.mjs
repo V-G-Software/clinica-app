@@ -123,7 +123,12 @@ for (const [slug, [nome, cor]] of Object.entries(marcas)) {
   await page.goto(`${APP}/?org=vet-amigo`);
   await entrarPaciente(page, 'laura@exemplo.com');
   const menu = await menuPrincipal(page);
-  ok(JSON.stringify(menu) === JSON.stringify(['Início', 'Minha recuperação', 'Conversas', 'Notificações', 'Meu perfil']), `vet/tutora: menu ${JSON.stringify(menu)}`);
+  // Com o módulo agenda (1.1), o manifesto passa de 5 itens principais: "Meu perfil" vai para "Mais".
+  // A tela de consultas entra no menu quando o frontend a conhecer (F4, etapa 3); até lá, fica oculta.
+  ok(JSON.stringify(menu.filter((x) => x !== 'Minhas consultas')) === JSON.stringify(['Início', 'Minha recuperação', 'Conversas', 'Notificações']), `vet/tutora: menu ${JSON.stringify(menu)}`);
+  await page.getByRole('button', { name: 'Mais' }).click();
+  ok(await page.getByRole('link', { name: 'Meu perfil' }).isVisible(), 'vet/tutora: "Meu perfil" em "Mais"');
+  await page.keyboard.press('Escape');
   ok(await visivel(page.getByText('Castração — 10 dias')), 'vet/tutora: acompanhamento do Thor no início');
   const conversas = await page.locator('section', { hasText: 'Conversas' }).locator('li span:first-child').allInnerTexts();
   ok(conversas.includes('Thor') && conversas.includes('Mel'), `vet/tutora: conversas identificadas por pet ${JSON.stringify(conversas)}`);

@@ -1,0 +1,58 @@
+{
+  "requisicao": "GET /v1/agendamentos/agd_beatriz_cirurgia",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "agd_beatriz_cirurgia",
+    "paciente": {
+      "id": "pac_beatriz",
+      "nome": "Beatriz Costa"
+    },
+    "profissional": {
+      "usuarioId": "usr_ana",
+      "nome": "Dra. Ana Lima",
+      "perfil": "PROFISSIONAL"
+    },
+    "servico": {
+      "id": "srv_rinoplastia",
+      "nome": "Rinoplastia",
+      "categoria": "PROCEDIMENTO"
+    },
+    "inicioEm": "2026-11-10T10:00:00Z",
+    "fimEm": "2026-11-10T13:00:00Z",
+    "status": "CONFIRMADO",
+    "origem": "EQUIPE",
+    "encaixe": false,
+    "local": "Hospital Santa Clara — centro cirúrgico, 2º andar",
+    "orientacoes": "Jejum de 8 horas. Chegue ao hospital 1 hora antes, com documento e exames pré-operatórios.",
+    "observacao": null,
+    "motivoCancelamento": null,
+    "historico": [
+      {
+        "ocorridoEm": "2026-10-28T13:00:00Z",
+        "acao": "CRIADO",
+        "por": {
+          "usuarioId": "usr_julia",
+          "nome": "Júlia Ramos",
+          "perfil": "SECRETARIA"
+        }
+      },
+      {
+        "ocorridoEm": "2026-11-07T15:00:00Z",
+        "acao": "CONFIRMADO",
+        "por": {
+          "usuarioId": "usr_beatriz",
+          "nome": "Beatriz Costa",
+          "perfil": "PACIENTE"
+        }
+      }
+    ],
+    "criadoEm": "2026-10-28T13:00:00Z",
+    "acoesPermitidas": [
+      "EDITAR",
+      "REMARCAR",
+      "CANCELAR",
+      "ABRIR_CONVERSA"
+    ]
+  }
+}
