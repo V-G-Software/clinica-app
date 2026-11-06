@@ -65,7 +65,8 @@ for (const [slug, [nome, cor]] of Object.entries(marcas)) {
   await page.goto(`${APP}/?org=modelo-otorrino`);
   await entrarEquipe(page, 'ana@modelo-otorrino.exemplo');
   const menu = await menuPrincipal(page);
-  ok(JSON.stringify(menu) === JSON.stringify(['Início', 'Pós-operatórios', 'Conversas', 'Pacientes']), `otorrino/equipe: menu ${JSON.stringify(menu)}`);
+  // Barra do celular: até 5 posições contando o "Mais"; com a agenda, "Pacientes" desce para o "Mais".
+  ok(JSON.stringify(menu) === JSON.stringify(['Início', 'Agenda', 'Pós-operatórios', 'Conversas']), `otorrino/equipe: menu ${JSON.stringify(menu)}`);
   ok(await page.getByRole('button', { name: 'Mais' }).isVisible(), 'otorrino/equipe: itens secundários em "Mais"');
   ok(await visivel(page.getByText('Alertas abertos (1)')), 'otorrino/equipe: seção ALERTAS_ABERTOS');
   await foto(page, '2-inicio-equipe-otorrino');
@@ -79,7 +80,7 @@ for (const [slug, [nome, cor]] of Object.entries(marcas)) {
 
   // 4) Relógio avança 1 dia: o token de 15 min expira e o app renova sozinho.
   await post('/__mock/relogio', { avancarDias: 1 });
-  await page.getByRole('link', { name: 'Pacientes' }).first().click();
+  await page.getByRole('link', { name: 'Conversas' }).first().click();
   await page.getByRole('link', { name: 'Início' }).first().click();
   await page.getByRole('heading', { name: /^Olá/ }).waitFor();
   ok(!page.url().includes('/entrar'), 'após o relógio avançar, o 401 é renovado sem pedir login');
@@ -123,11 +124,11 @@ for (const [slug, [nome, cor]] of Object.entries(marcas)) {
   await page.goto(`${APP}/?org=vet-amigo`);
   await entrarPaciente(page, 'laura@exemplo.com');
   const menu = await menuPrincipal(page);
-  // Com o módulo agenda (1.1), o manifesto passa de 5 itens principais: "Meu perfil" vai para "Mais".
-  // A tela de consultas entra no menu quando o frontend a conhecer (F4, etapa 3); até lá, fica oculta.
-  ok(JSON.stringify(menu.filter((x) => x !== 'Minhas consultas')) === JSON.stringify(['Início', 'Minha recuperação', 'Conversas', 'Notificações']), `vet/tutora: menu ${JSON.stringify(menu)}`);
+  // Com a agenda, o manifesto tem 5 itens principais e "Meu perfil" em "Mais": a barra mostra 4 + "Mais".
+  ok(JSON.stringify(menu) === JSON.stringify(['Início', 'Minha recuperação', 'Minhas consultas', 'Conversas']), `vet/tutora: menu ${JSON.stringify(menu)}`);
   await page.getByRole('button', { name: 'Mais' }).click();
   ok(await page.getByRole('link', { name: 'Meu perfil' }).isVisible(), 'vet/tutora: "Meu perfil" em "Mais"');
+  ok(await page.getByRole('link', { name: 'Notificações' }).isVisible(), 'vet/tutora: 5º item principal ("Notificações") em "Mais"');
   await page.keyboard.press('Escape');
   ok(await visivel(page.getByText('Castração — 10 dias')), 'vet/tutora: acompanhamento do Thor no início');
   const conversas = await page.locator('section', { hasText: 'Conversas' }).locator('li span:first-child').allInnerTexts();

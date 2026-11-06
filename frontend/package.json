@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "vue-tsc --noEmit",
-    "e2e": "node e2e/fe0.mjs && node e2e/fe1.mjs && node e2e/fe2.mjs && node e2e/fe3.mjs",
+    "e2e": "node e2e/fe0.mjs && node e2e/fe1.mjs && node e2e/fe2.mjs && node e2e/fe3.mjs && node e2e/fe4.mjs",
     "e2e:a11y": "node e2e/acessibilidade.mjs",
     "build:homologacao": "vite build --mode homologacao",
     "preview:homologacao": "vite preview --mode homologacao --port 4173 --strictPort",

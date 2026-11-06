@@ -1,4 +1,4 @@
-// Catálogo fixo de telas (6). O backend só escolhe entre estas; o resto é ignorado.
+// Catálogo fixo de telas. O backend só escolhe entre estas; o resto é ignorado.
 // Rotas usam apenas ids opacos — nunca nome de paciente ou dado clínico.
 import type { Component } from 'vue';
 import type { Tela } from '@clinica/contrato-tipos';
@@ -8,7 +8,7 @@ export interface DefinicaoTela {
   rota: string;
   componente: () => Promise<Component>;
   /** Módulo exigido (núcleo = undefined). */
-  modulo?: 'pacientes' | 'acompanhamento' | 'chat' | 'equipe';
+  modulo?: 'pacientes' | 'acompanhamento' | 'chat' | 'equipe' | 'agenda';
   publico: 'todos' | 'equipe' | 'paciente' | 'gestor';
   fase: string;
 }
@@ -34,6 +34,13 @@ export const CATALOGO: DefinicaoTela[] = [
   def('chat.lista', '/conversas', 'todos', 'FE1', 'chat', () => import('@/telas/chat/Lista.vue')),
   def('chat.conversa', '/conversas/:conversaId', 'todos', 'FE1', 'chat', () => import('@/telas/chat/Conversa.vue')),
   def('equipe.lista', '/equipe', 'gestor', 'FE2', 'equipe', () => import('@/telas/equipe/Lista.vue')),
+  def('agenda.lista', '/agenda', 'equipe', 'F4', 'agenda', () => import('@/telas/agenda/Lista.vue')),
+  def('agenda.novo', '/agenda/novo', 'equipe', 'F4', 'agenda', () => import('@/telas/agenda/Novo.vue')),
+  def('agenda.servicos', '/agenda/servicos', 'equipe', 'F4', 'agenda', () => import('@/telas/agenda/Servicos.vue')),
+  def('agenda.grade', '/agenda/grade', 'equipe', 'F4', 'agenda', () => import('@/telas/agenda/Grade.vue')),
+  def('agenda.meus', '/agenda/minhas', 'paciente', 'F4', 'agenda', () => import('@/telas/agenda/Meus.vue')),
+  def('agenda.marcar', '/agenda/marcar', 'paciente', 'F4', 'agenda', () => import('@/telas/agenda/Marcar.vue')),
+  def('agenda.detalhe', '/agenda/:agendamentoId', 'todos', 'F4', 'agenda', () => import('@/telas/agenda/Detalhe.vue')),
   def('organizacao.configuracao', '/configuracoes', 'gestor', 'FE2', undefined, () => import('@/telas/organizacao/Configuracao.vue')),
 ];
 export const telaPorNome = new Map(CATALOGO.map((d) => [d.tela as string, d]));
@@ -48,6 +55,6 @@ export function caminhoDe(tela: string, parametros: Record<string, string> = {})
     return encodeURIComponent(parametros[p] ?? '');
   });
   if (faltou) return null;
-  if (d.tela === 'acompanhamento.novo' && parametros.pacienteId) return `${caminho}?pacienteId=${encodeURIComponent(parametros.pacienteId)}`;
+  if ((d.tela === 'acompanhamento.novo' || d.tela === 'agenda.novo') && parametros.pacienteId) return `${caminho}?pacienteId=${encodeURIComponent(parametros.pacienteId)}`;
   return caminho;
 }

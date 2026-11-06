@@ -18,7 +18,11 @@ const maisAberto = ref(false);
 const contadores = computed(() => (sessao.manifesto?.contadores ?? {}) as Record<string, number>);
 const valor = (chave?: string) => (chave ? contadores.value[chave] ?? 0 : 0);
 const ativo = (caminho: string) => (caminho === '/' ? rota.path === '/' : rota.path.startsWith(caminho));
-const totalMais = computed(() => sessao.menu.secundario.reduce((s, i) => s + valor(i.contador), 0));
+// Barra inferior: no máximo 5 posições contando o "Mais" (5 itens com rótulos longos não cabem em 360 px).
+// Com menu secundário, o 5º item principal desce para o "Mais"; sem ele, os 5 cabem na barra.
+const barra = computed(() => (sessao.menu.secundario.length ? sessao.menu.principal.slice(0, 4) : sessao.menu.principal));
+const mais = computed(() => [...sessao.menu.principal.slice(barra.value.length), ...sessao.menu.secundario]);
+const totalMais = computed(() => mais.value.reduce((s, i) => s + valor(i.contador), 0));
 const logo = computed(() => app.config?.tema.logoUrl);
 </script>
 
@@ -51,13 +55,13 @@ const logo = computed(() => app.config?.tema.logoUrl);
 
     <!-- Barra inferior (celular) -->
     <nav class="fixed inset-x-0 bottom-0 z-20 flex border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden dark:border-zinc-700 dark:bg-zinc-900" :aria-label="t('nav.menu')">
-      <RouterLink v-for="item in sessao.menu.principal" :key="item.id" :to="item.caminho"
-        class="relative flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium"
+      <RouterLink v-for="item in barra" :key="item.id" :to="item.caminho"
+        class="relative flex min-h-16 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium"
         :class="ativo(item.caminho) ? 'text-acao' : 'text-secundario dark:text-zinc-400'" :aria-current="ativo(item.caminho) ? 'page' : undefined">
         <Icone :nome="item.icone" class="size-6" /><span class="max-w-full truncate px-1">{{ item.rotulo }}</span>
         <span class="absolute top-1.5 left-1/2 ml-2"><Badge :valor="valor(item.contador)" :rotulo="`${valor(item.contador)}`" /></span>
       </RouterLink>
-      <button v-if="sessao.menu.secundario.length" type="button" class="relative flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium text-secundario dark:text-zinc-400"
+      <button v-if="mais.length" type="button" class="relative flex min-h-16 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium text-secundario dark:text-zinc-400"
         :aria-expanded="maisAberto" @click="maisAberto = true">
         <Ellipsis class="size-6" aria-hidden="true" /><span>{{ t('app.mais') }}</span>
         <span class="absolute top-1.5 left-1/2 ml-2"><Badge :valor="totalMais" :rotulo="`${totalMais}`" /></span>
@@ -68,7 +72,7 @@ const logo = computed(() => app.config?.tema.logoUrl);
     <div v-if="maisAberto" class="fixed inset-0 z-30 bg-black/40 lg:hidden" @click.self="maisAberto = false">
       <div class="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] dark:bg-zinc-900" role="dialog" aria-modal="true" :aria-label="t('app.mais')">
         <div class="mb-2 flex justify-end"><button type="button" class="p-2" :aria-label="t('app.voltar')" @click="maisAberto = false"><X class="size-6" /></button></div>
-        <RouterLink v-for="item in sessao.menu.secundario" :key="item.id" :to="item.caminho" class="flex min-h-12 items-center gap-3 rounded-lg px-3 font-medium hover:bg-marca-50 dark:hover:bg-zinc-800" @click="maisAberto = false">
+        <RouterLink v-for="item in mais" :key="item.id" :to="item.caminho" class="flex min-h-12 items-center gap-3 rounded-lg px-3 font-medium hover:bg-marca-50 dark:hover:bg-zinc-800" @click="maisAberto = false">
           <Icone :nome="item.icone" class="size-5" /><span class="flex-1">{{ item.rotulo }}</span>
           <Badge :valor="valor(item.contador)" :rotulo="`${valor(item.contador)}`" />
         </RouterLink>
