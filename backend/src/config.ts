@@ -30,6 +30,8 @@ export const config = {
   bancoApp: e.DATABASE_URL ?? 'postgres://clinica_app:app_local@localhost:5432/clinica',
   bancoDono: e.DATABASE_URL_DONO ?? 'postgres://clinica_dono:dono_local@localhost:5432/clinica',
   chaveJwtPrivada: chaveJwt(),
+  // Rotação: chaves anteriores (PEM, separadas por linha em branco ou `;`) ainda aceitas na verificação.
+  chavesJwtAnteriores: (e.CHAVE_JWT_ANTERIOR ?? '').replace(/\\n/g, '\n').split(/;|\n\s*\n/).map((x) => x.trim()).filter(Boolean),
   chaveCifra: chaveCifra(),
   segredoAssinatura: segredoAssinatura(),
   storage: (e.STORAGE ?? 'local') as 'local' | 's3',

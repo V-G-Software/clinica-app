@@ -120,3 +120,64 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: backend, path: "conformidade/relatorio.*\nbackend.log" }
+
+  backend-s3:
+    # Mesmo backend com STORAGE=s3 (URLs pré-assinadas, recodificação, miniatura e limpeza da quarentena)
+    # contra um S3 local (moto). Cobre o caminho de produção de arquivos que o job `backend` não exercita.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_PASSWORD: postgres }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s --health-retries 20
+    env:
+      PGPASSWORD: postgres
+      DATABASE_URL: postgres://clinica_app:app_local@localhost:5432/clinica
+      DATABASE_URL_DONO: postgres://clinica_dono:dono_local@localhost:5432/clinica
+      PORT: 4020
+      URL_PUBLICA: http://localhost:4020
+      EMAIL: log
+      MODO_TESTE_CODIGO_EMAIL: '123456'
+      MODO_TESTE_TOTP: '000000'
+      VALIDAR_RESPOSTA: '1'
+      STORAGE: s3
+      S3_ENDPOINT: http://localhost:9000
+      S3_BUCKET: clinica
+      AWS_ACCESS_KEY_ID: teste
+      AWS_SECRET_ACCESS_KEY: teste
+      CONF_DIRETORIO_URL: http://localhost:4020/diretorio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: S3 local (moto) e bucket
+        working-directory: backend
+        run: |
+          python3 -m venv /tmp/moto && /tmp/moto/bin/pip install -q "moto[server]==5.1.4"
+          /tmp/moto/bin/python -m moto.server -p 9000 > ../moto.log 2>&1 &
+          for i in $(seq 1 30); do curl -s localhost:9000 >/dev/null && break; sleep 1; done
+          node -e "const {S3Client,CreateBucketCommand}=require('@aws-sdk/client-s3');new S3Client({region:'us-east-1',endpoint:'http://localhost:9000',forcePathStyle:true}).send(new CreateBucketCommand({Bucket:'clinica'})).catch(e=>{console.error(e);process.exit(1)})"
+      - name: Banco e backend
+        working-directory: backend
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f scripts/papeis.sql
+          pnpm migrar && pnpm org:criar --todos
+          pnpm start > ../backend.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:4020/diretorio/modelo-otorrino >/dev/null && break; sleep 1; done
+      - name: Conformidade de arquivos, check-in com foto e chat — S3
+        run: pnpm conformidade testes/06-arquivos.test.ts testes/05-acompanhamento.test.ts testes/07-chat.test.ts
+        env: { CONF_SLUG: modelo-otorrino }
+      - name: Quarentena vazia e sem erros
+        working-directory: backend
+        run: |
+          node -e "const {S3Client,ListObjectsV2Command}=require('@aws-sdk/client-s3');new S3Client({region:'us-east-1',endpoint:'http://localhost:9000',forcePathStyle:true}).send(new ListObjectsV2Command({Bucket:'clinica',Prefix:'quarentena/'})).then(r=>{const n=(r.Contents||[]).length;console.log('na quarentena:',n);process.exit(n?1:0)})"
+          ! grep -i "RESPOSTA FORA DO CONTRATO" ../backend.log
+          ! grep '"level":50' ../backend.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: backend-s3, path: "conformidade/relatorio.*\nbackend.log" }

@@ -20,20 +20,27 @@ export const iguais = (a: string, b: string) => { const x = Buffer.from(a); cons
 export const hashSenha = (s: string) => argon2Hash(s, { algorithm: 2, memoryCost: 19456, timeCost: 2, parallelism: 1 });
 export const conferirSenha = (h: string, s: string) => argon2Verify(h, s).catch(() => false);
 
-// JWT EdDSA (Ed25519). Claims: org, ses, sub, perfil, exp.
+// JWT EdDSA (Ed25519). Claims: org, ses, sub, perfil, exp. Rotação sem derrubar sessões (ADR-0015):
+// assina com a chave atual e o `kid` dela; aceita também tokens das chaves anteriores
+// (CHAVE_JWT_ANTERIOR, PEM pública ou privada) até eles expirarem (15 min de acesso).
 const privada = createPrivateKey(config.chaveJwtPrivada);
+const idChave = (k: ReturnType<typeof createPublicKey>) => createHash('sha256').update(k.export({ type: 'spki', format: 'der' })).digest('base64url').slice(0, 16);
 const publica = createPublicKey(privada);
+const kidAtual = idChave(publica);
+const publicas = new Map([[kidAtual, publica], ...config.chavesJwtAnteriores.map((pem) => { const k = createPublicKey(pem); return [idChave(k), k] as const; })]);
 const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
 export function assinarJwt(claims: Record<string, unknown>): string {
-  const corpo = `${b64({ alg: 'EdDSA', typ: 'JWT' })}.${b64(claims)}`;
+  const corpo = `${b64({ alg: 'EdDSA', typ: 'JWT', kid: kidAtual })}.${b64(claims)}`;
   return `${corpo}.${sign(null, Buffer.from(corpo), privada).toString('base64url')}`;
 }
 export function lerJwt<T = Record<string, unknown>>(token: string): T | null {
   const [h, c, s] = token.split('.');
   if (!h || !c || !s) return null;
   try {
-    if (JSON.parse(Buffer.from(h, 'base64url').toString()).alg !== 'EdDSA') return null;
-    if (!verify(null, Buffer.from(`${h}.${c}`), publica, Buffer.from(s, 'base64url'))) return null;
+    const cab = JSON.parse(Buffer.from(h, 'base64url').toString());
+    if (cab.alg !== 'EdDSA') return null;
+    const chave = publicas.get(cab.kid ?? kidAtual); // token sem kid: emitido antes da rotação existir
+    if (!chave || !verify(null, Buffer.from(`${h}.${c}`), chave, Buffer.from(s, 'base64url'))) return null;
     return JSON.parse(Buffer.from(c, 'base64url').toString()) as T;
   } catch { return null; }
 }

@@ -1,59 +1,38 @@
-// Validação e higiene de imagem (8.3 / 14.4): confere a assinatura do tipo (magic bytes) e remove
-// metadados EXIF/XMP, que podem conter a localização do paciente. A recodificação completa (que também
-// neutraliza payloads escondidos nos pixels) exige uma biblioteca nativa de imagem: QUESTION-022.
+// Validação e higiene de imagem (8.3 / 14.4, QUESTION-022 resolvida na F3):
+//  1. assinatura do tipo (magic bytes) — barra arquivo com extensão/Content-Type mentiroso;
+//  2. DECODIFICA e RECODIFICA com sharp (libvips): o arquivo guardado é gerado do zero a partir dos
+//     pixels — metadados (EXIF com GPS, XMP, IPTC, ICC), comentários, chunks desconhecidos e conteúdo
+//     anexado ao fim do arquivo (poliglotas JPEG+ZIP/HTML) não sobrevivem;
+//  3. orientação EXIF aplicada antes (a foto não "deita" ao perder o EXIF);
+//  4. lado maior limitado a 2560 px e miniatura de 320 px para listas (urlMiniatura).
+// Imagem que não decodifica (corrompida, bomba de descompressão acima do limite) é rejeitada.
+import sharp from 'sharp';
+
 export const ASSINATURAS: Record<string, (b: Buffer) => boolean> = {
   'image/jpeg': (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
   'image/png': (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
   'image/webp': (b) => b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP',
 };
 
-/** JPEG: remove segmentos APP1 (EXIF/XMP), APP13 (IPTC) e comentários. */
-function limparJpeg(b: Buffer): Buffer {
-  const partes: Buffer[] = [b.subarray(0, 2)];
-  let i = 2;
-  while (i + 4 <= b.length && b[i] === 0xff) {
-    const marcador = b[i + 1];
-    if (marcador === 0xda) { partes.push(b.subarray(i)); return Buffer.concat(partes); } // início dos dados da imagem
-    const tam = b.readUInt16BE(i + 2);
-    const seg = b.subarray(i, i + 2 + tam);
-    if (!(marcador === 0xe1 || marcador === 0xed || marcador === 0xfe)) partes.push(seg);
-    i += 2 + tam;
-  }
-  return Buffer.concat([...partes, b.subarray(i)]);
+const LADO_MAXIMO = 2560;
+const LADO_MINIATURA = 320;
+const PIXELS_MAXIMOS = 50_000_000; // ~ 7000×7000: acima disso é suspeita de bomba de descompressão
+
+sharp.cache(false); // processo de longa duração: não segura memória entre uploads
+sharp.concurrency(1);
+
+function codificar(img: sharp.Sharp, tipo: string) {
+  if (tipo === 'image/png') return img.png({ compressionLevel: 9 });
+  if (tipo === 'image/webp') return img.webp({ quality: 85 });
+  return img.jpeg({ quality: 85, mozjpeg: true });
 }
-/** PNG: remove chunks eXIf, tEXt, zTXt, iTXt e tIME. */
-function limparPng(b: Buffer): Buffer {
-  const partes: Buffer[] = [b.subarray(0, 8)];
-  let i = 8;
-  while (i + 12 <= b.length) {
-    const tam = b.readUInt32BE(i);
-    const tipo = b.subarray(i + 4, i + 8).toString('latin1');
-    const chunk = b.subarray(i, i + 12 + tam);
-    if (!['eXIf', 'tEXt', 'zTXt', 'iTXt', 'tIME'].includes(tipo)) partes.push(chunk);
-    i += 12 + tam;
-    if (tipo === 'IEND') break;
-  }
-  return Buffer.concat(partes);
-}
-/** WebP: remove chunks EXIF e XMP e ajusta o tamanho RIFF. */
-function limparWebp(b: Buffer): Buffer {
-  const partes: Buffer[] = [];
-  let i = 12;
-  while (i + 8 <= b.length) {
-    const tipo = b.subarray(i, i + 4).toString('latin1');
-    const tam = b.readUInt32LE(i + 4);
-    const total = 8 + tam + (tam % 2);
-    if (tipo !== 'EXIF' && tipo !== 'XMP ') partes.push(b.subarray(i, i + total));
-    i += total;
-  }
-  const corpo = Buffer.concat(partes);
-  const cab = Buffer.from(b.subarray(0, 12));
-  cab.writeUInt32LE(corpo.length + 4, 4);
-  return Buffer.concat([cab, corpo]);
-}
-export function higienizar(tipo: string, b: Buffer): Buffer {
-  if (tipo === 'image/jpeg') return limparJpeg(b);
-  if (tipo === 'image/png') return limparPng(b);
-  if (tipo === 'image/webp') return limparWebp(b);
-  return b;
+
+export interface ImagemProcessada { imagem: Buffer; miniatura: Buffer; largura: number; altura: number }
+
+/** Recodifica a imagem e gera a miniatura, no MESMO formato declarado. Lança se não decodificar. */
+export async function recodificar(tipo: string, bytes: Buffer): Promise<ImagemProcessada> {
+  const base = () => sharp(bytes, { limitInputPixels: PIXELS_MAXIMOS, failOn: 'error', animated: false }).rotate();
+  const { data: imagem, info } = await codificar(base().resize({ width: LADO_MAXIMO, height: LADO_MAXIMO, fit: 'inside', withoutEnlargement: true }), tipo).toBuffer({ resolveWithObject: true });
+  const miniatura = await codificar(base().resize({ width: LADO_MINIATURA, height: LADO_MINIATURA, fit: 'inside', withoutEnlargement: true }), tipo).toBuffer();
+  return { imagem, miniatura, largura: info.width, altura: info.height };
 }

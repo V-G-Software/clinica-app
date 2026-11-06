@@ -28,6 +28,7 @@ async function carimbar(tx: Tx, orgId: string, em: string) {
 async function fotoDeExemplo(tx: Tx, org: Org, donoId: string, em: string) {
   const id = novoId('arq');
   await storage.gravar(`final/${org.id}/${id}`, PNG, 'image/png');
+  await storage.gravar(`final/${org.id}/${id}.mini`, PNG, 'image/png');
   await tx.query(`INSERT INTO arquivos (organizacao_id, id, dono_id, nome, tipo, tamanho_bytes, finalidade, status, chave_storage, criado_em)
                   VALUES ($1,$2,$3,'foto.png','image/png',$4,'CHECKIN','DISPONIVEL',$5,$6)`, [org.id, id, donoId, PNG.length, `final/${org.id}/${id}`, em]);
   return id;
