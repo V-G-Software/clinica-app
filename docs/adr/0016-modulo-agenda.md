@@ -44,6 +44,7 @@ O vocabulário vem dos termos que já existem: `procedimento` ("cirurgia" na oto
 5. **Lembrete:** job determinístico `agendamento:{id}:lembrete`, `lembreteHorasAntes` antes do início. Notificação `AGENDAMENTO_LEMBRETE`, com o pedido de confirmação. Remarcar reagenda o job; cancelar remove.
 6. **Realizar e marcar falta:** só a equipe, e só depois do início.
 7. **Notificações:** mudança feita pela equipe avisa o paciente; mudança feita pelo paciente avisa o profissional. O texto é discreto, como sempre (RN-NOT-002). Push diz só "Sua consulta foi confirmada — {organização}", sem serviço nem horário.
+8. **Procedimento ↔ acompanhamento (RN-AGE-008):** ver Consequências (etapa 4).
 
 **Datas.** `inicio` e `fim` trafegam em UTC (ISO-8601). Grade e bloqueios são locais, no fuso da organização (`HH:mm` e datas), pelas mesmas funções de `@clinica/dominio/datas` usadas no acompanhamento (ADR-0009). Horário de verão não existe mais no Brasil, mas o cálculo não depende disso.
 
@@ -91,6 +92,13 @@ O paciente recebe `ler` e `criar`. O backend ainda confere o autoagendamento e s
   - invalidação por `agenda.agendamento.*`.
   - Conversão data/hora local → UTC em `telas/agenda/util.ts`, no fuso da organização e com duas passadas por causa do horário de verão. Nunca no fuso do aparelho.
   - Botões só pelo `acoesPermitidas`: o prazo de cancelamento do paciente é decidido pelo backend, e o app só orienta a falar com a equipe.
-- Contrato `1.1.0-rc.1`, minor e só com adições, conforme a regra 4.2.
+- **Etapa 4 (RN-AGE-008, QUESTION-032):** procedimento ligado ao acompanhamento pós-procedimento.
+  - Ao marcar, é **opcional** iniciar o acompanhamento, com o protocolo sugerido pelo serviço. Ele nasce `AGENDADO` no dia local do procedimento.
+  - A ligação vai nos dois sentidos: `Agendamento.acompanhamentoId` e `Acompanhamento.agendamentoId`.
+  - **Remarcar para outro dia encerra o atual e cria um novo**, com o mesmo protocolo e a mesma equipe; nada é apagado. Cancelar ou registrar falta encerra, com o motivo.
+  - Tudo na mesma transação: se o acompanhamento falha, o agendamento não fica pela metade.
+  - Migração `0006`: FKs `DEFERRABLE INITIALLY DEFERRED`, porque a ligação é circular. Durante o `ADD CONSTRAINT`, o `FORCE RLS` sai por um instante para o dono validar todas as linhas.
+  - O encerramento é um efeito do sistema: vale mesmo quando quem cancela a cirurgia não tem a permissão de encerrar acompanhamento (a secretária, por exemplo). O motivo e a autoria ficam registrados.
+- Contrato `1.1.0-rc.1`, minor e só com adições, conforme a regra 4.2. A etapa 4 levou a `1.1.0-rc.2`, também só com adições.
 - O backend precisa da extensão `btree_gist`, que existe no Postgres gerenciado (RDS, Cloud SQL, Neon).
 - Integração com ERP e agenda externa (Google Calendar, ERP GeneXus): fora do escopo; vira módulo de integração depois.

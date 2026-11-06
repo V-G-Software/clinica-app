@@ -7,8 +7,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { api, ok } from '@/api';
 import { ErroApi } from '@/api/erros';
 import { useAppStore } from '@/app/store';
+import { useSessaoStore } from '@/sessao/store';
 import { hojeNoFuso } from '@/i18n/dias';
-import { capitalizar, novo } from '@/i18n/termos';
+import { artigo, capitalizar, flexao, novo } from '@/i18n/termos';
 import { criarChave, useTermos } from '@/dados/util';
 import { useMensagemErro } from '@/dados/erro';
 import Botao from '@/ds/Botao.vue';
@@ -22,6 +23,7 @@ import { paraUtc } from './util';
 const rota = useRoute();
 const router = useRouter();
 const app = useAppStore();
+const sessao = useSessaoStore();
 const qc = useQueryClient();
 const termo = useTermos();
 const msg = useMensagemErro();
@@ -47,11 +49,17 @@ watch(servico, (s) => {
   duracao.value = s ? String(s.duracaoMinutos) : '';
 });
 const procedimento = computed(() => servico.value?.categoria === 'PROCEDIMENTO');
+// RN-AGE-008: procedimento pode iniciar o acompanhamento junto (protocolo sugerido pelo serviço; opcional).
+const podeAcompanhar = computed(() => procedimento.value && sessao.modulos.has('acompanhamento') && sessao.pode('acompanhamento.acompanhamento.criar'));
+const protocolos = useQuery({ queryKey: ['protocolos', 'ATIVO'], queryFn: () => ok(api().GET('/v1/protocolos', { params: { query: { status: 'ATIVO', limite: 100 } } })), enabled: podeAcompanhar });
+const acompanhar = ref(false);
+const protocoloId = ref('');
+watch(servico, (s) => { protocoloId.value = s?.protocoloId ?? ''; acompanhar.value = !!s?.protocoloId; });
 
 const inicioEm = computed(() => (modo.value === 'LIVRE' ? livre.value?.inicioEm : data.value && /^\d{2}:\d{2}$/.test(hora.value) ? paraUtc(data.value, hora.value, app.fuso) : undefined));
 const prof = computed(() => (modo.value === 'LIVRE' ? livre.value?.profissionalId : profissionalId.value));
 const duracaoValida = computed(() => modo.value === 'LIVRE' || (Number(duracao.value) >= 5 && Number(duracao.value) <= 720));
-const pronto = computed(() => !!(pacienteId.value && servico.value && inicioEm.value && prof.value && duracaoValida.value));
+const pronto = computed(() => !!(pacienteId.value && servico.value && inicioEm.value && prof.value && duracaoValida.value && (!acompanhar.value || !podeAcompanhar.value || protocoloId.value)));
 
 const chave = criarChave();
 const m = useMutation({
@@ -62,9 +70,10 @@ const m = useMutation({
       ...(modo.value === 'OUTRO' && Number(duracao.value) !== servico.value!.duracaoMinutos ? { duracaoMinutos: Number(duracao.value) } : {}),
       ...(modo.value === 'OUTRO' && encaixe.value ? { encaixe: true } : {}),
       local: local.value.trim() || null, observacao: observacao.value.trim() || null,
+      ...(podeAcompanhar.value && acompanhar.value && protocoloId.value ? { acompanhamento: { protocoloId: protocoloId.value } } : {}),
     },
   })),
-  onSuccess: async (a) => { chave.concluir(); await qc.invalidateQueries({ queryKey: ['agendamentos'] }); await qc.invalidateQueries({ queryKey: ['inicio'] }); await router.replace(`/agenda/${a.id}`); },
+  onSuccess: async (a) => { chave.concluir(); await qc.invalidateQueries({ queryKey: ['agendamentos'] }); await qc.invalidateQueries({ queryKey: ['inicio'] }); if (a.acompanhamentoId) void qc.invalidateQueries({ queryKey: ['acompanhamentos'] }); await router.replace(`/agenda/${a.id}`); },
   // 4xx é resposta definitiva: a próxima tentativa é outra ação (outro horário, encaixe) e precisa de outra chave.
   onError: (e) => { if (e instanceof ErroApi && e.status >= 400 && e.status < 500) chave.concluir(); },
 });
@@ -102,6 +111,13 @@ watch([inicioEm, prof, encaixe], () => m.reset());
           <span>Encaixe <span class="block text-sm text-secundario">Permite sobrepor outro horário do mesmo profissional. Use só quando combinado com ele.</span></span></label>
       </Cartao>
       <CampoTexto v-model="local" :rotulo="procedimento ? 'Local (hospital, sala)' : 'Local (opcional)'" :maxlength="200" />
+      <Cartao v-if="podeAcompanhar" class="flex flex-col gap-3">
+        <label class="flex items-start gap-3"><input v-model="acompanhar" type="checkbox" class="mt-0.5 size-5 shrink-0" />
+          <span>Iniciar {{ termo('acompanhamento').singular }}
+            <span class="block text-sm text-secundario">Começa no dia {{ artigo(termo('procedimento')) === 'a' ? 'da' : 'do' }} {{ termo('procedimento').singular }}. Se remarcar para outro dia, {{ artigo(termo('acompanhamento')) }} {{ termo('acompanhamento').singular }} é {{ flexao(termo('acompanhamento'), 'encerrado', 'encerrada') }} e outr{{ artigo(termo('acompanhamento')) }} {{ flexao(termo('acompanhamento'), 'criado', 'criada') }} no novo dia; se cancelar, é {{ flexao(termo('acompanhamento'), 'encerrado', 'encerrada') }}.</span></span>
+        </label>
+        <Selecao v-if="acompanhar" v-model="protocoloId" :rotulo="capitalizar(termo('protocolo').singular)" vazio="Escolha…" :opcoes="(protocolos.data.value?.itens ?? []).map((p) => ({ valor: p.id, rotulo: p.nome }))" />
+      </Cartao>
       <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">Observação interna (o {{ termo('paciente').singular }} não vê)</span>
         <textarea v-model="observacao" rows="2" maxlength="2000" class="rounded-xl border-2 border-zinc-300 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-800" /></label>
       <Aviso v-if="servico.orientacoes">Orientação enviada ao {{ termo('paciente').singular }}: {{ servico.orientacoes }}</Aviso>

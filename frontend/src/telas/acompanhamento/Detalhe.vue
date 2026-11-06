@@ -88,7 +88,8 @@ const SEV: Record<string, string> = { ALTA: 'text-erro', MEDIA: 'text-atencao', 
         <RouterLink v-if="!sessao.ehPaciente" :to="`/pacientes/${a.paciente.id}`" class="text-sm text-acao underline">{{ a.paciente.nome }}</RouterLink>
         <p v-else class="text-sm text-secundario">{{ a.paciente.nome }}</p>
         <h1 class="text-2xl font-bold">{{ a.protocolo.nome }}</h1>
-        <p>{{ capitalizar(termo('procedimento').singular) }} em {{ formatarData(a.dataInicio, app.locale, { dateStyle: 'long' }) }}</p>
+        <p>{{ capitalizar(termo('procedimento').singular) }} em {{ formatarData(a.dataInicio, app.locale, { dateStyle: 'long' }) }}
+          <RouterLink v-if="a.agendamentoId && sessao.modulos.has('agenda')" :to="`/agenda/${a.agendamentoId}`" class="ml-1 text-acao underline">ver na agenda</RouterLink></p>
         <p v-if="a.status === 'ATIVO'" class="font-semibold">Dia {{ a.diaAtual }} de {{ a.totalDias }}</p>
         <p v-else-if="a.status === 'AGENDADO'" class="font-semibold">Começa em {{ -a.diaAtual }} dia(s)</p>
         <Aviso v-if="a.status === 'ENCERRADO'" tipo="atencao" class="mt-2">Encerrado{{ a.motivoEncerramento ? `: ${a.motivoEncerramento}` : '' }}</Aviso>

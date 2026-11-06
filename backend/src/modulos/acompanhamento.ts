@@ -92,6 +92,7 @@ export async function serAcompanhamento(tx: Tx, ctx: Ctx, a: any) {
     dataInicio: a.data_inicio, diaAtual: diferencaDias(a.data_inicio, partesLocais(Date.now(), org.fuso).data), totalDias: a.protocolo.duracaoDias, status: a.status,
     equipe: a.equipe_ids.filter((id: string) => usuarios.has(id)).map((id: string) => refUsuario(usuarios.get(id), id)),
     conversaId: conversa && (souParticipante || equipe) ? conversa : null,
+    agendamentoId: a.agendamento_id ?? null,
     resumoCheckins: { respondidos: conta('RESPONDIDO'), pendentes: conta('DISPONIVEL'), expirados: conta('EXPIRADO'), agendados: conta('AGENDADO') },
     alertasAbertos: alertas,
     proximoCheckin: prox ? resumoCheckin(prox, nomes) : null,

@@ -10,6 +10,7 @@ import {
   ATIVOS, cancelar, cfgAgenda, confirmar, criarAgendamento, finalizar, horariosLivres, membroAtivoEquipe, ocupado, periodo, remarcar, resumos,
   serAgendamentos, serServico,
 } from '../servicos/agenda.ts';
+import { protocoloVersao } from '../servicos/acompanhamento.ts';
 import { refUsuario, usuariosPorId } from '../servicos/refs.ts';
 import { obterPaciente } from './pacientes.ts';
 
@@ -46,6 +47,23 @@ async function obterProfissional(tx: Tx, ctx: Ctx, id: string) {
 async function validarServico(tx: Tx, ctx: Ctx, b: any) {
   if (b.categoria === 'PROCEDIMENTO' && b.autoagendavel) throw invalido('autoagendavel', 'Procedimentos são marcados pela equipe.');
   for (const [i, id] of (b.profissionaisIds as string[]).entries()) if (!(await membroAtivoEquipe(tx, ctx.org, id))) throw invalido(`profissionaisIds.${i}`, 'Membro da equipe inválido.');
+  if (b.protocoloId != null) {
+    if (b.categoria !== 'PROCEDIMENTO') throw invalido('protocoloId', 'Protocolo só se aplica a procedimentos.');
+    if (!temModulo(ctx.org.modulos, 'acompanhamento')) throw invalido('protocoloId', 'Módulo de acompanhamento inativo.');
+    const p = await protocoloVersao(tx, ctx.org.id, b.protocoloId);
+    if (!p || p.status !== 'ATIVO') throw invalido('protocoloId', 'Protocolo não encontrado.');
+  }
+}
+/** Pós-procedimento pedido junto com a marcação (RN-AGE-008): valida tudo antes de criar qualquer coisa. */
+async function validarAcompanhamento(tx: Tx, ctx: Ctx, s: any, b: any) {
+  if (s.categoria !== 'PROCEDIMENTO') throw invalido('acompanhamento', 'Só procedimentos iniciam acompanhamento.');
+  exigirModulo(ctx.org, 'acompanhamento');
+  exigir(ctx, 'acompanhamento.acompanhamento.criar');
+  const p = await protocoloVersao(tx, ctx.org.id, b.acompanhamento.protocoloId);
+  if (!p || p.status !== 'ATIVO') throw invalido('acompanhamento.protocoloId', 'Protocolo não encontrado.');
+  const equipeIds: string[] = [...new Set<string>(b.acompanhamento.equipeIds?.length ? b.acompanhamento.equipeIds : [b.profissionalId])];
+  for (const [i, id] of equipeIds.entries()) if (!(await membroAtivoEquipe(tx, ctx.org, id))) throw invalido(`acompanhamento.equipeIds.${i}`, 'Membro da equipe inválido.');
+  return { protocoloId: p.id as string, equipeIds };
 }
 async function serGrade(tx: Tx, ctx: Ctx, prof: string) {
   const g = await um(tx, 'SELECT itens, versao FROM grades WHERE organizacao_id = $1 AND profissional_id = $2', [ctx.org.id, prof]);
@@ -87,8 +105,8 @@ export const handlersAgenda: Record<string, Handler> = {
     exigir(ctx, 'agenda.configuracao.gerenciar');
     await validarServico(q.tx, ctx, q.body);
     const b = q.body;
-    const s = (await um(q.tx, `INSERT INTO servicos (organizacao_id, id, nome, categoria, duracao_minutos, autoagendavel, profissionais_ids, orientacoes)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`, [q.org.id, novoId('srv'), b.nome, b.categoria, b.duracaoMinutos, b.autoagendavel, b.profissionaisIds, b.orientacoes ?? null]))!;
+    const s = (await um(q.tx, `INSERT INTO servicos (organizacao_id, id, nome, categoria, duracao_minutos, autoagendavel, profissionais_ids, orientacoes, protocolo_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`, [q.org.id, novoId('srv'), b.nome, b.categoria, b.duracaoMinutos, b.autoagendavel, b.profissionaisIds, b.orientacoes ?? null, b.protocoloId ?? null]))!;
     await audit(q, 'CRIAR', 'servico', s.id);
     return criado(await umServico(q.tx, ctx, s), { ETag: etag(s.id, s.versao) });
   },
@@ -108,8 +126,8 @@ export const handlersAgenda: Record<string, Handler> = {
     if (s.status !== 'ATIVO') throw invalido('status', 'Serviço arquivado não pode ser editado.');
     await validarServico(q.tx, ctx, q.body);
     const b = q.body;
-    const r = await um(q.tx, `UPDATE servicos SET nome = $3, categoria = $4, duracao_minutos = $5, autoagendavel = $6, profissionais_ids = $7, orientacoes = $8, versao = versao + 1
-      WHERE organizacao_id = $1 AND id = $2 AND versao = $9 RETURNING *`, [q.org.id, s.id, b.nome, b.categoria, b.duracaoMinutos, b.autoagendavel, b.profissionaisIds, b.orientacoes ?? null, s.versao]);
+    const r = await um(q.tx, `UPDATE servicos SET nome = $3, categoria = $4, duracao_minutos = $5, autoagendavel = $6, profissionais_ids = $7, orientacoes = $8, protocolo_id = $10, versao = versao + 1
+      WHERE organizacao_id = $1 AND id = $2 AND versao = $9 RETURNING *`, [q.org.id, s.id, b.nome, b.categoria, b.duracaoMinutos, b.autoagendavel, b.profissionaisIds, b.orientacoes ?? null, s.versao, b.protocoloId ?? null]);
     if (!r) throw new ErroApi('CONFLITO_VERSAO', 'Recarregue e tente de novo.', { estadoAtual: atual });
     await audit(q, 'ALTERAR', 'servico', s.id);
     return ok(await umServico(q.tx, ctx, r), { ETag: etag(r.id, r.versao) });
@@ -228,10 +246,11 @@ export const handlersAgenda: Record<string, Handler> = {
     let a;
     if (ehEquipeCtx(ctx)) {
       const dur = b.duracaoMinutos ?? s.duracao_minutos;
+      const acp = b.acompanhamento ? await validarAcompanhamento(q.tx, ctx, s, b) : undefined;
       if (!b.encaixe && await ocupado(q.tx, q.org, b.profissionalId, inicio, new Date(+inicio + dur * MIN))) throw new ErroApi('HORARIO_INDISPONIVEL', 'Já existe um agendamento neste horário. Escolha outro ou marque como encaixe.');
-      a = await criarAgendamento(q.tx, q.org, { pacienteId: pac.id, servico: s, profissionalId: b.profissionalId, inicio, duracaoMinutos: dur, origem: 'EQUIPE', porId: ctx.usuario.id, local: b.local, observacao: b.observacao, encaixe: b.encaixe }, q.log);
+      a = await criarAgendamento(q.tx, q.org, { pacienteId: pac.id, servico: s, profissionalId: b.profissionalId, inicio, duracaoMinutos: dur, origem: 'EQUIPE', porId: ctx.usuario.id, local: b.local, observacao: b.observacao, encaixe: b.encaixe, acompanhamento: acp }, q.log);
     } else {
-      for (const campo of ['duracaoMinutos', 'local', 'observacao', 'encaixe']) if (b[campo] !== undefined) throw invalido(campo, 'Campo exclusivo da equipe.');
+      for (const campo of ['duracaoMinutos', 'local', 'observacao', 'encaixe', 'acompanhamento']) if (b[campo] !== undefined) throw invalido(campo, 'Campo exclusivo da equipe.');
       if (!s.autoagendavel) throw invalido('servicoId', 'Este serviço é marcado pela equipe.');
       const dia = partesLocais(+inicio, q.org.fuso).data;
       const livre = (await horariosLivres(q.tx, q.org, s, b.profissionalId, dia, dia, true)).some((h) => h.inicio === +inicio);
@@ -302,7 +321,7 @@ export const handlersAgenda: Record<string, Handler> = {
     const ctx = ctxAgenda(q);
     const a = await obterAgendamento(q.tx, ctx, q.params.agendamentoId);
     exigir(ctx, 'agenda.agendamento.gerenciar');
-    const r = await finalizar(q.tx, q.org, a, ctx.usuario.id, 'REALIZADO');
+    const r = await finalizar(q.tx, q.org, a, ctx.usuario.id, 'REALIZADO', q.log);
     await audit(q, 'REALIZAR', 'agendamento', a.id);
     return ok(await umAgendamento(q.tx, ctx, r));
   },
@@ -310,7 +329,7 @@ export const handlersAgenda: Record<string, Handler> = {
     const ctx = ctxAgenda(q);
     const a = await obterAgendamento(q.tx, ctx, q.params.agendamentoId);
     exigir(ctx, 'agenda.agendamento.gerenciar');
-    const r = await finalizar(q.tx, q.org, a, ctx.usuario.id, 'FALTOU');
+    const r = await finalizar(q.tx, q.org, a, ctx.usuario.id, 'FALTOU', q.log);
     await audit(q, 'REGISTRAR_FALTA', 'agendamento', a.id);
     return ok(await umAgendamento(q.tx, ctx, r));
   },

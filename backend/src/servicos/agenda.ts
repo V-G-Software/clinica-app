@@ -10,6 +10,7 @@ import type { Log } from '../http.ts';
 import { iso, type Ctx, type Org } from '../nucleo.ts';
 import { conversaAtivaDoPaciente, participa } from './chat.ts';
 import { agendar, cancelarPrefixo, registrarJob } from './jobs.ts';
+import { criarAcompanhamento, encerrarAcompanhamento } from './acompanhamento.ts';
 import { notificar } from './notificar.ts';
 import { contasDoPaciente, ehEquipeU, nomesPacientes, orgPorId, refUsuario, usuariosPorId } from './refs.ts';
 
@@ -121,13 +122,40 @@ async function comExclusao<T>(fn: () => Promise<T>, msg: string): Promise<T> {
   }
 }
 
-export async function criarAgendamento(tx: Tx, org: Org, d: { id?: string; pacienteId: string; servico: any; profissionalId: string; inicio: Date; duracaoMinutos?: number; origem: 'EQUIPE' | 'PACIENTE'; porId: string; local?: string | null; observacao?: string | null; encaixe?: boolean; criadoEm?: Date }, log: Log) {
+// ─────────── Procedimento ↔ acompanhamento (RN-AGE-008, QUESTION-032) ───────────
+const termoProcedimento = (org: Org): Termo => (org.termos as Record<string, Termo>).procedimento ?? { singular: 'procedimento', plural: 'procedimentos', genero: 'M' };
+/** Pós-procedimento nasce no dia local do procedimento, ligado nos dois sentidos (FKs verificadas no commit). */
+async function ligarNovoAcompanhamento(tx: Tx, org: Org, a: any, protocoloId: string, equipeIds: string[], porId: string, observacao: string | null, log: Log) {
+  const acp = await criarAcompanhamento(tx, org, { pacienteId: a.paciente_id, protocoloId, dataInicio: partesLocais(+new Date(a.inicio_em), org.fuso).data, equipeIds, criadoPor: porId, observacao, agendamentoId: a.id }, log);
+  return (await um(tx, 'UPDATE agendamentos SET acompanhamento_id = $3 WHERE organizacao_id = $1 AND id = $2 RETURNING *', [org.id, a.id, acp.id]))!;
+}
+async function ligado(tx: Tx, org: Org, a: any) {
+  if (!a.acompanhamento_id) return null;
+  return um(tx, `SELECT * FROM acompanhamentos WHERE organizacao_id = $1 AND id = $2 AND status IN ('AGENDADO','ATIVO') FOR UPDATE`, [org.id, a.acompanhamento_id]);
+}
+async function encerrarLigado(tx: Tx, org: Org, a: any, motivo: string, porId: string, log: Log) {
+  const acp = await ligado(tx, org, a);
+  if (acp) await encerrarAcompanhamento(tx, org, acp, motivo, porId, log);
+}
+/** Remarcação para outro dia: encerra o acompanhamento e cria outro no novo dia (nada é apagado). */
+async function recriarLigado(tx: Tx, org: Org, a: any, porId: string, log: Log) {
+  const acp = await ligado(tx, org, a);
+  const dia = partesLocais(+new Date(a.inicio_em), org.fuso).data;
+  if (!acp || acp.data_inicio === dia) return a;
+  const [ano, mes, d] = dia.split('-');
+  const t = termoProcedimento(org);
+  await encerrarAcompanhamento(tx, org, acp, `${cap(t.singular)} ${part(t, 'remarcado', 'remarcada')} para ${d}/${mes}/${ano}.`, porId, log);
+  return ligarNovoAcompanhamento(tx, org, a, acp.protocolo_id, acp.equipe_ids, porId, acp.observacao ?? null, log);
+}
+
+export async function criarAgendamento(tx: Tx, org: Org, d: { id?: string; pacienteId: string; servico: any; profissionalId: string; inicio: Date; duracaoMinutos?: number; origem: 'EQUIPE' | 'PACIENTE'; porId: string; local?: string | null; observacao?: string | null; encaixe?: boolean; criadoEm?: Date; acompanhamentoId?: string | null; acompanhamento?: { protocoloId: string; equipeIds: string[] } }, log: Log) {
   const fim = new Date(+d.inicio + (d.duracaoMinutos ?? d.servico.duracao_minutos) * MIN);
-  const a = (await comExclusao(() => um(tx, `INSERT INTO agendamentos (organizacao_id, id, paciente_id, servico_id, profissional_id, inicio_em, fim_em, origem, encaixe, local, orientacoes, observacao, historico, criado_por, criado_em)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,COALESCE($15, now())) RETURNING *`,
+  let a = (await comExclusao(() => um(tx, `INSERT INTO agendamentos (organizacao_id, id, paciente_id, servico_id, profissional_id, inicio_em, fim_em, origem, encaixe, local, orientacoes, observacao, historico, criado_por, criado_em, acompanhamento_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,COALESCE($15, now()),$16) RETURNING *`,
     [org.id, d.id ?? novoId('agd'), d.pacienteId, d.servico.id, d.profissionalId, d.inicio, fim, d.origem, !!d.encaixe, d.local ?? null, d.servico.orientacoes ?? null,
-      d.observacao ?? null, JSON.stringify([{ ...evento('CRIADO', d.porId), ...(d.criadoEm ? { ocorridoEm: iso(d.criadoEm) } : {}) }]), d.porId, d.criadoEm ?? null]),
+      d.observacao ?? null, JSON.stringify([{ ...evento('CRIADO', d.porId), ...(d.criadoEm ? { ocorridoEm: iso(d.criadoEm) } : {}) }]), d.porId, d.criadoEm ?? null, d.acompanhamentoId ?? null]),
   'Já existe um agendamento neste horário. Escolha outro ou marque como encaixe.'))!;
+  if (d.acompanhamento) a = await ligarNovoAcompanhamento(tx, org, a, d.acompanhamento.protocoloId, d.acompanhamento.equipeIds, d.porId, null, log);
   await agendarLembrete(tx, org, a);
   await emitir(tx, org.id, 'agenda.agendamento.criado', { agendamentoId: a.id }, await interessados(tx, org, a));
   const t = termoConsulta(org);
@@ -144,6 +172,7 @@ export async function cancelar(tx: Tx, org: Org, a: any, porId: string, motivo: 
   if (!ATIVOS.includes(a.status)) throw invalido('status', 'Este agendamento não pode mais ser cancelado.');
   const r = await atualizar(tx, org, a, { status: 'CANCELADO', motivo_cancelamento: motivo }, evento('CANCELADO', porId, motivo));
   await cancelarPrefixo(tx, org.id, `agendamento:${a.id}:lembrete`);
+  await encerrarLigado(tx, org, r, `${cap(termoProcedimento(org).singular)} ${part(termoProcedimento(org), 'cancelado', 'cancelada')}: ${motivo}`, porId, log);
   const t = termoConsulta(org);
   await avisarOutroLado(tx, org, r, porPaciente, 'AGENDAMENTO_ALTERADO', `${cap(um_a(t))} ${t.singular} foi ${part(t, 'cancelado', 'cancelada')}.`, log);
   return r;
@@ -152,16 +181,18 @@ export async function remarcar(tx: Tx, org: Org, a: any, porId: string, d: { ini
   const r = await comExclusao(() => atualizar(tx, org, a, {
     inicio_em: d.inicio, fim_em: new Date(+d.inicio + d.duracaoMinutos * MIN), profissional_id: d.profissionalId, encaixe: d.encaixe, status: 'AGENDADO',
   }, evento('REMARCADO', porId, d.motivo)), 'Já existe um agendamento neste horário.');
-  await agendarLembrete(tx, org, r);
+  const r2 = await recriarLigado(tx, org, r, porId, log);
+  await agendarLembrete(tx, org, r2);
   const t = termoConsulta(org);
-  await avisarOutroLado(tx, org, r, false, 'AGENDAMENTO_ALTERADO', `${cap(um_a(t))} ${t.singular} foi ${part(t, 'remarcado', 'remarcada')}. Confira o novo horário.`, log);
-  return r;
+  await avisarOutroLado(tx, org, r2, false, 'AGENDAMENTO_ALTERADO', `${cap(um_a(t))} ${t.singular} foi ${part(t, 'remarcado', 'remarcada')}. Confira o novo horário.`, log);
+  return r2;
 }
-export async function finalizar(tx: Tx, org: Org, a: any, porId: string, status: 'REALIZADO' | 'FALTOU') {
+export async function finalizar(tx: Tx, org: Org, a: any, porId: string, status: 'REALIZADO' | 'FALTOU', log: Log) {
   if (!ATIVOS.includes(a.status)) throw invalido('status', 'Este agendamento já foi finalizado.');
   if (Date.now() < +new Date(a.inicio_em)) throw invalido('status', 'Só depois do horário marcado.');
   const r = await atualizar(tx, org, a, { status }, evento(status, porId));
   await cancelarPrefixo(tx, org.id, `agendamento:${a.id}:lembrete`);
+  if (status === 'FALTOU') await encerrarLigado(tx, org, r, `Falta registrada: não compareceu ${part(termoProcedimento(org), 'ao', 'à')} ${termoProcedimento(org).singular}.`, porId, log);
   return r;
 }
 
@@ -173,7 +204,9 @@ export function serServico(ctx: Ctx, s: any, profs: Map<string, any>) {
   return {
     id: s.id, nome: s.nome, categoria: s.categoria, duracaoMinutos: s.duracao_minutos, autoagendavel: s.autoagendavel,
     profissionais: (s.profissionais_ids as string[]).filter((id) => profs.has(id)).map((id) => refUsuario(profs.get(id), id, 'PROFISSIONAL')),
-    orientacoes: s.orientacoes ?? null, status: s.status, acoesPermitidas: acoes,
+    orientacoes: s.orientacoes ?? null,
+    protocoloId: ctx.perfil !== 'PACIENTE' && temModulo(ctx.org.modulos, 'acompanhamento') ? s.protocolo_id ?? null : null,
+    status: s.status, acoesPermitidas: acoes,
   };
 }
 async function acoes(tx: Tx, ctx: Ctx, a: any): Promise<string[]> {
@@ -213,6 +246,7 @@ export async function serAgendamentos(tx: Tx, ctx: Ctx, linhas: any[]) {
       inicioEm: iso(a.inicio_em), fimEm: iso(a.fim_em), status: a.status, origem: a.origem, encaixe: a.encaixe,
       local: a.local ?? null, orientacoes: a.orientacoes ?? null, observacao: equipe ? a.observacao ?? null : null,
       motivoCancelamento: a.motivo_cancelamento ?? null,
+      acompanhamentoId: a.acompanhamento_id ?? null,
       historico: (a.historico as any[]).map((h) => ({ ocorridoEm: h.ocorridoEm, acao: h.acao, por: h.porId && usuarios.has(h.porId) ? refUsuario(usuarios.get(h.porId), h.porId) : null, ...(h.detalhe !== undefined ? { detalhe: h.detalhe } : {}) })),
       criadoEm: iso(a.criado_em), acoesPermitidas: await acoes(tx, ctx, a),
     };

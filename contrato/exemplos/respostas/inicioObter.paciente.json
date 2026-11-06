@@ -33,6 +33,7 @@
             "orientacoes": null,
             "observacao": null,
             "motivoCancelamento": null,
+            "acompanhamentoId": null,
             "historico": [
               {
                 "ocorridoEm": "2026-11-05T14:00:00Z",

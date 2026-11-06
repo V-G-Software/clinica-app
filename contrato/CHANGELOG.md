@@ -2,6 +2,21 @@
 
 Versionamento semântico (seção 4.2). Dentro de `1.x`, só mudanças aditivas.
 
+## 1.1.0-rc.2 — 2026-11-06 (F4, etapa 4)
+
+Procedimento da agenda ligado ao acompanhamento pós-procedimento (QUESTION-032, decidida). Só adições.
+
+### Incluído
+- `POST /v1/agendamentos`: campo opcional `acompanhamento` (`protocoloId`, `equipeIds`). Só equipe e só em `PROCEDIMENTO`; o acompanhamento nasce `AGENDADO` no dia local do procedimento.
+- `Agendamento.acompanhamentoId` e `Acompanhamento.agendamentoId`: a ligação nos dois sentidos (`null` quando não há).
+- `Servico.protocoloId` e `ServicoEdicao.protocoloId`: protocolo sugerido ao marcar o procedimento.
+
+### Esclarecido
+- RN-AGE-008:
+  - remarcar para outro dia **encerra** o acompanhamento ligado e cria um novo, com o mesmo protocolo e a mesma equipe, no novo dia; o agendamento passa a apontar para o novo;
+  - cancelar ou registrar falta encerra o acompanhamento ligado, com o motivo;
+  - acompanhamento já concluído ou encerrado não muda.
+
 ## 1.1.0-rc.1 — 2026-11-06 (F4, etapa 1)
 
 Módulo `agenda`: consultas e procedimentos (cirurgias), grade, bloqueios e autoagendamento ([ADR-0016](../docs/adr/0016-modulo-agenda.md)). Versão menor, só com adições. Organizações sem o módulo ficam idênticas.

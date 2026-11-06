@@ -27,6 +27,7 @@ Em desenvolvimento, `?org=` escolhe a organização (fica lembrado) e o botão d
 | Sem autoagendamento (vet) e sem o módulo (fisio): rota bloqueada e nada no menu | `e2e/fe4.mjs` |
 | Datas no fuso da organização, não do aparelho | `e2e/fe4.mjs` roda com o aparelho em Tóquio; `tests/unit/agenda.test.ts` cobre a conversão e o horário de verão |
 | Troca do mock para o backend real só pelo endereço do diretório | `e2e/backend-real.mjs` (marca, paciente confirma, equipe vê em tempo real) |
+| Cirurgia ↔ pós-operatório (RN-AGE-008): nasce junto (protocolo sugerido), remarcar para outro dia recria, cancelar encerra; avisos nos diálogos | `e2e/fe4.mjs` |
 | Acessibilidade | `e2e/acessibilidade.mjs` inclui as 8 telas da agenda: zero violações graves |
 
 Barra inferior no celular: no máximo 5 posições **contando o "Mais"**. Quando há itens secundários, o 5º item principal do manifesto desce para o "Mais". Cinco rótulos longos ("Meu pós-operatório", "Minhas consultas") não cabem em 360 px.

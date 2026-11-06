@@ -180,7 +180,7 @@
         "profissionaisIds": ["usr_renata"], "orientacoes": "Traga a carteira de vacinação do pet." },
       { "id": "srv_vacina", "nome": "Vacinação", "categoria": "CONSULTA", "duracaoMinutos": 20, "autoagendavel": true,
         "profissionaisIds": ["usr_renata"], "orientacoes": null },
-      { "id": "srv_castracao", "nome": "Castração", "categoria": "PROCEDIMENTO", "duracaoMinutos": 90, "autoagendavel": false,
+      { "id": "srv_castracao", "protocoloId": "prt_castracao10", "nome": "Castração", "categoria": "PROCEDIMENTO", "duracaoMinutos": 90, "autoagendavel": false,
         "profissionaisIds": ["usr_renata"], "orientacoes": "Jejum de 12 horas de comida e 6 horas de água." }
     ],
     "grades": {
@@ -197,7 +197,7 @@
       { "id": "agd_mel_vacina", "pacienteId": "pac_mel", "servicoId": "srv_vacina", "profissionalId": "usr_renata", "inicioEm": "2026-11-12T17:00:00Z",
         "criadoPor": "usr_diego", "criadoEm": "2026-11-01T15:00:00Z",
         "cancelar": { "em": "2026-11-05T12:00:00Z", "por": "usr_laura", "motivo": "Vou viajar nessa semana.", "peloPaciente": true } },
-      { "id": "agd_nina_castracao", "pacienteId": "pac_nina", "servicoId": "srv_castracao", "profissionalId": "usr_renata", "inicioEm": "2026-11-07T12:00:00Z",
+      { "id": "agd_nina_castracao", "acompanhamentoId": "acp_nina", "pacienteId": "pac_nina", "servicoId": "srv_castracao", "profissionalId": "usr_renata", "inicioEm": "2026-11-07T12:00:00Z",
         "criadoPor": "usr_diego", "criadoEm": "2026-10-30T15:00:00Z", "confirmar": { "em": "2026-11-06T13:00:00Z", "por": "usr_caio" },
         "realizar": { "em": "2026-11-07T14:00:00Z", "por": "usr_renata" } },
       { "id": "agd_thor_retorno", "pacienteId": "pac_thor", "servicoId": "srv_consulta_vet", "profissionalId": "usr_renata", "inicioEm": "2026-11-16T13:00:00Z",

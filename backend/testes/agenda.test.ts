@@ -1,13 +1,14 @@
 // Agenda (ADR-0016): garantias que a suíte de conformidade não alcança — concorrência (a constraint de
 // exclusão do banco deixa passar só uma de duas marcações simultâneas), lembrete como job (dispara,
-// some ao cancelar, acompanha a remarcação) e o seed da linha do tempo.
+// some ao cancelar, acompanha a remarcação), a ligação procedimento ↔ acompanhamento (atomicidade e FKs)
+// e o seed da linha do tempo.
 // Pré-requisito: banco migrado e semeado (pnpm migrar && pnpm org:criar --todos).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { novoId } from '../src/cripto.ts';
 import { comOrg, pool, type Tx } from '../src/db.ts';
 import type { Log } from '../src/http.ts';
 import { orgPorSlug, type Org } from '../src/nucleo.ts';
-import { cancelar, criarAgendamento, remarcar } from '../src/servicos/agenda.ts';
+import { cancelar, criarAgendamento, finalizar, remarcar } from '../src/servicos/agenda.ts';
 import { executarVencidos } from '../src/servicos/jobs.ts';
 
 const log: Log = { info: () => undefined, warn: () => undefined, error: () => undefined };
@@ -92,6 +93,47 @@ describe('agenda: lembrete como job', () => {
   });
 });
 
+describe('agenda: procedimento ↔ acompanhamento (RN-AGE-008)', () => {
+  let procedimento: any;
+  beforeAll(async () => {
+    procedimento = await comOrg(org.id, async (tx) => (await tx.query(`INSERT INTO servicos (organizacao_id, id, nome, categoria, duracao_minutos, autoagendavel, profissionais_ids, protocolo_id)
+      VALUES ($1,$2,'Procedimento de teste','PROCEDIMENTO',60,false,$3,'prt_septo7') RETURNING *`, [org.id, novoId('srv'), [PROF]])).rows[0]);
+  });
+
+  it('atômico: se o acompanhamento falha, o agendamento não fica pela metade', async () => {
+    const { pac } = await comOrg(org.id, novoPaciente);
+    const id = novoId('agd');
+    await expect(comOrg(org.id, (tx) => criarAgendamento(tx, org, { id, pacienteId: pac, servico: procedimento, profissionalId: PROF, inicio: horarioLivre(), origem: 'EQUIPE', porId: 'usr_julia', encaixe: true,
+      acompanhamento: { protocoloId: 'prt_inexistente', equipeIds: [PROF] } }, log))).rejects.toThrow();
+    expect(await ler('SELECT 1 FROM agendamentos WHERE organizacao_id = $1 AND id = $2', [org.id, id])).toHaveLength(0);
+  });
+
+  it('FK no commit: agendamento não aponta para acompanhamento inexistente', async () => {
+    const { pac } = await comOrg(org.id, novoPaciente);
+    await expect(comOrg(org.id, (tx) => criarAgendamento(tx, org, { pacienteId: pac, servico: procedimento, profissionalId: PROF, inicio: horarioLivre(), origem: 'EQUIPE', porId: 'usr_julia', encaixe: true,
+      acompanhamentoId: 'acp_inexistente' }, log))).rejects.toThrow(/agendamentos_acompanhamento_fk/);
+  });
+
+  it('remarcar para outro dia encerra e recria; falta encerra o atual', async () => {
+    const { pac } = await comOrg(org.id, novoPaciente);
+    const ini = horarioLivre();
+    const a = await comOrg(org.id, (tx) => criarAgendamento(tx, org, { pacienteId: pac, servico: procedimento, profissionalId: PROF, inicio: ini, origem: 'EQUIPE', porId: 'usr_julia', encaixe: true,
+      acompanhamento: { protocoloId: 'prt_septo7', equipeIds: [PROF] } }, log));
+    const [acp1] = await ler('SELECT id, status, agendamento_id FROM acompanhamentos WHERE organizacao_id = $1 AND id = $2', [org.id, a.acompanhamento_id]);
+    expect(acp1).toMatchObject({ status: 'AGENDADO', agendamento_id: a.id });
+    const r = await comOrg(org.id, async (tx) => remarcar(tx, org, (await tx.query('SELECT * FROM agendamentos WHERE organizacao_id = $1 AND id = $2', [org.id, a.id])).rows[0], 'usr_julia', { inicio: new Date(+ini + 2 * 24 * H), profissionalId: PROF, duracaoMinutos: 60, encaixe: true, motivo: null }, log));
+    expect(r.acompanhamento_id).not.toBe(acp1.id);
+    const st = Object.fromEntries((await ler('SELECT id, status FROM acompanhamentos WHERE organizacao_id = $1 AND agendamento_id = $2', [org.id, a.id])).map((x) => [x.id, x.status]));
+    expect(st).toEqual({ [acp1.id]: 'ENCERRADO', [r.acompanhamento_id]: 'AGENDADO' });
+    // A falta só vale depois do início: simula o horário passado direto no banco.
+    await comOrg(org.id, (tx) => tx.query(`UPDATE agendamentos SET inicio_em = now() - interval '2 hours', fim_em = now() - interval '1 hour' WHERE organizacao_id = $1 AND id = $2`, [org.id, a.id]));
+    await comOrg(org.id, async (tx) => finalizar(tx, org, (await tx.query('SELECT * FROM agendamentos WHERE organizacao_id = $1 AND id = $2', [org.id, a.id])).rows[0], 'usr_julia', 'FALTOU', log));
+    const [acp2] = await ler('SELECT status, motivo_encerramento FROM acompanhamentos WHERE organizacao_id = $1 AND id = $2', [org.id, r.acompanhamento_id]);
+    expect(acp2.status).toBe('ENCERRADO');
+    expect(acp2.motivo_encerramento).toMatch(/Falta registrada/);
+  });
+});
+
 describe('agenda: seed da linha do tempo', () => {
   it('reproduz os estados do cenário (cirurgias, retornos, falta, cancelamento)', async () => {
     const st = Object.fromEntries((await ler(`SELECT id, status FROM agendamentos WHERE organizacao_id = $1 AND id = ANY($2)`, [org.id, ['agd_rafael_cirurgia', 'agd_beatriz_cirurgia', 'agd_helena_retorno', 'agd_sonia_consulta', 'agd_paulo_consulta', 'agd_marcos_retorno']])).map((x) => [x.id, x.status]));
@@ -101,5 +143,11 @@ describe('agenda: seed da linha do tempo', () => {
     });
     const [beatriz] = await ler('SELECT historico FROM agendamentos WHERE organizacao_id = $1 AND id = $2', [org.id, 'agd_beatriz_cirurgia']);
     expect(beatriz.historico.map((h: any) => h.acao)).toEqual(['CRIADO', 'CONFIRMADO']);
+  });
+  it('liga as cirurgias do cenário aos acompanhamentos, nos dois sentidos', async () => {
+    const ag = await ler(`SELECT id, acompanhamento_id FROM agendamentos WHERE organizacao_id = $1 AND id = ANY($2) ORDER BY id`, [org.id, ['agd_beatriz_cirurgia', 'agd_rafael_cirurgia']]);
+    expect(ag).toEqual([{ id: 'agd_beatriz_cirurgia', acompanhamento_id: 'acp_beatriz' }, { id: 'agd_rafael_cirurgia', acompanhamento_id: 'acp_rafael' }]);
+    const acp = await ler(`SELECT id, agendamento_id FROM acompanhamentos WHERE organizacao_id = $1 AND id = ANY($2) ORDER BY id`, [org.id, ['acp_beatriz', 'acp_rafael']]);
+    expect(acp).toEqual([{ id: 'acp_beatriz', agendamento_id: 'agd_beatriz_cirurgia' }, { id: 'acp_rafael', agendamento_id: 'agd_rafael_cirurgia' }]);
   });
 });

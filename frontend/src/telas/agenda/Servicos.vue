@@ -18,6 +18,7 @@ import Cartao from '@/ds/Cartao.vue';
 import CampoTexto from '@/ds/CampoTexto.vue';
 import Conflito from '@/ds/Conflito.vue';
 import Dialogo from '@/ds/Dialogo.vue';
+import Selecao from '@/ds/Selecao.vue';
 import EstadoConsulta from '@/ds/EstadoConsulta.vue';
 
 const sessao = useSessaoStore();
@@ -43,12 +44,15 @@ const aberto = ref(false);
 const editandoId = ref<string | null>(null);
 const etag = ref<string | null>(null);
 const conflito = ref(false);
-const f = reactive({ nome: '', categoria: 'CONSULTA' as 'CONSULTA' | 'PROCEDIMENTO', duracao: '30', autoagendavel: false, profissionaisIds: [] as string[], orientacoes: '' });
+const f = reactive({ nome: '', categoria: 'CONSULTA' as 'CONSULTA' | 'PROCEDIMENTO', duracao: '30', autoagendavel: false, profissionaisIds: [] as string[], orientacoes: '', protocoloId: '' });
+// Protocolo sugerido (RN-AGE-008): só procedimento e só com o módulo de acompanhamento.
+const temAcompanhamento = computed(() => sessao.modulos.has('acompanhamento'));
+const protocolos = useQuery({ queryKey: ['protocolos', 'ATIVO'], queryFn: () => ok(api().GET('/v1/protocolos', { params: { query: { status: 'ATIVO', limite: 100 } } })), enabled: temAcompanhamento });
 function abrir(s?: Servico) {
   editandoId.value = s?.id ?? null; conflito.value = false; salvar.reset();
   Object.assign(f, s
-    ? { nome: s.nome, categoria: s.categoria, duracao: String(s.duracaoMinutos), autoagendavel: s.autoagendavel, profissionaisIds: s.profissionais.map((p) => p.usuarioId), orientacoes: s.orientacoes ?? '' }
-    : { nome: '', categoria: 'CONSULTA', duracao: '30', autoagendavel: false, profissionaisIds: profissionais.value.length === 1 ? [profissionais.value[0].id] : [], orientacoes: '' });
+    ? { nome: s.nome, categoria: s.categoria, duracao: String(s.duracaoMinutos), autoagendavel: s.autoagendavel, profissionaisIds: s.profissionais.map((p) => p.usuarioId), orientacoes: s.orientacoes ?? '', protocoloId: s.protocoloId ?? '' }
+    : { nome: '', categoria: 'CONSULTA', duracao: '30', autoagendavel: false, profissionaisIds: profissionais.value.length === 1 ? [profissionais.value[0].id] : [], orientacoes: '', protocoloId: '' });
   etag.value = null;
   if (s) void comEtag(api().GET('/v1/agenda/servicos/{servicoId}', { params: { path: { servicoId: s.id } } })).then((r) => { etag.value = r.etag; });
   aberto.value = true;
@@ -56,7 +60,7 @@ function abrir(s?: Servico) {
 const valido = computed(() => f.nome.trim().length >= 2 && Number(f.duracao) >= 5 && Number(f.duracao) <= 720 && f.profissionaisIds.length > 0);
 const salvar = useMutation({
   mutationFn: () => {
-    const body = { nome: f.nome.trim(), categoria: f.categoria, duracaoMinutos: Number(f.duracao), autoagendavel: f.categoria === 'CONSULTA' && f.autoagendavel, profissionaisIds: f.profissionaisIds, orientacoes: f.orientacoes.trim() || null };
+    const body = { nome: f.nome.trim(), categoria: f.categoria, duracaoMinutos: Number(f.duracao), autoagendavel: f.categoria === 'CONSULTA' && f.autoagendavel, profissionaisIds: f.profissionaisIds, orientacoes: f.orientacoes.trim() || null, ...(temAcompanhamento.value ? { protocoloId: f.categoria === 'PROCEDIMENTO' && f.protocoloId ? f.protocoloId : null } : {}) };
     return editandoId.value
       ? ok(api().PUT('/v1/agenda/servicos/{servicoId}', { params: { path: { servicoId: editandoId.value }, header: { 'If-Match': etag.value ?? '' } }, body }))
       : ok(api().POST('/v1/agenda/servicos', { body }));
@@ -117,6 +121,7 @@ const CATEGORIA = computed(() => ({ CONSULTA: capitalizar(termo.value('consulta'
           <span>{{ capitalizar(termo('paciente').singular) }} pode marcar pelo app
             <span class="block text-sm text-secundario">{{ f.categoria === 'PROCEDIMENTO' ? `${capitalizar(termo('procedimento').plural)} são marcados só pela equipe.` : 'Vale quando o autoagendamento está ligado nas configurações.' }}</span></span>
         </label>
+        <Selecao v-if="temAcompanhamento && f.categoria === 'PROCEDIMENTO'" v-model="f.protocoloId" :rotulo="`${capitalizar(termo('protocolo').singular)} sugerido ao marcar`" vazio="Nenhum" :opcoes="(protocolos.data.value?.itens ?? []).map((p) => ({ valor: p.id, rotulo: p.nome }))" />
         <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">Preparo (mostrado ao {{ termo('paciente').singular }})</span>
           <textarea v-model="f.orientacoes" rows="2" maxlength="2000" class="rounded-xl border-2 border-zinc-300 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-800" /></label>
         <Botao tipo="submit" bloco :carregando="salvar.isPending.value" :desabilitado="!valido || (!!editandoId && !etag)">Salvar</Botao>
