@@ -48,6 +48,10 @@ export function iniciarTempoReal(o: OpcoesTempoReal) {
     if (r.status === 401) { if (!(await o.renovar())) parar.abort(); return 'falhou'; }
     if (!r.ok || !r.body) return 'falhou';
     o.aoEstado?.('conectado');
+    // Sem cursor (primeira conexão, ou queda antes de qualquer evento) o servidor só manda o que vier
+    // DAQUI EM DIANTE: o que aconteceu entre a tela carregar e o stream abrir se perderia. Ressincroniza
+    // uma vez agora que o stream está aberto — daqui para frente nada escapa.
+    if (!ultimoId) cursorExpirado();
     const parser = criarParserSse((m) => {
       if (m.event === 'erro' && m.data.includes('CURSOR_EXPIRADO')) { ultimoId = null; cursorExpirado(); return; }
       try { const e = JSON.parse(m.data) as EventoApp; if (m.id) ultimoId = m.id; if (e?.id && e.tipo) entregar(e, true); } catch { /* evento malformado: ignora */ }
