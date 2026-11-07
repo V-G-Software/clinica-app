@@ -549,7 +549,7 @@ export interface paths {
          * Inicia o envio de um arquivo
          * @description Devolve as instruções de envio. O frontend envia os bytes para `envio.url` com o método e
          *     os cabeçalhos indicados e depois chama `/concluir`. JPEG, PNG e WebP; PDF só com finalidade `EXAME`
-         *     (ADR-0017: antivírus e saneamento; recusado vira `REJEITADO`). Outro tipo → 422 `TIPO_ARQUIVO_NAO_PERMITIDO`.
+         *     (ADR-0017: antivírus e saneamento; recusado vira `REJEITADO`). Outro tipo → 415 `TIPO_ARQUIVO_NAO_PERMITIDO`.
          */
         post: operations["arquivosIniciarEnvio"];
         delete?: never;
