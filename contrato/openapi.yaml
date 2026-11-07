@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Contrato da API — {{PRODUTO}}
-  version: 1.1.0-rc.2
+  version: 1.2.0-rc.1
   summary: Padrão que todo backend de organização segue para atender o frontend único (PWA).
   description: |
     Fonte da verdade do contrato v1. Spec-first (ADR-0001): tipos, cliente, mock e suíte
@@ -54,6 +54,8 @@ tags:
     description: Módulo `equipe` e configuração da organização (seção 9.5).
   - name: agenda
     description: Módulo `agenda` — consultas, procedimentos (cirurgias), grade, bloqueios e autoagendamento (ADR-0016).
+  - name: exames
+    description: Módulo `exames` — pedidos de exame, resultados (imagem e PDF) e revisão (ADR-0017).
 security:
   - bearer: []
 
@@ -712,7 +714,8 @@ paths:
       summary: Inicia o envio de um arquivo
       description: |
         Devolve as instruções de envio. O frontend envia os bytes para `envio.url` com o método e
-        os cabeçalhos indicados e depois chama `/concluir`. No MVP, só JPEG, PNG e WebP.
+        os cabeçalhos indicados e depois chama `/concluir`. JPEG, PNG e WebP; PDF só com finalidade `EXAME`
+        (ADR-0017: antivírus e saneamento; recusado vira `REJEITADO`). Outro tipo → 415 `TIPO_ARQUIVO_NAO_PERMITIDO`.
       x-idempotente: true
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -2244,6 +2247,219 @@ paths:
               schema: { $ref: '#/components/schemas/Agendamento' }
         default: { $ref: '#/components/responses/Erro' }
 
+  # ───────────────────────────── Exames (ADR-0017) ─────────────────────────────
+  /v1/exames/pedidos:
+    get:
+      operationId: examesListarPedidos
+      tags: [exames]
+      summary: Pedidos de exame (equipe; o paciente vê só os dos pacientes vinculados)
+      parameters:
+        - { name: pacienteId, in: query, required: false, schema: { $ref: '#/components/schemas/Id' } }
+        - { name: status, in: query, required: false, schema: { $ref: '#/components/schemas/StatusPedidoExame' } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Pedidos, do mais recente para o mais antigo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    required: [itens]
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/PedidoExame' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: examesCriarPedido
+      tags: [exames]
+      summary: Registra um pedido de exame (RN-EXA-002)
+      description: Só quem tem `exames.pedido.criar` (profissional e gestor). Avisa o paciente (`EXAME_PEDIDO`).
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [pacienteId, itens]
+              properties:
+                pacienteId: { $ref: '#/components/schemas/Id' }
+                itens:
+                  type: array
+                  minItems: 1
+                  maxItems: 30
+                  items: { $ref: '#/components/schemas/ItemPedidoExame' }
+                orientacoes: { type: [string, 'null'], maxLength: 2000, description: Orientações gerais ao paciente. }
+                observacao: { type: [string, 'null'], maxLength: 2000, description: Interna da equipe; o paciente não vê. }
+      responses:
+        '201':
+          description: Pedido registrado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PedidoExame' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/exames/pedidos/{pedidoId}:
+    get:
+      operationId: examesObterPedido
+      tags: [exames]
+      summary: Pedido de exame com os resultados ligados
+      parameters:
+        - $ref: '#/components/parameters/PedidoExameId'
+      responses:
+        '200':
+          description: Pedido
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PedidoExame' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/exames/pedidos/{pedidoId}/concluir:
+    post:
+      operationId: examesConcluirPedido
+      tags: [exames]
+      summary: Conclui o pedido (equipe); resultados ainda podem ser consultados, mas não ligados a ele
+      parameters:
+        - $ref: '#/components/parameters/PedidoExameId'
+      responses:
+        '200':
+          description: Pedido concluído (repetir não muda nada)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PedidoExame' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/exames/pedidos/{pedidoId}/cancelar:
+    post:
+      operationId: examesCancelarPedido
+      tags: [exames]
+      summary: Cancela o pedido (equipe), com motivo; nada é apagado
+      parameters:
+        - $ref: '#/components/parameters/PedidoExameId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [motivo]
+              properties:
+                motivo: { type: string, minLength: 3, maxLength: 1000 }
+      responses:
+        '200':
+          description: Pedido cancelado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PedidoExame' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/exames/resultados:
+    get:
+      operationId: examesListarResultados
+      tags: [exames]
+      summary: Resultados de exame (equipe; o paciente vê só os dos pacientes vinculados)
+      parameters:
+        - { name: pacienteId, in: query, required: false, schema: { $ref: '#/components/schemas/Id' } }
+        - { name: pedidoId, in: query, required: false, schema: { $ref: '#/components/schemas/Id' } }
+        - { name: status, in: query, required: false, schema: { $ref: '#/components/schemas/StatusResultadoExame' } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Resultados, do mais recente para o mais antigo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    required: [itens]
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/ResultadoExame' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: examesEnviarResultado
+      tags: [exames]
+      summary: Envia um resultado de exame (paciente ou equipe; RN-EXA-003)
+      description: |
+        Os arquivos precisam estar `DISPONIVEL`, com finalidade `EXAME`, enviados pela própria conta.
+        O pedido, se informado, precisa ser do mesmo paciente e estar `ABERTO`. O paciente só envia com
+        `pacienteEnviaResultados` ligado. Avisa quem revisa (`EXAME_RESULTADO`).
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [pacienteId, titulo, arquivosIds]
+              properties:
+                pacienteId: { $ref: '#/components/schemas/Id' }
+                pedidoId: { $ref: '#/components/schemas/IdOuNulo' }
+                titulo: { type: string, minLength: 2, maxLength: 200, description: 'Por exemplo, "Hemograma completo".' }
+                dataColeta: { oneOf: [{ $ref: '#/components/schemas/Data' }, { type: 'null' }] }
+                arquivosIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 10
+                  uniqueItems: true
+                  items: { $ref: '#/components/schemas/Id' }
+                comentario: { type: [string, 'null'], maxLength: 2000 }
+      responses:
+        '201':
+          description: Resultado enviado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoExame' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/exames/resultados/{resultadoId}:
+    get:
+      operationId: examesObterResultado
+      tags: [exames]
+      summary: Resultado de exame com os arquivos (URLs assinadas)
+      parameters:
+        - $ref: '#/components/parameters/ResultadoExameId'
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoExame' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/exames/resultados/{resultadoId}/revisar:
+    post:
+      operationId: examesRevisarResultado
+      tags: [exames]
+      summary: Marca o resultado como revisado, com nota opcional ao paciente (RN-EXA-004)
+      description: Idempotente — revisar de novo não muda o autor nem a data da revisão.
+      parameters:
+        - $ref: '#/components/parameters/ResultadoExameId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                nota: { type: [string, 'null'], maxLength: 2000, description: Visível ao paciente. }
+      responses:
+        '200':
+          description: Resultado revisado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResultadoExame' }
+        default: { $ref: '#/components/responses/Erro' }
+
 components:
   securitySchemes:
     bearer:
@@ -2352,6 +2568,16 @@ components:
       schema: { $ref: '#/components/schemas/Id' }
     AgendamentoId:
       name: agendamentoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    PedidoExameId:
+      name: pedidoId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    ResultadoExameId:
+      name: resultadoId
       in: path
       required: true
       schema: { $ref: '#/components/schemas/Id' }
@@ -2505,7 +2731,7 @@ components:
     ModuloId:
       type: string
       x-catalogo-nomes: true
-      enum: [pacientes, acompanhamento, chat, equipe, agenda]
+      enum: [pacientes, acompanhamento, chat, equipe, agenda, exames]
     Tela:
       type: string
       x-catalogo-nomes: true
@@ -2534,19 +2760,25 @@ components:
         - agenda.grade
         - agenda.meus
         - agenda.marcar
+        - exames.lista
+        - exames.novo
+        - exames.pedido
+        - exames.resultado
+        - exames.meus
+        - exames.enviar
     TermoChave:
       type: string
       x-catalogo-nomes: true
-      enum: [organizacao, paciente, responsavel, profissional, acompanhamento, protocolo, procedimento, checkin, conversa, consulta]
+      enum: [organizacao, paciente, responsavel, profissional, acompanhamento, protocolo, procedimento, checkin, conversa, consulta, exame]
     ContadorChave:
       type: string
       x-catalogo-nomes: true
-      enum: [chat.naoLidas, notificacoes.naoLidas, acompanhamento.alertasAbertos, acompanhamento.checkinsPendentes]
+      enum: [chat.naoLidas, notificacoes.naoLidas, acompanhamento.alertasAbertos, acompanhamento.checkinsPendentes, exames.resultadosParaRevisar]
     Icone:
       type: string
       x-catalogo-nomes: true
       description: Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.
-      enum: [house, users, user, user-plus, activity, heart-pulse, message-circle, bell, settings, clipboard-list, calendar, stethoscope, paw-print, circle-alert, file-text, camera, credit-card, circle-help, log-out, calendar-plus, calendar-check, calendar-clock]
+      enum: [house, users, user, user-plus, activity, heart-pulse, message-circle, bell, settings, clipboard-list, calendar, stethoscope, paw-print, circle-alert, file-text, camera, credit-card, circle-help, log-out, calendar-plus, calendar-check, calendar-clock, flask-conical]
     CodigoErro:
       type: string
       enum:
@@ -2577,7 +2809,7 @@ components:
         - HORARIO_INDISPONIVEL
     TipoNotificacao:
       type: string
-      enum: [CHAT_MENSAGEM, CHECKIN_DISPONIVEL, CHECKIN_LEMBRETE, ALERTA_CRIADO, ACOMPANHAMENTO_INICIADO, ACOMPANHAMENTO_CONCLUIDO, CONVITE_ACEITO, SISTEMA, AGENDAMENTO_CRIADO, AGENDAMENTO_ALTERADO, AGENDAMENTO_LEMBRETE]
+      enum: [CHAT_MENSAGEM, CHECKIN_DISPONIVEL, CHECKIN_LEMBRETE, ALERTA_CRIADO, ACOMPANHAMENTO_INICIADO, ACOMPANHAMENTO_CONCLUIDO, CONVITE_ACEITO, SISTEMA, AGENDAMENTO_CRIADO, AGENDAMENTO_ALTERADO, AGENDAMENTO_LEMBRETE, EXAME_PEDIDO, EXAME_RESULTADO, EXAME_REVISADO]
     TipoEvento:
       type: string
       x-catalogo-nomes: true
@@ -2596,9 +2828,11 @@ components:
         - sessao.encerrada
         - agenda.agendamento.criado
         - agenda.agendamento.atualizado
+        - exames.pedido.atualizado
+        - exames.resultado.atualizado
     TipoSecao:
       type: string
-      enum: [ACOMPANHAMENTO_ATUAL, CHECKINS_PENDENTES, ALERTAS_ABERTOS, CHECKINS_DO_DIA, ACOMPANHAMENTOS_ATIVOS, CONVERSAS_RECENTES, ATALHOS, AVISO, CONTATO_ORGANIZACAO, PROXIMA_CONSULTA, AGENDA_DO_DIA]
+      enum: [ACOMPANHAMENTO_ATUAL, CHECKINS_PENDENTES, ALERTAS_ABERTOS, CHECKINS_DO_DIA, ACOMPANHAMENTOS_ATIVOS, CONVERSAS_RECENTES, ATALHOS, AVISO, CONTATO_ORGANIZACAO, PROXIMA_CONSULTA, AGENDA_DO_DIA, RESULTADOS_PARA_REVISAR, EXAMES_PENDENTES]
     Severidade:
       type: string
       enum: [BAIXA, MEDIA, ALTA]
@@ -3011,6 +3245,10 @@ components:
         - agenda.agendamento.criar
         - agenda.agendamento.gerenciar
         - agenda.configuracao.gerenciar
+        - exames.exame.ler
+        - exames.pedido.criar
+        - exames.resultado.enviar
+        - exames.resultado.revisar
     Capacidades:
       type: object
       additionalProperties: false
@@ -3039,6 +3277,10 @@ components:
             tiposPermitidos:
               type: array
               items: { type: string }
+            tiposPermitidosExame:
+              type: array
+              items: { type: string }
+              description: Tipos aceitos na finalidade `EXAME` (inclui `application/pdf`; ADR-0017). Ausente sem o módulo `exames`.
     ContatoOrganizacao:
       type: object
       additionalProperties: false
@@ -3186,6 +3428,23 @@ components:
                   data: { $ref: '#/components/schemas/Data' }
                   total: { type: integer, minimum: 0 }
                   itens: { type: array, items: { $ref: '#/components/schemas/AgendamentoResumo' } }
+        - if: { properties: { tipo: { const: RESULTADOS_PARA_REVISAR } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [total, itens]
+                properties:
+                  total: { type: integer, minimum: 0 }
+                  itens: { type: array, items: { $ref: '#/components/schemas/ResultadoExame' } }
+        - if: { properties: { tipo: { const: EXAMES_PENDENTES } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [itens]
+                properties:
+                  itens: { type: array, items: { $ref: '#/components/schemas/PedidoExame' } }
 
     # ─────────── Notificações ───────────
     Notificacao:
@@ -3230,7 +3489,7 @@ components:
     # ─────────── Arquivos ───────────
     FinalidadeArquivo:
       type: string
-      enum: [CHECKIN, CHAT, PERFIL, ORGANIZACAO]
+      enum: [CHECKIN, CHAT, PERFIL, ORGANIZACAO, EXAME]
     EnvioArquivo:
       type: object
       additionalProperties: false
@@ -3309,6 +3568,10 @@ components:
           then: { properties: { dados: { required: [motivo] } } }
         - if: { properties: { tipo: { anyOf: [{ const: agenda.agendamento.criado }, { const: agenda.agendamento.atualizado }] } } }
           then: { properties: { dados: { required: [agendamentoId] } } }
+        - if: { properties: { tipo: { const: exames.pedido.atualizado } } }
+          then: { properties: { dados: { required: [pedidoId] } } }
+        - if: { properties: { tipo: { const: exames.resultado.atualizado } } }
+          then: { properties: { dados: { required: [resultadoId] } } }
 
     # ─────────── Pacientes ───────────
     TipoPaciente:
@@ -4007,6 +4270,96 @@ components:
             categoria: { $ref: '#/components/schemas/CategoriaServico' }
         profissional: { $ref: '#/components/schemas/Referencia' }
         paciente: { $ref: '#/components/schemas/Referencia' }
+    # ─────────── Exames (ADR-0017) ───────────
+    StatusPedidoExame:
+      type: string
+      enum: [ABERTO, CONCLUIDO, CANCELADO]
+    StatusResultadoExame:
+      type: string
+      enum: [AGUARDANDO_REVISAO, REVISADO]
+    ItemPedidoExame:
+      type: object
+      additionalProperties: false
+      required: [nome]
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 200 }
+        orientacoes: { type: [string, 'null'], maxLength: 1000, description: 'Preparo do item (por exemplo, "jejum de 8 horas").' }
+    ResultadoExameResumo:
+      type: object
+      additionalProperties: false
+      required: [id, titulo, status, criadoEm]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        titulo: { type: string }
+        status: { $ref: '#/components/schemas/StatusResultadoExame' }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+    PedidoExame:
+      type: object
+      additionalProperties: false
+      required: [id, paciente, solicitante, itens, orientacoes, observacao, status, motivoCancelamento, resultados, criadoEm, concluidoEm, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        solicitante: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        itens:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [nome, orientacoes]
+            properties:
+              nome: { type: string }
+              orientacoes: { type: [string, 'null'] }
+        orientacoes: { type: [string, 'null'] }
+        observacao: { type: [string, 'null'], description: 'Interna da equipe; sempre `null` para o paciente.' }
+        status: { $ref: '#/components/schemas/StatusPedidoExame' }
+        motivoCancelamento: { type: [string, 'null'] }
+        resultados:
+          type: array
+          description: Resultados ligados ao pedido, do mais antigo para o mais recente.
+          items: { $ref: '#/components/schemas/ResultadoExameResumo' }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        concluidoEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [ENVIAR_RESULTADO, CONCLUIR, CANCELAR] }
+    ResultadoExame:
+      type: object
+      additionalProperties: false
+      required: [id, paciente, pedidoId, titulo, dataColeta, arquivos, comentario, origem, enviadoPor, status, revisao, criadoEm, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        pedidoId: { $ref: '#/components/schemas/IdOuNulo' }
+        titulo: { type: string }
+        dataColeta: { oneOf: [{ $ref: '#/components/schemas/Data' }, { type: 'null' }] }
+        arquivos:
+          type: array
+          items: { $ref: '#/components/schemas/Arquivo' }
+        comentario: { type: [string, 'null'], description: Comentário de quem enviou. }
+        origem: { type: string, enum: [PACIENTE, EQUIPE] }
+        enviadoPor: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        status: { $ref: '#/components/schemas/StatusResultadoExame' }
+        revisao:
+          oneOf:
+            - type: 'null'
+            - type: object
+              additionalProperties: false
+              required: [por, revisadoEm, nota]
+              properties:
+                por: { $ref: '#/components/schemas/ReferenciaUsuario' }
+                revisadoEm: { $ref: '#/components/schemas/DataHora' }
+                nota: { type: [string, 'null'], description: Visível ao paciente. }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [REVISAR] }
+    ConfigExames:
+      type: object
+      additionalProperties: false
+      required: [pacienteEnviaResultados]
+      properties:
+        pacienteEnviaResultados: { type: boolean, description: 'Paciente envia resultados pelo app (RN-EXA-003). Padrão: `true`.' }
     ConfigAgenda:
       type: object
       additionalProperties: false
@@ -4059,6 +4412,9 @@ components:
         agenda:
           description: Presente quando o módulo `agenda` está contratado.
           $ref: '#/components/schemas/ConfigAgenda'
+        exames:
+          description: Presente quando o módulo `exames` está contratado.
+          $ref: '#/components/schemas/ConfigExames'
         acoesPermitidas:
           type: array
           items: { type: string, enum: [EDITAR] }
@@ -4110,3 +4466,10 @@ components:
             cancelamentoAteHoras: { type: integer, minimum: 0, maximum: 720 }
             lembreteHorasAntes: { type: integer, minimum: 1, maximum: 168 }
             intervaloMinutos: { type: integer, enum: [5, 10, 15, 20, 30, 60] }
+        exames:
+          type: object
+          description: 'Exige o módulo `exames` (senão `MODULO_NAO_CONTRATADO`).'
+          additionalProperties: false
+          minProperties: 1
+          properties:
+            pacienteEnviaResultados: { type: boolean }

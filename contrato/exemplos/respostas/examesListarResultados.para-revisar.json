@@ -1,0 +1,48 @@
+{
+  "requisicao": "GET /v1/exames/resultados?status=AGUARDANDO_REVISAO",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "res_beatriz_hemograma",
+        "paciente": {
+          "id": "pac_beatriz",
+          "nome": "Beatriz Costa"
+        },
+        "pedidoId": "ped_beatriz_preop",
+        "titulo": "Hemograma completo",
+        "dataColeta": "2026-11-05",
+        "arquivos": [
+          {
+            "id": "arq_0mw4x9xc00005w",
+            "nome": "resultado.png",
+            "tipo": "image/png",
+            "tamanhoBytes": 179,
+            "finalidade": "EXAME",
+            "status": "DISPONIVEL",
+            "motivoRejeicao": null,
+            "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc00005w?exp=1794144900106&assinatura=mw7vjswa.00005w",
+            "urlMiniatura": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc00005w?exp=1794144900106&assinatura=mw7vjswa.00005w&miniatura=1",
+            "urlsExpiramEm": "2026-11-08T13:35:00Z",
+            "criadoEm": "2026-11-06T12:00:00Z"
+          }
+        ],
+        "comentario": "Fiz no laboratório perto de casa.",
+        "origem": "PACIENTE",
+        "enviadoPor": {
+          "usuarioId": "usr_beatriz",
+          "nome": "Beatriz Costa",
+          "perfil": "PACIENTE"
+        },
+        "status": "AGUARDANDO_REVISAO",
+        "revisao": null,
+        "criadoEm": "2026-11-06T12:00:00Z",
+        "acoesPermitidas": [
+          "REVISAR"
+        ]
+      }
+    ],
+    "proximoCursor": null
+  }
+}

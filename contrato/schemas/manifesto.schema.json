@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://exemplo.com.br/contrato/v1/manifesto.schema.json",
   "title": "Manifesto da sessão (GET /v1/sessao)",
-  "x-gerado-de": "contrato/openapi.yaml#/$defs/Manifesto (1.1.0-rc.2)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Manifesto (1.2.0-rc.1)",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -291,7 +291,8 @@
         "procedimento",
         "checkin",
         "conversa",
-        "consulta"
+        "consulta",
+        "exame"
       ]
     },
     "Termo": {
@@ -417,7 +418,8 @@
         "acompanhamento",
         "chat",
         "equipe",
-        "agenda"
+        "agenda",
+        "exames"
       ]
     },
     "ConfigPacientes": {
@@ -655,7 +657,8 @@
         "log-out",
         "calendar-plus",
         "calendar-check",
-        "calendar-clock"
+        "calendar-clock",
+        "flask-conical"
       ]
     },
     "Destino": {
@@ -703,7 +706,13 @@
         "agenda.servicos",
         "agenda.grade",
         "agenda.meus",
-        "agenda.marcar"
+        "agenda.marcar",
+        "exames.lista",
+        "exames.novo",
+        "exames.pedido",
+        "exames.resultado",
+        "exames.meus",
+        "exames.enviar"
       ]
     },
     "ContadorChave": {
@@ -713,7 +722,8 @@
         "chat.naoLidas",
         "notificacoes.naoLidas",
         "acompanhamento.alertasAbertos",
-        "acompanhamento.checkinsPendentes"
+        "acompanhamento.checkinsPendentes",
+        "exames.resultadosParaRevisar"
       ]
     },
     "Permissao": {
@@ -743,7 +753,11 @@
         "agenda.agendamento.ler",
         "agenda.agendamento.criar",
         "agenda.agendamento.gerenciar",
-        "agenda.configuracao.gerenciar"
+        "agenda.configuracao.gerenciar",
+        "exames.exame.ler",
+        "exames.pedido.criar",
+        "exames.resultado.enviar",
+        "exames.resultado.revisar"
       ]
     },
     "Capacidades": {
@@ -813,6 +827,13 @@
               "items": {
                 "type": "string"
               }
+            },
+            "tiposPermitidosExame": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Tipos aceitos na finalidade `EXAME` (inclui `application/pdf`; ADR-0017). Ausente sem o módulo `exames`."
             }
           }
         }

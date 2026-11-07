@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.1.0-rc.1"
+      "versao": "1.2.0-rc.1"
     },
     "organizacao": {
       "id": "org_vet",
@@ -86,6 +86,11 @@
         "singular": "consulta",
         "plural": "consultas",
         "genero": "F"
+      },
+      "exame": {
+        "singular": "exame",
+        "plural": "exames",
+        "genero": "M"
       }
     },
     "modulos": [
@@ -164,6 +169,13 @@
           "lembreteHorasAntes": 24,
           "intervaloMinutos": 30
         }
+      },
+      {
+        "id": "exames",
+        "versao": "1.0",
+        "config": {
+          "pacienteEnviaResultados": false
+        }
       }
     ],
     "navegacao": [
@@ -196,6 +208,15 @@
         }
       },
       {
+        "id": "meus-exames",
+        "rotulo": "Meus exames",
+        "icone": "flask-conical",
+        "grupo": "PRINCIPAL",
+        "destino": {
+          "tela": "exames.meus"
+        }
+      },
+      {
         "id": "conversas",
         "rotulo": "Conversas",
         "icone": "message-circle",
@@ -209,7 +230,7 @@
         "id": "notificacoes",
         "rotulo": "Notificações",
         "icone": "bell",
-        "grupo": "PRINCIPAL",
+        "grupo": "SECUNDARIO",
         "destino": {
           "tela": "notificacoes"
         },
@@ -232,7 +253,8 @@
       "acompanhamento.checkin.responder",
       "chat.conversa.ler",
       "chat.mensagem.enviar",
-      "agenda.agendamento.ler"
+      "agenda.agendamento.ler",
+      "exames.exame.ler"
     ],
     "capacidades": {
       "tempoReal": {
@@ -249,14 +271,21 @@
           "image/jpeg",
           "image/png",
           "image/webp"
+        ],
+        "tiposPermitidosExame": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "application/pdf"
         ]
       }
     },
     "contadores": {
-      "notificacoes.naoLidas": 15,
+      "notificacoes.naoLidas": 16,
       "chat.naoLidas": 3,
       "acompanhamento.alertasAbertos": 0,
-      "acompanhamento.checkinsPendentes": 0
+      "acompanhamento.checkinsPendentes": 0,
+      "exames.resultadosParaRevisar": 0
     },
     "pacientesVinculados": [
       {

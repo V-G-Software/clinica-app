@@ -58,7 +58,8 @@
     "procedimento": { "singular": "cirurgia", "plural": "cirurgias", "genero": "F" },
     "checkin": { "singular": "check-in", "plural": "check-ins", "genero": "M" },
     "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" },
-    "consulta": { "singular": "consulta", "plural": "consultas", "genero": "F" }
+    "consulta": { "singular": "consulta", "plural": "consultas", "genero": "F" },
+    "exame": { "singular": "exame", "plural": "exames", "genero": "M" }
   },
   "modulos": [
     { "id": "pacientes", "versao": "1.0", "config": { "formularioCadastroId": "frm_cadastro_pet", "relacoesPermitidas": ["ANIMAL"] } },
@@ -82,12 +83,13 @@
       }
     },
     { "id": "equipe", "versao": "1.0", "config": {} },
-    { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": false, "antecedenciaMinimaHoras": 4, "janelaDias": 60, "cancelamentoAteHoras": 12, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } }
+    { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": false, "antecedenciaMinimaHoras": 4, "janelaDias": 60, "cancelamentoAteHoras": 12, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } },
+    { "id": "exames", "versao": "1.0", "config": { "pacienteEnviaResultados": false } }
   ],
   "capacidades": {
     "tempoReal": { "modo": "POLLING", "intervaloPollingSegundos": 15 },
     "push": { "modo": "WEB_PUSH", "chavePublicaVapid": "BExemploDeChavePublicaVapidEmBase64Url" },
-    "upload": { "tamanhoMaximoBytes": 15728640, "tiposPermitidos": ["image/jpeg", "image/png", "image/webp"] }
+    "upload": { "tamanhoMaximoBytes": 15728640, "tiposPermitidos": ["image/jpeg", "image/png", "image/webp"], "tiposPermitidosExame": ["image/jpeg", "image/png", "image/webp", "application/pdf"] }
   },
   "usuarios": [
     {
@@ -203,5 +205,13 @@
       { "id": "agd_thor_retorno", "pacienteId": "pac_thor", "servicoId": "srv_consulta_vet", "profissionalId": "usr_renata", "inicioEm": "2026-11-16T13:00:00Z",
         "criadoPor": "usr_diego", "criadoEm": "2026-11-06T16:00:00Z" }
     ]
+  },
+  "exames": {
+    "$comentario": "Exames (ADR-0017) sem envio pela tutora: só a equipe anexa resultados.",
+    "pedidos": [
+      { "id": "ped_thor_hemograma", "pacienteId": "pac_thor", "solicitanteId": "usr_renata", "criadoEm": "2026-11-06T16:30:00Z",
+        "itens": [{ "nome": "Hemograma", "orientacoes": "Jejum de 6 horas." }], "orientacoes": "Pode ser feito na clínica ou em laboratório veterinário.", "observacao": null }
+    ],
+    "resultados": []
   }
 }

@@ -1,0 +1,50 @@
+{
+  "requisicao": "GET /v1/exames/pedidos/ped_beatriz_preop",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "ped_beatriz_preop",
+    "paciente": {
+      "id": "pac_beatriz",
+      "nome": "Beatriz Costa"
+    },
+    "solicitante": {
+      "usuarioId": "usr_ana",
+      "nome": "Dra. Ana Lima",
+      "perfil": "PROFISSIONAL"
+    },
+    "itens": [
+      {
+        "nome": "Hemograma completo",
+        "orientacoes": null
+      },
+      {
+        "nome": "Coagulograma",
+        "orientacoes": "Jejum de 4 horas."
+      },
+      {
+        "nome": "Eletrocardiograma",
+        "orientacoes": null
+      }
+    ],
+    "orientacoes": "Faça os exames até 3 dias antes da cirurgia e envie os resultados pelo app.",
+    "observacao": "Pré-operatório da rinoplastia.",
+    "status": "ABERTO",
+    "motivoCancelamento": null,
+    "resultados": [
+      {
+        "id": "res_beatriz_hemograma",
+        "titulo": "Hemograma completo",
+        "status": "AGUARDANDO_REVISAO",
+        "criadoEm": "2026-11-06T12:00:00Z"
+      }
+    ],
+    "criadoEm": "2026-11-02T14:00:00Z",
+    "concluidoEm": null,
+    "acoesPermitidas": [
+      "ENVIAR_RESULTADO",
+      "CONCLUIR",
+      "CANCELAR"
+    ]
+  }
+}

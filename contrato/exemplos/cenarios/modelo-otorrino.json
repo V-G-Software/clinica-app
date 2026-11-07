@@ -58,7 +58,8 @@
     "procedimento": { "singular": "cirurgia", "plural": "cirurgias", "genero": "F" },
     "checkin": { "singular": "check-in", "plural": "check-ins", "genero": "M" },
     "conversa": { "singular": "conversa", "plural": "conversas", "genero": "F" },
-    "consulta": { "singular": "consulta", "plural": "consultas", "genero": "F" }
+    "consulta": { "singular": "consulta", "plural": "consultas", "genero": "F" },
+    "exame": { "singular": "exame", "plural": "exames", "genero": "M" }
   },
   "modulos": [
     { "id": "pacientes", "versao": "1.0", "config": { "formularioCadastroId": "frm_cadastro_basico", "relacoesPermitidas": ["PROPRIO", "DEPENDENTE"] } },
@@ -81,12 +82,13 @@
       }
     },
     { "id": "equipe", "versao": "1.0", "config": {} },
-    { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": true, "antecedenciaMinimaHoras": 2, "janelaDias": 30, "cancelamentoAteHoras": 24, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } }
+    { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": true, "antecedenciaMinimaHoras": 2, "janelaDias": 30, "cancelamentoAteHoras": 24, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } },
+    { "id": "exames", "versao": "1.0", "config": { "pacienteEnviaResultados": true } }
   ],
   "capacidades": {
     "tempoReal": { "modo": "SSE", "intervaloPollingSegundos": 20 },
     "push": { "modo": "WEB_PUSH", "chavePublicaVapid": "BExemploDeChavePublicaVapidEmBase64Url" },
-    "upload": { "tamanhoMaximoBytes": 15728640, "tiposPermitidos": ["image/jpeg", "image/png", "image/webp"] }
+    "upload": { "tamanhoMaximoBytes": 15728640, "tiposPermitidos": ["image/jpeg", "image/png", "image/webp"], "tiposPermitidosExame": ["image/jpeg", "image/png", "image/webp", "application/pdf"] }
   },
   "usuarios": [
     {
@@ -278,6 +280,24 @@
         "confirmar": { "em": "2026-11-07T15:00:00Z", "por": "usr_beatriz" } },
       { "id": "agd_rafael_retorno", "pacienteId": "pac_rafael", "servicoId": "srv_retorno", "profissionalId": "usr_ana", "inicioEm": "2026-11-11T12:00:00Z",
         "criadoPor": "usr_julia", "criadoEm": "2026-11-07T14:00:00Z" }
+    ]
+  },
+  "exames": {
+    "$comentario": "Exames (ADR-0017). Pedido pré-operatório da Beatriz com um resultado enviado por ela, aguardando revisão; tomografia do Marcos enviada pela equipe e revisada (pedido concluído).",
+    "pedidos": [
+      { "id": "ped_beatriz_preop", "pacienteId": "pac_beatriz", "solicitanteId": "usr_ana", "criadoEm": "2026-11-02T14:00:00Z",
+        "itens": [{ "nome": "Hemograma completo" }, { "nome": "Coagulograma", "orientacoes": "Jejum de 4 horas." }, { "nome": "Eletrocardiograma" }],
+        "orientacoes": "Faça os exames até 3 dias antes da cirurgia e envie os resultados pelo app.", "observacao": "Pré-operatório da rinoplastia." },
+      { "id": "ped_marcos_tc", "pacienteId": "pac_marcos", "solicitanteId": "usr_carlos", "criadoEm": "2026-10-20T14:00:00Z",
+        "itens": [{ "nome": "Tomografia computadorizada dos seios da face" }], "orientacoes": null, "observacao": null,
+        "concluir": { "em": "2026-10-30T13:10:00Z", "por": "usr_carlos" } }
+    ],
+    "resultados": [
+      { "id": "res_beatriz_hemograma", "pacienteId": "pac_beatriz", "pedidoId": "ped_beatriz_preop", "titulo": "Hemograma completo", "dataColeta": "2026-11-05",
+        "enviadoPor": "usr_beatriz", "criadoEm": "2026-11-06T12:00:00Z", "comentario": "Fiz no laboratório perto de casa." },
+      { "id": "res_marcos_tc", "pacienteId": "pac_marcos", "pedidoId": "ped_marcos_tc", "titulo": "Tomografia dos seios da face", "dataColeta": "2026-10-27",
+        "enviadoPor": "usr_julia", "criadoEm": "2026-10-28T15:00:00Z", "comentario": null,
+        "revisar": { "em": "2026-10-30T13:00:00Z", "por": "usr_carlos", "nota": "Sem alterações que impeçam a cirurgia." } }
     ]
   }
 }

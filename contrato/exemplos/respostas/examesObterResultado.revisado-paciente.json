@@ -1,0 +1,49 @@
+{
+  "requisicao": "GET /v1/exames/resultados/res_marcos_tc",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "res_marcos_tc",
+    "paciente": {
+      "id": "pac_marcos",
+      "nome": "Marcos Souza"
+    },
+    "pedidoId": "ped_marcos_tc",
+    "titulo": "Tomografia dos seios da face",
+    "dataColeta": "2026-10-27",
+    "arquivos": [
+      {
+        "id": "arq_0mvs8qqo000038",
+        "nome": "resultado.png",
+        "tipo": "image/png",
+        "tamanhoBytes": 179,
+        "finalidade": "EXAME",
+        "status": "DISPONIVEL",
+        "motivoRejeicao": null,
+        "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mvs8qqo000038?exp=1794144900110&assinatura=mw7vjswe.000038",
+        "urlMiniatura": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mvs8qqo000038?exp=1794144900110&assinatura=mw7vjswe.000038&miniatura=1",
+        "urlsExpiramEm": "2026-11-08T13:35:00Z",
+        "criadoEm": "2026-10-28T15:00:00Z"
+      }
+    ],
+    "comentario": null,
+    "origem": "EQUIPE",
+    "enviadoPor": {
+      "usuarioId": "usr_julia",
+      "nome": "Júlia Ramos",
+      "perfil": "SECRETARIA"
+    },
+    "status": "REVISADO",
+    "revisao": {
+      "por": {
+        "usuarioId": "usr_carlos",
+        "nome": "Dr. Carlos Nogueira",
+        "perfil": "PROFISSIONAL"
+      },
+      "revisadoEm": "2026-10-30T13:00:00Z",
+      "nota": "Sem alterações que impeçam a cirurgia."
+    },
+    "criadoEm": "2026-10-28T15:00:00Z",
+    "acoesPermitidas": []
+  }
+}

@@ -14,15 +14,62 @@
         }
       },
       {
+        "id": "resultados-para-revisar",
+        "tipo": "RESULTADOS_PARA_REVISAR",
+        "dados": {
+          "total": 1,
+          "itens": [
+            {
+              "id": "res_beatriz_hemograma",
+              "paciente": {
+                "id": "pac_beatriz",
+                "nome": "Beatriz Costa"
+              },
+              "pedidoId": "ped_beatriz_preop",
+              "titulo": "Hemograma completo",
+              "dataColeta": "2026-11-05",
+              "arquivos": [
+                {
+                  "id": "arq_0mw4x9xc00005w",
+                  "nome": "resultado.png",
+                  "tipo": "image/png",
+                  "tamanhoBytes": 179,
+                  "finalidade": "EXAME",
+                  "status": "DISPONIVEL",
+                  "motivoRejeicao": null,
+                  "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc00005w?exp=1794144900042&assinatura=mw7vjsui.00005w",
+                  "urlMiniatura": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc00005w?exp=1794144900042&assinatura=mw7vjsui.00005w&miniatura=1",
+                  "urlsExpiramEm": "2026-11-08T13:35:00Z",
+                  "criadoEm": "2026-11-06T12:00:00Z"
+                }
+              ],
+              "comentario": "Fiz no laboratório perto de casa.",
+              "origem": "PACIENTE",
+              "enviadoPor": {
+                "usuarioId": "usr_beatriz",
+                "nome": "Beatriz Costa",
+                "perfil": "PACIENTE"
+              },
+              "status": "AGUARDANDO_REVISAO",
+              "revisao": null,
+              "criadoEm": "2026-11-06T12:00:00Z",
+              "acoesPermitidas": [
+                "REVISAR"
+              ]
+            }
+          ]
+        }
+      },
+      {
         "id": "alertas",
         "tipo": "ALERTAS_ABERTOS",
         "dados": {
           "total": 1,
           "itens": [
             {
-              "id": "alr_0mw6e57uo00079",
+              "id": "alr_0mw6e57uo0007l",
               "acompanhamentoId": "acp_marcos",
-              "checkinId": "chk_0mw28tpc00004j",
+              "checkinId": "chk_0mw28tpc00004r",
               "paciente": {
                 "id": "pac_marcos",
                 "nome": "Marcos Souza"
@@ -53,7 +100,7 @@
           "expirados": 0,
           "itens": [
             {
-              "id": "chk_0mw28tpc00004k",
+              "id": "chk_0mw28tpc00004s",
               "acompanhamentoId": "acp_marcos",
               "paciente": {
                 "id": "pac_marcos",
@@ -65,7 +112,7 @@
               "expiraEm": "2026-11-09T02:00:00Z"
             },
             {
-              "id": "chk_0mw3o9k000004y",
+              "id": "chk_0mw3o9k0000056",
               "acompanhamentoId": "acp_sonia",
               "paciente": {
                 "id": "pac_sonia",
@@ -77,7 +124,7 @@
               "expiraEm": "2026-11-09T02:00:00Z"
             },
             {
-              "id": "chk_0mw53peo00005y",
+              "id": "chk_0mw53peo000068",
               "acompanhamentoId": "acp_rafael",
               "paciente": {
                 "id": "pac_rafael",
@@ -124,7 +171,7 @@
                   "perfil": "SECRETARIA"
                 }
               ],
-              "conversaId": "cnv_0mw53peo000065",
+              "conversaId": "cnv_0mw53peo00006f",
               "agendamentoId": "agd_rafael_cirurgia",
               "resumoCheckins": {
                 "respondidos": 0,
@@ -134,7 +181,7 @@
               },
               "alertasAbertos": 0,
               "proximoCheckin": {
-                "id": "chk_0mw53peo00005y",
+                "id": "chk_0mw53peo000068",
                 "acompanhamentoId": "acp_rafael",
                 "paciente": {
                   "id": "pac_rafael",
@@ -181,7 +228,7 @@
                   "perfil": "SECRETARIA"
                 }
               ],
-              "conversaId": "cnv_0mw3o9k0000054",
+              "conversaId": "cnv_0mw3o9k000005c",
               "agendamentoId": null,
               "resumoCheckins": {
                 "respondidos": 1,
@@ -191,7 +238,7 @@
               },
               "alertasAbertos": 0,
               "proximoCheckin": {
-                "id": "chk_0mw3o9k000004y",
+                "id": "chk_0mw3o9k0000056",
                 "acompanhamentoId": "acp_sonia",
                 "paciente": {
                   "id": "pac_sonia",
@@ -238,7 +285,7 @@
                   "perfil": "SECRETARIA"
                 }
               ],
-              "conversaId": "cnv_0mw28tpc00004p",
+              "conversaId": "cnv_0mw28tpc00004x",
               "agendamentoId": null,
               "resumoCheckins": {
                 "respondidos": 2,
@@ -248,7 +295,7 @@
               },
               "alertasAbertos": 1,
               "proximoCheckin": {
-                "id": "chk_0mw28tpc00004k",
+                "id": "chk_0mw28tpc00004s",
                 "acompanhamentoId": "acp_marcos",
                 "paciente": {
                   "id": "pac_marcos",
@@ -277,7 +324,7 @@
         "dados": {
           "itens": [
             {
-              "id": "cnv_0mw28tpc00004p",
+              "id": "cnv_0mw28tpc00004x",
               "titulo": "Marcos Souza",
               "paciente": {
                 "id": "pac_marcos",
@@ -290,23 +337,23 @@
                   "usuarioId": "usr_ana",
                   "nome": "Dra. Ana Lima",
                   "perfil": "PROFISSIONAL",
-                  "lidoAte": "msg_0mw6fxio00007l"
+                  "lidoAte": "msg_0mw6fxio00007x"
                 },
                 {
                   "usuarioId": "usr_julia",
                   "nome": "Júlia Ramos",
                   "perfil": "SECRETARIA",
-                  "lidoAte": "msg_0mw6f1d9c0007j"
+                  "lidoAte": "msg_0mw6f1d9c0007v"
                 },
                 {
                   "usuarioId": "usr_marcos",
                   "nome": "Marcos Souza",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw6gcy800007n"
+                  "lidoAte": "msg_0mw6gcy800007z"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw7s5mo00008y",
+                "id": "msg_0mw7s5mo00009a",
                 "resumo": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
                 "autorNome": null,
                 "enviadoEm": "2026-11-08T12:00:00Z"
@@ -321,7 +368,7 @@
               ]
             },
             {
-              "id": "cnv_0mw53peo000065",
+              "id": "cnv_0mw53peo00006f",
               "titulo": "Rafael Mendes",
               "paciente": {
                 "id": "pac_rafael",
@@ -350,7 +397,7 @@
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw6w08000008h",
+                "id": "msg_0mw6w08000008t",
                 "resumo": "Mantenha a cabeceira elevada e evite assoar o nariz.",
                 "autorNome": null,
                 "enviadoEm": "2026-11-07T21:00:00Z"
@@ -365,7 +412,7 @@
               ]
             },
             {
-              "id": "cnv_0mw3o9k0000054",
+              "id": "cnv_0mw3o9k000005c",
               "titulo": "Sônia Ribeiro",
               "paciente": {
                 "id": "pac_sonia",
@@ -390,11 +437,11 @@
                   "usuarioId": "usr_sonia",
                   "nome": "Sônia Ribeiro",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw6h03k000087"
+                  "lidoAte": "msg_0mw6h03k00008j"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw6h03k000087",
+                "id": "msg_0mw6h03k00008j",
                 "resumo": "Dia 1 · dor 4 · noite regular · sangramento não",
                 "autorNome": "Sônia Ribeiro",
                 "enviadoEm": "2026-11-07T14:00:00Z"
@@ -409,7 +456,7 @@
               ]
             },
             {
-              "id": "cnv_0mw0tduo00003l",
+              "id": "cnv_0mw0tduo00003t",
               "titulo": "Beatriz Costa",
               "paciente": {
                 "id": "pac_beatriz",
@@ -422,23 +469,23 @@
                   "usuarioId": "usr_ana",
                   "nome": "Dra. Ana Lima",
                   "perfil": "PROFISSIONAL",
-                  "lidoAte": "msg_0mw22r2yo0003x"
+                  "lidoAte": "msg_0mw22r2yo00045"
                 },
                 {
                   "usuarioId": "usr_julia",
                   "nome": "Júlia Ramos",
                   "perfil": "SECRETARIA",
-                  "lidoAte": "msg_0mw0tka5c0003p"
+                  "lidoAte": "msg_0mw0tka5c0003x"
                 },
                 {
                   "usuarioId": "usr_beatriz",
                   "nome": "Beatriz Costa",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw10j1xc0003u"
+                  "lidoAte": "msg_0mw10j1xc00042"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw22r2yo0003x",
+                "id": "msg_0mw22r2yo00045",
                 "resumo": "Jejum de 8 horas, inclusive de água.",
                 "autorNome": "Dra. Ana Lima",
                 "enviadoEm": "2026-11-04T12:10:00Z"

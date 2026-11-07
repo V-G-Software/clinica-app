@@ -39,6 +39,9 @@ Decisões assumidas na F0 que precisam de confirmação. As decisões de negóci
 | QUESTION-033 | Encaixe (dois agendamentos no mesmo horário) é só da equipe e sem limite? | Sim: só a equipe e só pedindo explicitamente (`encaixe: true`). O banco impede sobreposição sem encaixe. Sem limite de encaixes por dia. | Revisar com a clínica piloto. |
 | QUESTION-034 | Política de faltas: muitas faltas bloqueiam o autoagendamento? Cobrança? | Nada automático: a falta fica registrada (`FALTOU`) e aparece no histórico. | Depois do piloto. |
 | QUESTION-035 | Paciente pede para remarcar pelo app? | Não: o paciente cancela (dentro do prazo) e marca de novo, ou fala com a equipe pela conversa. Remarcar é só da equipe. | Revisar com a clínica piloto. |
+| QUESTION-036 | Resultado enviado sem pedido: quem é avisado? | Todos os profissionais com permissão de revisar. Em clínica grande, isso gera ruído. Alternativa: o profissional do acompanhamento ativo ou da última consulta do paciente. | Regra no backend; contrato não muda. Revisar com a clínica piloto. |
+| QUESTION-037 | Resultado enviado por engano (arquivo errado, paciente errado): como corrigir? | Não há como apagar nem invalidar no MVP; a equipe revisa com uma nota explicando. Proposta: ação `INVALIDAR` com motivo (o resultado some das listas, mas fica no histórico). | Aditivo no contrato. |
+| QUESTION-038 | Guia do pedido de exame em PDF assinada (para levar ao laboratório)? | Fora do MVP: o pedido é um registro estruturado. Entra junto com receita e atestado, depois da QUESTION-031. | Aditivo (`PedidoExame.documentoArquivoId`). |
 
 ## Adições ao contrato em relação ao prompt (registradas no CHANGELOG)
 
