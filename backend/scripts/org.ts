@@ -21,7 +21,7 @@ const [acao, ...args] = process.argv.slice(2);
 const arg = (n: string) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
 
 /** Módulos que este backend implementa. Os demais do cenário (ex.: `agenda`, F4) ficam de fora até a etapa do backend. */
-export const MODULOS_IMPLEMENTADOS = new Set(['pacientes', 'acompanhamento', 'chat', 'equipe', 'agenda']);
+export const MODULOS_IMPLEMENTADOS = new Set(['pacientes', 'acompanhamento', 'chat', 'equipe', 'agenda', 'exames']);
 function modulosSuportados(cen: any, log: (m: string) => void = console.log) {
   const fora = cen.modulos.filter((m: any) => !MODULOS_IMPLEMENTADOS.has(m.id)).map((m: any) => m.id);
   if (fora.length) log(`aviso: ${cen.organizacao.slug}: módulo(s) ${fora.join(', ')} ainda não implementado(s) neste backend — ignorado(s)`);

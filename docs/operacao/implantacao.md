@@ -33,8 +33,14 @@ O servidor **se recusa a subir** em `NODE_ENV=production` sem as chaves, com `MO
   - `STORAGE=s3` com `S3_BUCKET`, `S3_REGIAO` e credenciais por papel IAM;
   - `EMAIL=smtp`, `SMTP_URL`, `EMAIL_REMETENTE`;
   - `VAPID_*`;
+  - `ANTIVIRUS_URL=tcp://clamav:3310` (módulo `exames`, ADR-0017);
   - `LOG_LEVEL=info`.
 - [ ] **Bucket S3** privado, sem listagem pública. CORS liberando `PUT` só das origens do frontend: o envio de foto vai direto do navegador para o S3.
+- [ ] **Antivírus (só com o módulo `exames`):**
+  - um contêiner `clamav/clamav` (versão fixa) ao lado da API, na rede privada, com a porta 3310 sem exposição pública;
+  - `freshclam` atualizando as assinaturas;
+  - a API alcançando o `clamd`.
+  Sem `ANTIVIRUS_URL`, o app **não oferece PDF** (falha fechada) e aceita só fotos. Com o `clamd` fora do ar, o PDF fica `PROCESSANDO` e o job tenta de novo a cada minuto: monitore o log `antivírus indisponível`. `ANTIVIRUS_URL=teste` é recusado em produção.
 - [ ] **Health check:** `GET /diretorio/v1/organizacoes?dominio=healthcheck.invalid` deve responder 404, nunca 5xx (já está no `HEALTHCHECK` da imagem).
 - [ ] **Instâncias:** com 2 ou mais, o worker de jobs pode rodar em todas (é seguro), ou use `JOBS=0` nas de API e uma instância dedicada ao worker. O limite de requisições é por instância (ADR-0015).
 - [ ] **TLS e proxy:** o proxy precisa repassar `X-Forwarded-For` (o servidor usa `trustProxy` para obter o IP real nos limites e na auditoria) e não pode bufferizar o SSE (`/v1/eventos/stream`, com `X-Accel-Buffering: no`).

@@ -12,6 +12,7 @@ import type { Org } from '../src/nucleo.ts';
 import { criarAcompanhamento, criarAlerta, encerrarAcompanhamento, resolverAlerta, responderCheckin } from '../src/servicos/acompanhamento.ts';
 import { postarMensagem } from '../src/servicos/chat.ts';
 import * as agenda from '../src/servicos/agenda.ts';
+import * as exames from '../src/servicos/exames.ts';
 import { storage } from '../src/servicos/storage.ts';
 
 const silencioso: Log = { info: () => undefined, warn: () => undefined, error: (o, m) => console.error(m, o) };
@@ -26,12 +27,12 @@ async function carimbar(tx: Tx, orgId: string, em: string) {
   for (const [t, col] of CARIMBOS) await tx.query(`UPDATE ${t} SET ${col} = $2 WHERE organizacao_id = $1 AND ${col} = now()`, [orgId, em]);
 }
 
-async function fotoDeExemplo(tx: Tx, org: Org, donoId: string, em: string) {
+async function fotoDeExemplo(tx: Tx, org: Org, donoId: string, em: string, finalidade = 'CHECKIN') {
   const id = novoId('arq');
   await storage.gravar(`final/${org.id}/${id}`, PNG, 'image/png');
   await storage.gravar(`final/${org.id}/${id}.mini`, PNG, 'image/png');
   await tx.query(`INSERT INTO arquivos (organizacao_id, id, dono_id, nome, tipo, tamanho_bytes, finalidade, status, chave_storage, criado_em)
-                  VALUES ($1,$2,$3,'foto.png','image/png',$4,'CHECKIN','DISPONIVEL',$5,$6)`, [org.id, id, donoId, PNG.length, `final/${org.id}/${id}`, em]);
+                  VALUES ($1,$2,$3,'foto.png','image/png',$4,$7,'DISPONIVEL',$5,$6)`, [org.id, id, donoId, PNG.length, `final/${org.id}/${id}`, em, finalidade]);
   return id;
 }
 
@@ -61,6 +62,10 @@ export function deslocarCenario(cen: any, fuso: string, agora = Date.now()) {
         ...x, inicioEm: ms(x.inicioEm), criadoEm: ms(x.criadoEm),
         ...Object.fromEntries(['confirmar', 'cancelar', 'realizar', 'falta'].filter((k) => x[k]).map((k) => [k, { ...x[k], em: ms(x[k].em) }])),
       })),
+    } } : {}),
+    ...(cen.exames ? { exames: {
+      pedidos: (cen.exames.pedidos ?? []).map((p: any) => ({ ...p, criadoEm: ms(p.criadoEm), ...Object.fromEntries(['concluir', 'cancelar'].filter((k) => p[k]).map((k) => [k, { ...p[k], em: ms(p[k].em) }])) })),
+      resultados: (cen.exames.resultados ?? []).map((x: any) => ({ ...x, criadoEm: ms(x.criadoEm), dataColeta: x.dataColeta && somarDias(x.dataColeta, dias), revisar: x.revisar && { ...x.revisar, em: ms(x.revisar.em) } })),
     } } : {}),
   };
 }
@@ -143,6 +148,26 @@ export async function semearF2(c: pg.Client, org: Org, cenario: any, agora = Dat
       if (x.cancelar) passos.push({ em: Date.parse(x.cancelar.em), fazer: async () => { await agenda.cancelar(tx, org, await ag(x.id), x.cancelar.por, x.cancelar.motivo, !!x.cancelar.peloPaciente, silencioso); } });
       if (x.realizar) passos.push({ em: Date.parse(x.realizar.em), fazer: async () => { await agenda.finalizar(tx, org, await ag(x.id), x.realizar.por, 'REALIZADO', silencioso); } });
       if (x.falta) passos.push({ em: Date.parse(x.falta.em), fazer: async () => { await agenda.finalizar(tx, org, await ag(x.id), x.falta.por, 'FALTOU', silencioso); } });
+    }
+  }
+  // Exames (ADR-0017): pedidos e resultados pela mesma regra da API, na linha do tempo.
+  if (cen.exames && org.modulos.some((m) => m.id === 'exames')) {
+    const linha = async (t: string, id: string) => (await tx.query(`SELECT * FROM ${t} WHERE organizacao_id = $1 AND id = $2 FOR UPDATE`, [org.id, id])).rows[0];
+    for (const p of cen.exames.pedidos ?? []) {
+      passos.push({ em: Date.parse(p.criadoEm), sempre: true, fazer: async () => {
+        await exames.criarPedido(tx, org, { id: p.id, pacienteId: p.pacienteId, solicitanteId: p.solicitanteId, itens: p.itens, orientacoes: p.orientacoes, observacao: p.observacao, criadoEm: new Date(p.criadoEm) }, silencioso);
+      } });
+      if (p.concluir) passos.push({ em: Date.parse(p.concluir.em), fazer: async () => { await exames.finalizarPedido(tx, org, await linha('pedidos_exame', p.id), 'CONCLUIDO', null); } });
+      if (p.cancelar) passos.push({ em: Date.parse(p.cancelar.em), fazer: async () => { await exames.finalizarPedido(tx, org, await linha('pedidos_exame', p.id), 'CANCELADO', p.cancelar.motivo); } });
+    }
+    for (const x of cen.exames.resultados ?? []) {
+      passos.push({ em: Date.parse(x.criadoEm), sempre: true, fazer: async () => {
+        const autor = (await tx.query('SELECT perfis FROM usuarios WHERE organizacao_id = $1 AND id = $2', [org.id, x.enviadoPor])).rows[0];
+        const arq = await fotoDeExemplo(tx, org, x.enviadoPor, x.criadoEm, 'EXAME');
+        await exames.criarResultado(tx, org, { id: x.id, pacienteId: x.pacienteId, pedidoId: x.pedidoId ?? null, titulo: x.titulo, dataColeta: x.dataColeta ?? null, arquivosIds: [arq],
+          comentario: x.comentario ?? null, enviadoPor: x.enviadoPor, origem: autor?.perfis.some((pf: string) => pf !== 'PACIENTE') ? 'EQUIPE' : 'PACIENTE', criadoEm: new Date(x.criadoEm) }, silencioso);
+      } });
+      if (x.revisar) passos.push({ em: Date.parse(x.revisar.em), fazer: async () => { await exames.revisarResultado(tx, org, await linha('resultados_exame', x.id), x.revisar.por, x.revisar.nota ?? null, silencioso, new Date(x.revisar.em)); } });
     }
   }
   for (const cv of cen.conversas ?? []) {

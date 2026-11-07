@@ -1,5 +1,6 @@
 // Contadores do manifesto e de GET /v1/contadores (badges do menu).
-import { ehEquipe, temModulo } from '@clinica/dominio';
+import { ehEquipe, permissoesDe, temModulo } from '@clinica/dominio';
+import { contadorParaRevisar } from './exames.ts';
 import { um, type Tx } from '../db.ts';
 import type { Org } from '../nucleo.ts';
 
@@ -24,5 +25,7 @@ export async function contadoresDe(tx: Tx, org: Org, usuarioId: string): Promise
       : await n(`SELECT count(*)::int AS n FROM checkins WHERE organizacao_id = $1 AND status = 'DISPONIVEL'
                    AND paciente_id IN (SELECT paciente_id FROM vinculos WHERE organizacao_id = $1 AND usuario_id = $2)`, [org.id, usuarioId]);
   }
+  if (temModulo(org.modulos, 'exames'))
+    r['exames.resultadosParaRevisar'] = u ? await contadorParaRevisar(tx, org, new Set((u.perfis as string[]).filter((p) => p !== 'PACIENTE').flatMap((p) => permissoesDe(org.modulos, p as any)))) : 0;
   return r;
 }

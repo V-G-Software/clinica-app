@@ -45,7 +45,10 @@ export const config = {
   modoTeste: { codigoEmail: e.MODO_TESTE_CODIGO_EMAIL ?? null, totp: e.MODO_TESTE_TOTP ?? null },
   validarResposta: e.VALIDAR_RESPOSTA ? e.VALIDAR_RESPOSTA === '1' : !producao,
   versaoMinimaFrontend: e.VERSAO_MINIMA_FRONTEND ?? '0.1.0',
+  // Antivírus para PDF (ADR-0017): tcp://host:3310 (clamd) ou "teste" (EICAR; fora de produção). Sem ele, sem PDF.
+  antivirus: e.ANTIVIRUS_URL || null,
 };
+if (config.producao && config.antivirus === 'teste') throw new Error('ANTIVIRUS_URL=teste não pode ser usado em produção');
 if (config.producao && (config.modoTeste.codigoEmail || config.modoTeste.totp)) throw new Error('MODO_TESTE_* não pode ser usado em produção');
 if (config.producao && !config.segredoAssinatura) throw new Error('SEGREDO_ASSINATURA é obrigatório em produção');
 if (config.email === 'smtp' && !config.smtp.url) throw new Error('EMAIL=smtp exige SMTP_URL (ex.: smtp://usuario:senha@host:587)');

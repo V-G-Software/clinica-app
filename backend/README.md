@@ -1,6 +1,6 @@
 # Backend de referência
 
-Implementação do contrato (`contrato/openapi.yaml`) em Node 22 + Fastify + PostgreSQL. Decisões em [ADR-0013](../docs/adr/0013-backend-de-referencia.md) (núcleo) e [ADR-0014](../docs/adr/0014-jobs-push-e-email.md) (jobs, push, e-mail) e [ADR-0015](../docs/adr/0015-seguranca-para-o-piloto.md) (segurança do piloto) e [ADR-0016](../docs/adr/0016-modulo-agenda.md) (agenda). Fase atual: **F4** — todas as operações do contrato 1.1: núcleo (F1), protocolos, acompanhamentos, check-ins, alertas, chat, jobs agendados, Web Push, e-mail SMTP (F2–F3) e o módulo agenda (consultas e cirurgias).
+Implementação do contrato (`contrato/openapi.yaml`) em Node 22 + Fastify + PostgreSQL. Decisões em [ADR-0013](../docs/adr/0013-backend-de-referencia.md) (núcleo) e [ADR-0014](../docs/adr/0014-jobs-push-e-email.md) (jobs, push, e-mail) e [ADR-0015](../docs/adr/0015-seguranca-para-o-piloto.md) (segurança do piloto) e [ADR-0016](../docs/adr/0016-modulo-agenda.md) (agenda) e [ADR-0017](../docs/adr/0017-modulo-exames.md) (exames). Fase atual: **F5** — todas as operações do contrato 1.2: núcleo (F1), protocolos, acompanhamentos, check-ins, alertas, chat, jobs agendados, Web Push, e-mail SMTP (F2–F3), o módulo agenda (consultas e cirurgias) e o módulo exames (pedidos, resultados com PDF sob antivírus e saneamento, revisão). PDF exige `ANTIVIRUS_URL` (clamd; `teste` fora de produção).
 
 ## Subir localmente
 

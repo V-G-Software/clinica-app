@@ -73,6 +73,7 @@ jobs:
       EMAIL: log
       MODO_TESTE_CODIGO_EMAIL: '123456'
       MODO_TESTE_TOTP: '000000'
+      ANTIVIRUS_URL: teste  # verificador EICAR (ADR-0017); o protocolo clamd é testado em testes/antivirus.test.ts
       VALIDAR_RESPOSTA: '1'
       STORAGE_DIR: /tmp/clinica-arquivos
       CONF_DIRETORIO_URL: http://localhost:4020/diretorio
@@ -142,6 +143,7 @@ jobs:
       EMAIL: log
       MODO_TESTE_CODIGO_EMAIL: '123456'
       MODO_TESTE_TOTP: '000000'
+      ANTIVIRUS_URL: teste  # verificador EICAR (ADR-0017); o protocolo clamd é testado em testes/antivirus.test.ts
       VALIDAR_RESPOSTA: '1'
       STORAGE: s3
       S3_ENDPOINT: http://localhost:9000

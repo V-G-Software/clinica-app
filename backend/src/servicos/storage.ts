@@ -12,7 +12,8 @@ export interface Storage {
   urlEnvio(chave: string, tipo: string, expiraEm: number): Promise<{ url: string; metodo: 'PUT'; cabecalhos: Record<string, string> }>;
   ler(chave: string): Promise<Buffer | null>;
   gravar(chave: string, bytes: Buffer, tipo: string): Promise<void>;
-  urlVisualizacao(chave: string, expiraEm: number): Promise<string>;
+  /** `anexo`: baixa como arquivo (Content-Disposition: attachment) com este nome e tipo — usado em PDF. */
+  urlVisualizacao(chave: string, expiraEm: number, anexo?: { nome: string; tipo: string }): Promise<string>;
   remover(chave: string): Promise<void>;
 }
 
@@ -25,7 +26,11 @@ class StorageLocal implements Storage {
   async ler(chave: string) { const p = this.caminho(chave); return existsSync(p) ? readFileSync(p) : null; }
   async gravar(chave: string, bytes: Buffer) { const p = this.caminho(chave); mkdirSync(path.dirname(p), { recursive: true }); writeFileSync(p, bytes); }
   async remover(chave: string) { rmSync(this.caminho(chave), { force: true }); }
-  async urlVisualizacao(chave: string, exp: number) { return `${config.urlPublica}/_arquivos/ver/${chave}?exp=${exp}&ass=${assinarUrl(`GET|${chave}|${exp}|`)}`; }
+  async urlVisualizacao(chave: string, exp: number, anexo?: { nome: string; tipo: string }) {
+    const extra = anexo ? `${anexo.tipo}|${anexo.nome}` : '';
+    const q = anexo ? `&tipo=${encodeURIComponent(anexo.tipo)}&nome=${encodeURIComponent(anexo.nome)}` : '';
+    return `${config.urlPublica}/_arquivos/ver/${chave}?exp=${exp}${q}&ass=${assinarUrl(`GET|${chave}|${exp}|${extra}`)}`;
+  }
 }
 
 class StorageS3 implements Storage {
@@ -39,8 +44,9 @@ class StorageS3 implements Storage {
   }
   async gravar(chave: string, bytes: Buffer, tipo: string) { await this.s3.send(new PutObjectCommand({ Bucket: config.s3.bucket, Key: chave, Body: bytes, ContentType: tipo })); }
   async remover(chave: string) { await this.s3.send(new DeleteObjectCommand({ Bucket: config.s3.bucket, Key: chave })); }
-  async urlVisualizacao(chave: string, exp: number) {
-    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: config.s3.bucket, Key: chave }), { expiresIn: Math.max(60, Math.floor((exp - Date.now()) / 1000)) });
+  async urlVisualizacao(chave: string, exp: number, anexo?: { nome: string; tipo: string }) {
+    const extra = anexo ? { ResponseContentType: anexo.tipo, ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(anexo.nome)}` } : {};
+    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: config.s3.bucket, Key: chave, ...extra }), { expiresIn: Math.max(60, Math.floor((exp - Date.now()) / 1000)) });
   }
 }
 
