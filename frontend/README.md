@@ -6,7 +6,7 @@ Construído a partir de `docs/PROMPT_FRONTEND.md`, sobre o contrato (`@clinica/c
 pnpm mock                          # http://localhost:4010
 pnpm --filter frontend dev         # http://localhost:5173/?org=modelo-otorrino
 pnpm --filter frontend test        # unitários (Vitest)
-pnpm --filter frontend e2e         # E2E FE0–FE4 com Playwright (mock e dev server no ar)
+pnpm --filter frontend e2e         # E2E FE0–FE5 com Playwright (mock e dev server no ar)
 pnpm --filter frontend e2e:a11y    # auditoria de acessibilidade (axe-core)
 pnpm --filter frontend build:homologacao && pnpm --filter frontend preview:homologacao  # produção + CSP em :4173
 pnpm --filter frontend e2e:csp     # fluxos com a CSP ativa
@@ -16,6 +16,19 @@ pnpm --filter frontend build       # build de produção + service worker
 Em desenvolvimento, `?org=` escolhe a organização (fica lembrado) e o botão de chave inglesa troca de organização e avança o relógio do mock. Logins de teste: `mock/README.md`.
 
 ## Estado
+
+### F5 · exames (ADR-0017)
+| Critério de saída | Situação |
+|---|---|
+| Equipe: fila "Para revisar" com contador na navegação, revisão com nota opcional ao paciente, pedido estruturado (itens com preparo, orientações, observação interna), concluir e cancelar com motivo | `e2e/fe5.mjs` |
+| Paciente: pedidos pendentes no início, preparo dos itens, envio de foto e PDF ligado ao pedido (título sugerido), leitura da nota da revisão | `e2e/fe5.mjs` |
+| PDF: só aparece com `application/pdf` em `capacidades.upload.tiposPermitidosExame`; PDF com vírus recusado com mensagem; servido como **download** (nunca inline); "Enviar" bloqueado enquanto há arquivo subindo | `e2e/fe5.mjs` e `e2e/backend-real.mjs` (antivírus e saneamento reais) |
+| Permissões pelo manifesto: secretária vê e anexa, mas não pede nem revisa; tutora do vet sem envio (`pacienteEnviaResultados: false`); fisio sem o módulo | `e2e/fe5.mjs` |
+| Tempo real: resultado novo chega à fila da equipe; revisão chega ao paciente; contador zera | `e2e/fe5.mjs` e `e2e/backend-real.mjs` |
+| URLs assinadas renovadas antes de expirar (`urlsExpiramEm`) | `tests/unit/exames.test.ts` |
+| Acessibilidade | `e2e/acessibilidade.mjs` inclui as 7 telas de exames (claro e escuro): zero violações graves |
+
+Paciente: "Meus exames" vem **depois** de "Conversas" na navegação. Na barra do celular (5 posições), o chat continua visível — é o canal principal do paciente.
 
 ### F4 · agenda (ADR-0016)
 | Critério de saída | Situação |

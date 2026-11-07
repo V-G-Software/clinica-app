@@ -6,11 +6,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
-import { Activity, MessageCircle, Pencil, QrCode } from 'lucide-vue-next';
+import { Activity, FlaskConical, MessageCircle, Pencil, QrCode } from 'lucide-vue-next';
 import type { PacienteEntrada } from '@clinica/contrato-tipos';
 import { api, ok } from '@/api';
 import { ErroApi } from '@/api/erros';
 import { useAppStore } from '@/app/store';
+import { useSessaoStore } from '@/sessao/store';
 import { comEtag } from '@/dados/etag';
 import { criarChave, useTermos } from '@/dados/util';
 import { useMensagemErro } from '@/dados/erro';
@@ -24,6 +25,7 @@ import Dialogo from '@/ds/Dialogo.vue';
 import Conflito from '@/ds/Conflito.vue';
 import FormPaciente from './FormPaciente.vue';
 
+const sessao = useSessaoStore();
 const { t } = useI18n();
 const rota = useRoute();
 const router = useRouter();
@@ -83,6 +85,7 @@ const AVISO: Record<string, string> = { PUSH: 'Recebe avisos no celular', EMAIL:
         <div class="flex flex-wrap gap-2">
           <Botao v-if="acoes.has('ABRIR_CONVERSA')" variante="secundario" :carregando="abrirConversa.isPending.value" @click="abrirConversa.mutate()"><MessageCircle class="size-5" aria-hidden="true" /> {{ capitalizar(termo('conversa').singular) }}</Botao>
           <RouterLink v-if="acoes.has('INICIAR_ACOMPANHAMENTO')" :to="`/acompanhamentos/novo?pacienteId=${p.id}`"><Botao><Activity class="size-5" aria-hidden="true" /> Iniciar {{ termo('acompanhamento').singular }}</Botao></RouterLink>
+          <RouterLink v-if="sessao.modulos.has('exames') && sessao.pode('exames.exame.ler')" :to="`/exames?pacienteId=${p.id}`"><Botao variante="secundario"><FlaskConical class="size-5" aria-hidden="true" /> {{ capitalizar(termo('exame').plural) }}</Botao></RouterLink>
         </div>
       </header>
 

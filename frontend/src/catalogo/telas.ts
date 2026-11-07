@@ -8,7 +8,7 @@ export interface DefinicaoTela {
   rota: string;
   componente: () => Promise<Component>;
   /** Módulo exigido (núcleo = undefined). */
-  modulo?: 'pacientes' | 'acompanhamento' | 'chat' | 'equipe' | 'agenda';
+  modulo?: 'pacientes' | 'acompanhamento' | 'chat' | 'equipe' | 'agenda' | 'exames';
   publico: 'todos' | 'equipe' | 'paciente' | 'gestor';
   fase: string;
 }
@@ -41,6 +41,12 @@ export const CATALOGO: DefinicaoTela[] = [
   def('agenda.meus', '/agenda/minhas', 'paciente', 'F4', 'agenda', () => import('@/telas/agenda/Meus.vue')),
   def('agenda.marcar', '/agenda/marcar', 'paciente', 'F4', 'agenda', () => import('@/telas/agenda/Marcar.vue')),
   def('agenda.detalhe', '/agenda/:agendamentoId', 'todos', 'F4', 'agenda', () => import('@/telas/agenda/Detalhe.vue')),
+  def('exames.lista', '/exames', 'equipe', 'F5', 'exames', () => import('@/telas/exames/Lista.vue')),
+  def('exames.novo', '/exames/novo', 'equipe', 'F5', 'exames', () => import('@/telas/exames/Novo.vue')),
+  def('exames.meus', '/exames/meus', 'paciente', 'F5', 'exames', () => import('@/telas/exames/Meus.vue')),
+  def('exames.enviar', '/exames/enviar', 'todos', 'F5', 'exames', () => import('@/telas/exames/Enviar.vue')),
+  def('exames.pedido', '/exames/pedidos/:pedidoId', 'todos', 'F5', 'exames', () => import('@/telas/exames/Pedido.vue')),
+  def('exames.resultado', '/exames/resultados/:resultadoId', 'todos', 'F5', 'exames', () => import('@/telas/exames/Resultado.vue')),
   def('organizacao.configuracao', '/configuracoes', 'gestor', 'FE2', undefined, () => import('@/telas/organizacao/Configuracao.vue')),
 ];
 export const telaPorNome = new Map(CATALOGO.map((d) => [d.tela as string, d]));
@@ -55,6 +61,8 @@ export function caminhoDe(tela: string, parametros: Record<string, string> = {})
     return encodeURIComponent(parametros[p] ?? '');
   });
   if (faltou) return null;
-  if ((d.tela === 'acompanhamento.novo' || d.tela === 'agenda.novo') && parametros.pacienteId) return `${caminho}?pacienteId=${encodeURIComponent(parametros.pacienteId)}`;
-  return caminho;
+  // Atalhos de criação aceitam contexto opcional (paciente, pedido) na query.
+  const extras = ({ 'acompanhamento.novo': ['pacienteId'], 'agenda.novo': ['pacienteId'], 'exames.novo': ['pacienteId'], 'exames.enviar': ['pacienteId', 'pedidoId'] } as Record<string, string[]>)[d.tela] ?? [];
+  const q = extras.filter((k) => parametros[k]).map((k) => `${k}=${encodeURIComponent(parametros[k])}`).join('&');
+  return q ? `${caminho}?${q}` : caminho;
 }

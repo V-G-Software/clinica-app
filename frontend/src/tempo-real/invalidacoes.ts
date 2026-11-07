@@ -15,6 +15,8 @@ export function invalidacoesPara(e: EventoApp): ChaveConsulta[] {
     case 'acompanhamento.acompanhamento.atualizado': return [['acompanhamento', d.acompanhamentoId], ['acompanhamentos'], ['checkins'], ['inicio']];
     case 'agenda.agendamento.criado':
     case 'agenda.agendamento.atualizado': return [['agendamento', d.agendamentoId], ['agendamentos'], ['agenda-horarios'], ['inicio']];
+    case 'exames.pedido.atualizado': return [['exame-pedido', d.pedidoId], ['exames-pedidos'], ['inicio']];
+    case 'exames.resultado.atualizado': return [['exame-resultado', d.resultadoId], ['exames-resultados'], ...(d.pedidoId ? [['exame-pedido', d.pedidoId]] : []), ['inicio']];
     case 'notificacao.criada': return [['notificacoes']];
     case 'arquivo.processado': return [['arquivo', d.arquivoId]];
     default: return [];
