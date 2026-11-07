@@ -29,6 +29,7 @@
         "orientacoes": "Traga seus exames anteriores, se tiver.",
         "observacao": null,
         "motivoCancelamento": "Paciente pediu para remarcar por telefone.",
+        "acompanhamentoId": null,
         "historico": [
           {
             "ocorridoEm": "2026-11-04T14:00:00Z",
@@ -78,6 +79,7 @@
         "orientacoes": "Jejum de 8 horas. Chegue ao hospital 1 hora antes, com documento e exames pré-operatórios.",
         "observacao": null,
         "motivoCancelamento": null,
+        "acompanhamentoId": "acp_beatriz",
         "historico": [
           {
             "ocorridoEm": "2026-10-28T13:00:00Z",
@@ -131,6 +133,7 @@
         "orientacoes": null,
         "observacao": null,
         "motivoCancelamento": null,
+        "acompanhamentoId": null,
         "historico": [
           {
             "ocorridoEm": "2026-11-05T14:00:00Z",
@@ -184,6 +187,7 @@
         "orientacoes": null,
         "observacao": null,
         "motivoCancelamento": null,
+        "acompanhamentoId": null,
         "historico": [
           {
             "ocorridoEm": "2026-11-07T14:00:00Z",
@@ -229,6 +233,7 @@
         "orientacoes": "Traga seus exames anteriores, se tiver.",
         "observacao": null,
         "motivoCancelamento": null,
+        "acompanhamentoId": null,
         "historico": [
           {
             "ocorridoEm": "2026-11-06T18:05:00Z",

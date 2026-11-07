@@ -27,6 +27,7 @@
     "orientacoes": "Jejum de 8 horas. Chegue ao hospital 1 hora antes, com documento e exames pré-operatórios.",
     "observacao": null,
     "motivoCancelamento": null,
+    "acompanhamentoId": "acp_beatriz",
     "historico": [
       {
         "ocorridoEm": "2026-10-28T13:00:00Z",

@@ -125,6 +125,7 @@
                 }
               ],
               "conversaId": "cnv_0mw53peo000065",
+              "agendamentoId": "agd_rafael_cirurgia",
               "resumoCheckins": {
                 "respondidos": 0,
                 "pendentes": 1,
@@ -181,6 +182,7 @@
                 }
               ],
               "conversaId": "cnv_0mw3o9k0000054",
+              "agendamentoId": null,
               "resumoCheckins": {
                 "respondidos": 1,
                 "pendentes": 1,
@@ -237,6 +239,7 @@
                 }
               ],
               "conversaId": "cnv_0mw28tpc00004p",
+              "agendamentoId": null,
               "resumoCheckins": {
                 "respondidos": 2,
                 "pendentes": 1,

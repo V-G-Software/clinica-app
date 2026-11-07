@@ -111,6 +111,45 @@ await espera(julia.getByText('Cancelado', { exact: true }).first(), 'cancelar: s
 await espera(julia.getByText('Motivo do cancelamento: Paciente desistiu.'), 'cancelar: motivo exibido');
 ok(!(await julia.getByRole('button', { name: 'Remarcar' }).isVisible()), 'cancelado: sem ações (acoesPermitidas)');
 
+// Cirurgia com pós-operatório (RN-AGE-008): nasce junto, remarcar para outro dia encerra e recria, cancelar encerra.
+await julia.goto(`${APP}/agenda/novo?pacienteId=pac_helena`);
+await julia.getByText('Helena Duarte').waitFor();
+await julia.getByLabel('Serviço').selectOption({ label: 'Septoplastia (120 min)' });
+ok(await julia.getByLabel(/Iniciar pós-operatório/).isChecked(), 'cirurgia: "iniciar pós-operatório" já marcado (protocolo sugerido pelo serviço)');
+await julia.locator('option[value="prt_septo7"]').waitFor({ state: 'attached' });
+ok((await julia.getByLabel('Protocolo').inputValue()) === 'prt_septo7', 'cirurgia: protocolo sugerido pré-selecionado');
+await julia.getByRole('button', { name: 'Outro horário' }).click();
+await julia.getByLabel('Data').fill('2026-12-01');
+await julia.getByLabel('Hora').fill('07:00');
+await julia.getByRole('button', { name: 'Marcar', exact: true }).click();
+await julia.waitForURL(/\/agenda\/agd_/);
+await espera(julia.getByRole('link', { name: /Pós-operatório.*Septoplastia — 7 dias · agendado/ }), 'cirurgia: pós-operatório ligado aparece no detalhe');
+const urlCirurgia = julia.url();
+const linkAcp = julia.locator('main a[href^="/acompanhamentos/"]');
+const acp1 = await linkAcp.getAttribute('href');
+await julia.getByRole('button', { name: 'Remarcar' }).click();
+const dr = julia.getByRole('dialog');
+await dr.getByRole('button', { name: 'Outro horário' }).click();
+await dr.getByLabel('Data').fill('2026-12-03');
+await dr.getByLabel('Hora').fill('07:00');
+await espera(dr.getByText(/Outro dia: o pós-operatório atual será encerrado/), 'remarcar cirurgia: aviso de que o pós-operatório será recriado');
+await dr.getByRole('button', { name: 'Remarcar', exact: true }).click();
+await espera(julia.getByText(/Remarcado.*por Júlia/), 'cirurgia remarcada');
+await julia.waitForFunction((h) => document.querySelector('main a[href^="/acompanhamentos/"]')?.getAttribute('href') !== h, acp1);
+const acp2 = await linkAcp.getAttribute('href');
+ok(acp2 !== acp1, 'remarcar cirurgia: o agendamento aponta para um novo pós-operatório');
+await julia.goto(`${APP}${acp1}`);
+await espera(julia.getByText(/Encerrado: Cirurgia remarcada para 03\/12\/2026/), 'pós-operatório antigo encerrado com o motivo (nada apagado)');
+await julia.goto(`${APP}${acp2}`);
+await espera(julia.getByRole('link', { name: 'ver na agenda' }), 'pós-operatório novo aponta para a cirurgia');
+await julia.goto(urlCirurgia);
+await julia.getByRole('button', { name: 'Cancelar', exact: true }).click();
+await espera(julia.getByRole('dialog').getByText(/O pós-operatório ligado será encerrado/), 'cancelar cirurgia: aviso sobre o pós-operatório');
+await julia.getByRole('dialog').getByLabel('Motivo').fill('Paciente desistiu.');
+await julia.getByRole('button', { name: 'Confirmar cancelamento' }).click();
+await espera(julia.getByRole('link', { name: /Pós-operatório.*encerrado/ }), 'cancelar cirurgia: pós-operatório encerrado');
+await foto(julia, 'fe4-6-cirurgia-acompanhamento');
+
 // Procedimento futuro: preparo visível e sem "realizado" antes do início.
 await julia.goto(`${APP}/agenda/agd_beatriz_cirurgia`);
 await espera(julia.getByText(/Jejum de 8 horas/), 'procedimento: preparo visível');

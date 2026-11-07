@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://exemplo.com.br/contrato/v1/inicio.schema.json",
   "title": "Tela inicial (GET /v1/inicio)",
-  "x-gerado-de": "contrato/openapi.yaml#/$defs/Inicio (1.1.0-rc.1)",
+  "x-gerado-de": "contrato/openapi.yaml#/$defs/Inicio (1.1.0-rc.2)",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -689,6 +689,7 @@
         "status",
         "equipe",
         "conversaId",
+        "agendamentoId",
         "resumoCheckins",
         "alertasAbertos",
         "proximoCheckin",
@@ -747,6 +748,10 @@
         },
         "conversaId": {
           "$ref": "#/$defs/IdOuNulo"
+        },
+        "agendamentoId": {
+          "$ref": "#/$defs/IdOuNulo",
+          "description": "Procedimento da agenda que originou o acompanhamento (módulo `agenda`)."
         },
         "resumoCheckins": {
           "type": "object",
@@ -1066,6 +1071,7 @@
         "orientacoes",
         "observacao",
         "motivoCancelamento",
+        "acompanhamentoId",
         "historico",
         "criadoEm",
         "acoesPermitidas"
@@ -1144,6 +1150,10 @@
             "string",
             "null"
           ]
+        },
+        "acompanhamentoId": {
+          "$ref": "#/$defs/IdOuNulo",
+          "description": "Acompanhamento pós-procedimento ligado (o atual, depois de remarcações)."
         },
         "historico": {
           "type": "array",

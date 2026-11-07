@@ -75,10 +75,12 @@ export async function semearF2(c: pg.Client, org: Org, cenario: any, agora = Dat
 
   type Passo = { em: number; fazer: () => Promise<void>; sempre?: boolean };
   const passos: Passo[] = [];
+  // Procedimento da agenda que originou o acompanhamento (RN-AGE-008): a ligação vem do agendamento no cenário.
+  const agendamentoDe = new Map<string, string>((cen.agenda?.agendamentos ?? []).filter((x: any) => x.acompanhamentoId).map((x: any) => [x.acompanhamentoId, x.id]));
   for (const a of cen.acompanhamentos ?? []) {
     const criadoEm = Date.parse(a.criadoEm);
     passos.push({ em: criadoEm, sempre: true, fazer: async () => {
-      await criarAcompanhamento(tx, org, { id: a.id, pacienteId: a.pacienteId, protocoloId: a.protocoloId, dataInicio: a.dataInicio, equipeIds: a.equipeIds, criadoPor: a.criadoPor, observacao: a.observacao ?? null, criadoEm: a.criadoEm }, silencioso, agora);
+      await criarAcompanhamento(tx, org, { id: a.id, pacienteId: a.pacienteId, protocoloId: a.protocoloId, dataInicio: a.dataInicio, equipeIds: a.equipeIds, criadoPor: a.criadoPor, observacao: a.observacao ?? null, criadoEm: a.criadoEm, agendamentoId: agendamentoDe.get(a.id) ?? null }, silencioso, agora);
       // Check-ins vencidos antes de agora e sem resposta programada: aplica a regra CHECKIN_EXPIRADO.
       const prot = cen.protocolos.find((p: any) => p.id === a.protocoloId);
       for (const regra of (prot.regrasAlerta ?? []).filter((r: any) => r.tipo === 'CHECKIN_EXPIRADO')) {
@@ -123,8 +125,8 @@ export async function semearF2(c: pg.Client, org: Org, cenario: any, agora = Dat
   // Agenda (ADR-0016): serviços, grades e bloqueios direto; agendamentos pela mesma regra da API, na linha do tempo.
   if (cen.agenda && org.modulos.some((m) => m.id === 'agenda')) {
     for (const sv of cen.agenda.servicos ?? [])
-      await tx.query(`INSERT INTO servicos (organizacao_id, id, nome, categoria, duracao_minutos, autoagendavel, profissionais_ids, orientacoes)
-                      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [org.id, sv.id, sv.nome, sv.categoria, sv.duracaoMinutos, sv.autoagendavel, sv.profissionaisIds, sv.orientacoes ?? null]);
+      await tx.query(`INSERT INTO servicos (organizacao_id, id, nome, categoria, duracao_minutos, autoagendavel, profissionais_ids, orientacoes, protocolo_id)
+                      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [org.id, sv.id, sv.nome, sv.categoria, sv.duracaoMinutos, sv.autoagendavel, sv.profissionaisIds, sv.orientacoes ?? null, sv.protocoloId ?? null]);
     for (const [prof, itens] of Object.entries<any[]>(cen.agenda.grades ?? {}))
       await tx.query('INSERT INTO grades (organizacao_id, profissional_id, itens) VALUES ($1,$2,$3)', [org.id, prof, JSON.stringify(itens.map((i) => ({ ...i, servicosIds: i.servicosIds ?? null })))]);
     for (const b of cen.agenda.bloqueios ?? [])
@@ -135,12 +137,12 @@ export async function semearF2(c: pg.Client, org: Org, cenario: any, agora = Dat
       passos.push({ em: Date.parse(x.criadoEm), sempre: true, fazer: async () => {
         const sv = (await tx.query('SELECT * FROM servicos WHERE organizacao_id = $1 AND id = $2', [org.id, x.servicoId])).rows[0];
         await agenda.criarAgendamento(tx, org, { id: x.id, pacienteId: x.pacienteId, servico: sv, profissionalId: x.profissionalId, inicio: new Date(x.inicioEm),
-          duracaoMinutos: x.duracaoMinutos, origem: x.origem ?? 'EQUIPE', porId: x.criadoPor, local: x.local, observacao: x.observacao, encaixe: x.encaixe, criadoEm: new Date(x.criadoEm) }, silencioso);
+          duracaoMinutos: x.duracaoMinutos, origem: x.origem ?? 'EQUIPE', porId: x.criadoPor, local: x.local, observacao: x.observacao, encaixe: x.encaixe, criadoEm: new Date(x.criadoEm), acompanhamentoId: x.acompanhamentoId ?? null }, silencioso);
       } });
       if (x.confirmar) passos.push({ em: Date.parse(x.confirmar.em), fazer: async () => { await agenda.confirmar(tx, org, await ag(x.id), x.confirmar.por ?? null); } });
       if (x.cancelar) passos.push({ em: Date.parse(x.cancelar.em), fazer: async () => { await agenda.cancelar(tx, org, await ag(x.id), x.cancelar.por, x.cancelar.motivo, !!x.cancelar.peloPaciente, silencioso); } });
-      if (x.realizar) passos.push({ em: Date.parse(x.realizar.em), fazer: async () => { await agenda.finalizar(tx, org, await ag(x.id), x.realizar.por, 'REALIZADO'); } });
-      if (x.falta) passos.push({ em: Date.parse(x.falta.em), fazer: async () => { await agenda.finalizar(tx, org, await ag(x.id), x.falta.por, 'FALTOU'); } });
+      if (x.realizar) passos.push({ em: Date.parse(x.realizar.em), fazer: async () => { await agenda.finalizar(tx, org, await ag(x.id), x.realizar.por, 'REALIZADO', silencioso); } });
+      if (x.falta) passos.push({ em: Date.parse(x.falta.em), fazer: async () => { await agenda.finalizar(tx, org, await ag(x.id), x.falta.por, 'FALTOU', silencioso); } });
     }
   }
   for (const cv of cen.conversas ?? []) {

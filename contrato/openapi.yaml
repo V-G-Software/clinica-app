@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Contrato da API — {{PRODUTO}}
-  version: 1.1.0-rc.1
+  version: 1.1.0-rc.2
   summary: Padrão que todo backend de organização segue para atender o frontend único (PWA).
   description: |
     Fonte da verdade do contrato v1. Spec-first (ADR-0001): tipos, cliente, mock e suíte
@@ -2056,6 +2056,9 @@ paths:
         Equipe: qualquer serviço ativo, inclusive fora da grade; `encaixe` permite sobrepor outro agendamento.
         Paciente: só serviço autoagendável, em horário devolvido por `GET /v1/agenda/horarios`, para um
         paciente vinculado à conta. Horário ocupado → 409 `HORARIO_INDISPONIVEL`.
+        Procedimento com `acompanhamento` (só equipe, módulo `acompanhamento` ativo e permissão de criar
+        acompanhamento): o pós-operatório nasce junto, `AGENDADO`, com `dataInicio` = dia local do
+        procedimento, e os dois ficam ligados (`acompanhamentoId` / `agendamentoId`).
       x-idempotente: true
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -2076,6 +2079,19 @@ paths:
                 local: { type: [string, 'null'], maxLength: 200, description: 'Só equipe (por exemplo, o hospital do procedimento).' }
                 observacao: { type: [string, 'null'], maxLength: 2000, description: Só equipe; o paciente não vê. }
                 encaixe: { type: boolean, default: false, description: Só equipe. }
+                acompanhamento:
+                  type: object
+                  additionalProperties: false
+                  required: [protocoloId]
+                  description: Só equipe e só em `PROCEDIMENTO`. Inicia o acompanhamento pós-procedimento ligado ao agendamento.
+                  properties:
+                    protocoloId: { $ref: '#/components/schemas/Id' }
+                    equipeIds:
+                      type: array
+                      minItems: 1
+                      maxItems: 20
+                      items: { $ref: '#/components/schemas/Id' }
+                      description: Padrão = o profissional do agendamento.
       responses:
         '201':
           description: Agendamento criado
@@ -2147,6 +2163,7 @@ paths:
       operationId: agendamentosCancelar
       tags: [agenda]
       summary: Cancela (RN-AGE-004); o histórico fica
+      description: Com acompanhamento ligado ainda não finalizado, ele é encerrado com o motivo (RN-AGE-008).
       parameters:
         - $ref: '#/components/parameters/AgendamentoId'
       requestBody:
@@ -2171,6 +2188,9 @@ paths:
       operationId: agendamentosRemarcar
       tags: [agenda]
       summary: Muda data, hora ou profissional (equipe); volta para AGENDADO
+      description: |
+        Com acompanhamento ligado ainda não finalizado e mudança de dia, o acompanhamento é encerrado e um
+        novo nasce com o mesmo protocolo e equipe, no novo dia (RN-AGE-008). Nada é apagado.
       parameters:
         - $ref: '#/components/parameters/AgendamentoId'
       requestBody:
@@ -2213,6 +2233,7 @@ paths:
       operationId: agendamentosRegistrarFalta
       tags: [agenda]
       summary: Registra que o paciente não compareceu (equipe, depois do início)
+      description: Com acompanhamento ligado ainda não finalizado, ele é encerrado (RN-AGE-008).
       parameters:
         - $ref: '#/components/parameters/AgendamentoId'
       responses:
@@ -3600,7 +3621,7 @@ components:
     Acompanhamento:
       type: object
       additionalProperties: false
-      required: [id, paciente, protocolo, dataInicio, diaAtual, totalDias, status, equipe, conversaId, resumoCheckins, alertasAbertos, proximoCheckin, observacao, motivoEncerramento, criadoEm, acoesPermitidas]
+      required: [id, paciente, protocolo, dataInicio, diaAtual, totalDias, status, equipe, conversaId, agendamentoId, resumoCheckins, alertasAbertos, proximoCheckin, observacao, motivoEncerramento, criadoEm, acoesPermitidas]
       properties:
         id: { $ref: '#/components/schemas/Id' }
         paciente: { $ref: '#/components/schemas/Referencia' }
@@ -3622,6 +3643,9 @@ components:
           type: array
           items: { $ref: '#/components/schemas/ReferenciaUsuario' }
         conversaId: { $ref: '#/components/schemas/IdOuNulo' }
+        agendamentoId:
+          $ref: '#/components/schemas/IdOuNulo'
+          description: Procedimento da agenda que originou o acompanhamento (módulo `agenda`).
         resumoCheckins:
           type: object
           additionalProperties: false
@@ -3844,10 +3868,13 @@ components:
           type: [string, 'null']
           maxLength: 2000
           description: 'Preparo mostrado ao paciente (por exemplo, "jejum de 8 horas").'
+        protocoloId:
+          $ref: '#/components/schemas/IdOuNulo'
+          description: Só `PROCEDIMENTO`. Protocolo sugerido ao marcar (acompanhamento pós-procedimento).
     Servico:
       type: object
       additionalProperties: false
-      required: [id, nome, categoria, duracaoMinutos, autoagendavel, profissionais, orientacoes, status, acoesPermitidas]
+      required: [id, nome, categoria, duracaoMinutos, autoagendavel, profissionais, orientacoes, protocoloId, status, acoesPermitidas]
       properties:
         id: { $ref: '#/components/schemas/Id' }
         nome: { type: string }
@@ -3858,6 +3885,9 @@ components:
           type: array
           items: { $ref: '#/components/schemas/ReferenciaUsuario' }
         orientacoes: { type: [string, 'null'] }
+        protocoloId:
+          $ref: '#/components/schemas/IdOuNulo'
+          description: Protocolo sugerido ao marcar o procedimento; `null` para o paciente e sem o módulo `acompanhamento`.
         status: { $ref: '#/components/schemas/StatusServico' }
         acoesPermitidas:
           type: array
@@ -3927,7 +3957,7 @@ components:
     Agendamento:
       type: object
       additionalProperties: false
-      required: [id, paciente, profissional, servico, inicioEm, fimEm, status, origem, encaixe, local, orientacoes, observacao, motivoCancelamento, historico, criadoEm, acoesPermitidas]
+      required: [id, paciente, profissional, servico, inicioEm, fimEm, status, origem, encaixe, local, orientacoes, observacao, motivoCancelamento, acompanhamentoId, historico, criadoEm, acoesPermitidas]
       properties:
         id: { $ref: '#/components/schemas/Id' }
         paciente: { $ref: '#/components/schemas/Referencia' }
@@ -3949,6 +3979,9 @@ components:
         orientacoes: { type: [string, 'null'], description: Preparo copiado do serviço na hora da marcação. }
         observacao: { type: [string, 'null'], description: 'Interna da equipe; sempre `null` para o paciente.' }
         motivoCancelamento: { type: [string, 'null'] }
+        acompanhamentoId:
+          $ref: '#/components/schemas/IdOuNulo'
+          description: Acompanhamento pós-procedimento ligado (o atual, depois de remarcações).
         historico:
           type: array
           items: { $ref: '#/components/schemas/EventoAgendamento' }

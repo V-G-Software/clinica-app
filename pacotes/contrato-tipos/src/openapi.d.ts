@@ -1325,6 +1325,9 @@ export interface paths {
          * @description Equipe: qualquer serviço ativo, inclusive fora da grade; `encaixe` permite sobrepor outro agendamento.
          *     Paciente: só serviço autoagendável, em horário devolvido por `GET /v1/agenda/horarios`, para um
          *     paciente vinculado à conta. Horário ocupado → 409 `HORARIO_INDISPONIVEL`.
+         *     Procedimento com `acompanhamento` (só equipe, módulo `acompanhamento` ativo e permissão de criar
+         *     acompanhamento): o pós-operatório nasce junto, `AGENDADO`, com `dataInicio` = dia local do
+         *     procedimento, e os dois ficam ligados (`acompanhamentoId` / `agendamentoId`).
          */
         post: operations["agendamentosCriar"];
         delete?: never;
@@ -1377,7 +1380,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Cancela (RN-AGE-004); o histórico fica */
+        /**
+         * Cancela (RN-AGE-004); o histórico fica
+         * @description Com acompanhamento ligado ainda não finalizado, ele é encerrado com o motivo (RN-AGE-008).
+         */
         post: operations["agendamentosCancelar"];
         delete?: never;
         options?: never;
@@ -1394,7 +1400,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Muda data, hora ou profissional (equipe); volta para AGENDADO */
+        /**
+         * Muda data, hora ou profissional (equipe); volta para AGENDADO
+         * @description Com acompanhamento ligado ainda não finalizado e mudança de dia, o acompanhamento é encerrado e um
+         *     novo nasce com o mesmo protocolo e equipe, no novo dia (RN-AGE-008). Nada é apagado.
+         */
         post: operations["agendamentosRemarcar"];
         delete?: never;
         options?: never;
@@ -1428,7 +1438,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Registra que o paciente não compareceu (equipe, depois do início) */
+        /**
+         * Registra que o paciente não compareceu (equipe, depois do início)
+         * @description Com acompanhamento ligado ainda não finalizado, ele é encerrado (RN-AGE-008).
+         */
         post: operations["agendamentosRegistrarFalta"];
         delete?: never;
         options?: never;
@@ -2083,6 +2096,8 @@ export interface components {
             status: components["schemas"]["StatusAcompanhamento"];
             equipe: components["schemas"]["ReferenciaUsuario"][];
             conversaId: components["schemas"]["IdOuNulo"];
+            /** @description Procedimento da agenda que originou o acompanhamento (módulo `agenda`). */
+            agendamentoId: components["schemas"]["IdOuNulo"];
             resumoCheckins: {
                 respondidos: number;
                 pendentes: number;
@@ -2217,6 +2232,8 @@ export interface components {
             profissionaisIds: components["schemas"]["Id"][];
             /** @description Preparo mostrado ao paciente (por exemplo, "jejum de 8 horas"). */
             orientacoes?: string | null;
+            /** @description Só `PROCEDIMENTO`. Protocolo sugerido ao marcar (acompanhamento pós-procedimento). */
+            protocoloId?: components["schemas"]["IdOuNulo"];
         };
         Servico: {
             id: components["schemas"]["Id"];
@@ -2226,6 +2243,8 @@ export interface components {
             autoagendavel: boolean;
             profissionais: components["schemas"]["ReferenciaUsuario"][];
             orientacoes: string | null;
+            /** @description Protocolo sugerido ao marcar o procedimento; `null` para o paciente e sem o módulo `acompanhamento`. */
+            protocoloId: components["schemas"]["IdOuNulo"];
             status: components["schemas"]["StatusServico"];
             acoesPermitidas: ("EDITAR" | "ARQUIVAR" | "AGENDAR")[];
         };
@@ -2286,6 +2305,8 @@ export interface components {
             /** @description Interna da equipe; sempre `null` para o paciente. */
             observacao: string | null;
             motivoCancelamento: string | null;
+            /** @description Acompanhamento pós-procedimento ligado (o atual, depois de remarcações). */
+            acompanhamentoId: components["schemas"]["IdOuNulo"];
             historico: components["schemas"]["EventoAgendamento"][];
             criadoEm: components["schemas"]["DataHora"];
             acoesPermitidas: ("EDITAR" | "CONFIRMAR" | "CANCELAR" | "REMARCAR" | "REALIZAR" | "REGISTRAR_FALTA" | "ABRIR_CONVERSA")[];
@@ -4879,6 +4900,12 @@ export interface operations {
                      * @default false
                      */
                     encaixe?: boolean;
+                    /** @description Só equipe e só em `PROCEDIMENTO`. Inicia o acompanhamento pós-procedimento ligado ao agendamento. */
+                    acompanhamento?: {
+                        protocoloId: components["schemas"]["Id"];
+                        /** @description Padrão = o profissional do agendamento. */
+                        equipeIds?: components["schemas"]["Id"][];
+                    };
                 };
             };
         };

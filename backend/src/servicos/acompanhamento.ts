@@ -24,16 +24,16 @@ export const protocoloPublico = (p: any) => ({
   checkins: p.checkins, orientacoes: p.orientacoes ?? [], regrasAlerta: p.regras_alerta ?? [],
 });
 
-export interface NovoAcompanhamento { id?: string; pacienteId: string; protocoloId: string; dataInicio: string; equipeIds: string[]; criadoPor: string; observacao: string | null; criadoEm?: string }
+export interface NovoAcompanhamento { id?: string; pacienteId: string; protocoloId: string; dataInicio: string; equipeIds: string[]; criadoPor: string; observacao: string | null; criadoEm?: string; agendamentoId?: string | null }
 
 export async function criarAcompanhamento(tx: Tx, org: Org, d: NovoAcompanhamento, log: Log, agora = Date.now()) {
   const prot = (await protocoloVersao(tx, org.id, d.protocoloId))!;
   const protocolo = protocoloPublico(prot); // RN-ACO-003: congela a versão vigente
   const fuso = org.fuso;
   const inicio = localParaUtc(d.dataInicio, '00:00', fuso);
-  const a = (await um(tx, `INSERT INTO acompanhamentos (organizacao_id, id, paciente_id, protocolo_id, protocolo_versao, protocolo, data_inicio, equipe_ids, status, observacao, criado_por, criado_em)
-                           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE($12::timestamptz, now())) RETURNING *`,
-    [org.id, d.id ?? novoId('acp'), d.pacienteId, prot.id, prot.versao, protocolo, d.dataInicio, [...new Set(d.equipeIds)], inicio <= agora ? 'ATIVO' : 'AGENDADO', d.observacao, d.criadoPor, d.criadoEm ?? null]))!;
+  const a = (await um(tx, `INSERT INTO acompanhamentos (organizacao_id, id, paciente_id, protocolo_id, protocolo_versao, protocolo, data_inicio, equipe_ids, status, observacao, criado_por, criado_em, agendamento_id)
+                           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE($12::timestamptz, now()),$13) RETURNING *`,
+    [org.id, d.id ?? novoId('acp'), d.pacienteId, prot.id, prot.versao, protocolo, d.dataInicio, [...new Set(d.equipeIds)], inicio <= agora ? 'ATIVO' : 'AGENDADO', d.observacao, d.criadoPor, d.criadoEm ?? null, d.agendamentoId ?? null]))!;
   let fimMs = localParaUtc(somarDias(d.dataInicio, protocolo.duracaoDias + 1), '00:00', fuso);
   const disponiveis: any[] = [];
 

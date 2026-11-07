@@ -50,7 +50,9 @@ export function serServico(ctx: Ctx, s: any) {
   return {
     id: s.id, nome: s.nome, categoria: s.categoria, duracaoMinutos: s.duracaoMinutos, autoagendavel: s.autoagendavel,
     profissionais: s.profissionaisIds.filter((id: string) => ctx.org.usuarios.has(id)).map((id: string) => r.refUsuario(ctx.org, id, 'PROFISSIONAL')),
-    orientacoes: s.orientacoes ?? null, status: s.status, acoesPermitidas: acoes,
+    orientacoes: s.orientacoes ?? null,
+    protocoloId: r.ehEquipe(ctx) && r.temModulo(ctx.org, 'acompanhamento') ? s.protocoloId ?? null : null,
+    status: s.status, acoesPermitidas: acoes,
   };
 }
 function serGrade(ctx: Ctx, profissionalId: string) {
@@ -98,6 +100,7 @@ export function serAgendamento(ctx: Ctx, a: any) {
     local: a.local ?? null, orientacoes: a.orientacoes ?? null,
     observacao: r.ehEquipe(ctx) ? a.observacao ?? null : null,
     motivoCancelamento: a.motivoCancelamento ?? null,
+    acompanhamentoId: a.acompanhamentoId ?? null,
     historico: a.historico.map((h: any) => ({ ocorridoEm: h.ocorridoEm, acao: h.acao, por: h.porId && org.usuarios.has(h.porId) ? r.refUsuario(org, h.porId) : null, ...(h.detalhe !== undefined ? { detalhe: h.detalhe } : {}) })),
     criadoEm: a.criadoEm, acoesPermitidas: acoesAgendamento(ctx, a),
   };
@@ -188,16 +191,44 @@ function registrar(a: any, acao: string, porId: string | null, detalhe?: string 
 }
 function atualizado(org: Org, a: any) { emitir(org, 'agenda.agendamento.atualizado', { agendamentoId: a.id }, interessados(org, a)); }
 
-export function criarAgendamento(org: Org, d: { pacienteId: string; servicoId: string; profissionalId: string; inicioMs: number; duracaoMinutos?: number; origem: 'EQUIPE' | 'PACIENTE'; porId: string; local?: string | null; observacao?: string | null; encaixe?: boolean; id?: string }) {
+// ─────────── Procedimento ↔ acompanhamento (RN-AGE-008, QUESTION-032) ───────────
+const nomeProcedimento = (org: Org) => org.termos.procedimento ?? { singular: 'procedimento', plural: 'procedimentos', genero: 'M' };
+const flexP = (org: Org, m: string, f: string) => (nomeProcedimento(org).genero === 'F' ? f : m);
+const ATIVO_ACP = new Set(['AGENDADO', 'ATIVO']);
+/** Pós-procedimento nasce AGENDADO no dia local do procedimento, ligado nos dois sentidos. */
+function iniciarAcompanhamento(org: Org, a: any, protocoloId: string, equipeIds: string[], porId: string, observacao: string | null) {
+  return r.criarAcompanhamento(org, { pacienteId: a.pacienteId, protocoloId, dataInicio: partesLocais(a.inicioMs, org.config.fuso).data, equipeIds, criadoPor: porId, observacao, agendamentoId: a.id });
+}
+function ligado(org: Org, a: any) {
+  const acp = a.acompanhamentoId ? org.acompanhamentos.get(a.acompanhamentoId) : null;
+  return acp && ATIVO_ACP.has(acp.status) ? acp : null;
+}
+function encerrarLigado(org: Org, a: any, motivo: string, porId: string) {
+  const acp = ligado(org, a);
+  if (acp) r.encerrarAcompanhamento(org, acp, motivo, porId);
+}
+/** Remarcação para outro dia: encerra o acompanhamento e cria outro no novo dia (nada é apagado). */
+function recriarLigado(org: Org, a: any, porId: string) {
+  const acp = ligado(org, a);
+  const dia = partesLocais(a.inicioMs, org.config.fuso).data;
+  if (!acp || acp.dataInicio === dia) return;
+  const [ano, mes, d] = dia.split('-');
+  r.encerrarAcompanhamento(org, acp, `${r.cap(nomeProcedimento(org).singular)} ${flexP(org, 'remarcado', 'remarcada')} para ${d}/${mes}/${ano}.`, porId);
+  a.acompanhamentoId = iniciarAcompanhamento(org, a, acp.protocolo.id, acp.equipeIds, porId, acp.observacao ?? null).id;
+}
+
+export function criarAgendamento(org: Org, d: { pacienteId: string; servicoId: string; profissionalId: string; inicioMs: number; duracaoMinutos?: number; origem: 'EQUIPE' | 'PACIENTE'; porId: string; local?: string | null; observacao?: string | null; encaixe?: boolean; id?: string; acompanhamentoId?: string | null; acompanhamento?: { protocoloId: string; equipeIds: string[] } }) {
   const s = agendaDe(org).servicos.get(d.servicoId);
   const fimMs = d.inicioMs + (d.duracaoMinutos ?? s.duracaoMinutos) * MINUTO;
   const a = {
     id: d.id ?? novoId('agd'), pacienteId: d.pacienteId, servicoId: s.id, profissionalId: d.profissionalId, inicioMs: d.inicioMs, fimMs,
     status: 'AGENDADO', origem: d.origem, encaixe: !!d.encaixe, local: d.local ?? null, orientacoes: s.orientacoes ?? null,
-    observacao: d.observacao ?? null, motivoCancelamento: null, historico: [] as any[], criadoEm: agoraIso(), _v: 0,
+    observacao: d.observacao ?? null, motivoCancelamento: null, acompanhamentoId: d.acompanhamentoId ?? null as string | null,
+    historico: [] as any[], criadoEm: agoraIso(), _v: 0,
   };
   registrar(a, 'CRIADO', d.porId);
   agendaDe(org).agendamentos.set(a.id, a);
+  if (d.acompanhamento) a.acompanhamentoId = iniciarAcompanhamento(org, a, d.acompanhamento.protocoloId, d.acompanhamento.equipeIds, d.porId, null).id;
   agendarLembrete(org, a);
   emitir(org, 'agenda.agendamento.criado', { agendamentoId: a.id }, interessados(org, a));
   const t = termoConsulta(org);
@@ -216,6 +247,7 @@ export function cancelar(org: Org, a: any, porId: string, motivo: string, porPac
   if (!ATIVOS.has(a.status)) throw invalido('status', 'Este agendamento não pode mais ser cancelado.');
   a.status = 'CANCELADO'; a.motivoCancelamento = motivo; registrar(a, 'CANCELADO', porId, motivo);
   cancelarJob(`agendamento:${a.id}:lembrete`);
+  encerrarLigado(org, a, `${r.cap(nomeProcedimento(org).singular)} ${flexP(org, 'cancelado', 'cancelada')}: ${motivo}`, porId);
   atualizado(org, a);
   const t = termoConsulta(org);
   notificarOutroLado(org, a, porPaciente, 'AGENDAMENTO_ALTERADO', `${r.cap(t.genero === 'F' ? 'uma' : 'um')} ${t.singular} foi ${t.genero === 'F' ? 'cancelada' : 'cancelado'}.`);
@@ -225,6 +257,7 @@ export function remarcar(org: Org, a: any, porId: string, d: { inicioMs: number;
   a.inicioMs = d.inicioMs; a.fimMs = d.inicioMs + d.duracaoMinutos * MINUTO; a.profissionalId = d.profissionalId; a.encaixe = d.encaixe;
   a.status = 'AGENDADO'; registrar(a, 'REMARCADO', porId, d.motivo);
   agendarLembrete(org, a);
+  recriarLigado(org, a, porId);
   atualizado(org, a);
   const t = termoConsulta(org);
   notificarOutroLado(org, a, false, 'AGENDAMENTO_ALTERADO', `${r.cap(t.genero === 'F' ? 'uma' : 'um')} ${t.singular} foi ${t.genero === 'F' ? 'remarcada' : 'remarcado'}. Confira o novo horário.`);
@@ -235,6 +268,7 @@ export function finalizar(org: Org, a: any, porId: string, status: 'REALIZADO' |
   if (agoraMs() < a.inicioMs) throw invalido('status', 'Só depois do horário marcado.');
   a.status = status; registrar(a, status, porId);
   cancelarJob(`agendamento:${a.id}:lembrete`);
+  if (status === 'FALTOU') encerrarLigado(org, a, `Falta registrada: não compareceu ${flexP(org, 'ao', 'à')} ${nomeProcedimento(org).singular}.`, porId);
   atualizado(org, a);
   return a;
 }
@@ -269,6 +303,7 @@ export function carregarAgenda(org: Org, cen: any) {
     agendar(`seed:${x.id}:criar`, Date.parse(x.criadoEm), () => criarAgendamento(org, {
       id: x.id, pacienteId: x.pacienteId, servicoId: x.servicoId, profissionalId: x.profissionalId, inicioMs: Date.parse(x.inicioEm),
       duracaoMinutos: x.duracaoMinutos, origem: x.origem ?? 'EQUIPE', porId: x.criadoPor, local: x.local, observacao: x.observacao, encaixe: x.encaixe,
+      acompanhamentoId: x.acompanhamentoId ?? null,
     }));
     const a = () => st.agendamentos.get(x.id);
     if (x.confirmar) agendar(`seed:${x.id}:confirmar`, Date.parse(x.confirmar.em), () => confirmar(org, a(), x.confirmar.por ?? null));
@@ -288,7 +323,27 @@ const etagGrade = (org: Org, prof: string) => r.etag(`grd_${prof}`, agendaDe(org
 
 function validarServico(org: Org, b: any) {
   if (b.categoria === 'PROCEDIMENTO' && b.autoagendavel) throw invalido('autoagendavel', 'Procedimentos são marcados pela equipe.');
+  if (b.protocoloId != null) {
+    if (b.categoria !== 'PROCEDIMENTO') throw invalido('protocoloId', 'Protocolo só se aplica a procedimentos.');
+    if (!r.temModulo(org, 'acompanhamento')) throw invalido('protocoloId', 'Módulo de acompanhamento inativo.');
+    const p = r.obterProtocoloVersao(org, b.protocoloId);
+    if (!p || p.status !== 'ATIVO') throw invalido('protocoloId', 'Protocolo não encontrado.');
+  }
   b.profissionaisIds.forEach((id: string, i: number) => { if (!equipeAtiva(org, id)) throw invalido(`profissionaisIds.${i}`, 'Membro da equipe inválido.'); });
+}
+/** Pós-procedimento pedido junto com a marcação: valida tudo antes de criar qualquer coisa. */
+function validarAcompanhamento(ctx: Ctx, s: any, b: any) {
+  if (s.categoria !== 'PROCEDIMENTO') throw invalido('acompanhamento', 'Só procedimentos iniciam acompanhamento.');
+  r.exigirModulo(ctx.org, 'acompanhamento');
+  r.exigir(ctx, 'acompanhamento.acompanhamento.criar');
+  const p = r.obterProtocoloVersao(ctx.org, b.acompanhamento.protocoloId);
+  if (!p || p.status !== 'ATIVO') throw invalido('acompanhamento.protocoloId', 'Protocolo não encontrado.');
+  const equipeIds: string[] = [...new Set<string>(b.acompanhamento.equipeIds?.length ? b.acompanhamento.equipeIds : [b.profissionalId])];
+  equipeIds.forEach((id, i) => {
+    const u = ctx.org.usuarios.get(id);
+    if (!u || u.status !== 'ATIVO' || !r.usuarioEhEquipe(u)) throw invalido(`acompanhamento.equipeIds.${i}`, 'Membro da equipe inválido.');
+  });
+  return { protocoloId: p.id, equipeIds };
 }
 function obterProfissional(ctx: Ctx, id: string) {
   if (!r.ehEquipe(ctx) || !ctx.perms.has('agenda.agendamento.ler')) throw naoEncontrado('Profissional');
@@ -309,7 +364,7 @@ export const handlersAgenda: Record<string, (q: Q) => Res> = {
     const ctx = C(q);
     r.exigir(ctx, 'agenda.configuracao.gerenciar');
     validarServico(q.org, q.body);
-    const s = { id: novoId('srv'), ...q.body, orientacoes: q.body.orientacoes ?? null, status: 'ATIVO', _v: 1 };
+    const s = { id: novoId('srv'), ...q.body, orientacoes: q.body.orientacoes ?? null, protocoloId: q.body.protocoloId ?? null, status: 'ATIVO', _v: 1 };
     agendaDe(q.org).servicos.set(s.id, s);
     return { status: 201, body: serServico(ctx, s), headers: { ETag: etagServico(s) } };
   },
@@ -327,7 +382,7 @@ export const handlersAgenda: Record<string, (q: Q) => Res> = {
     r.conferirIfMatch(q.headers['if-match'], s.id, s._v, () => serServico(ctx, s));
     if (s.status !== 'ATIVO') throw invalido('status', 'Serviço arquivado não pode ser editado.');
     validarServico(q.org, q.body);
-    Object.assign(s, { ...q.body, orientacoes: q.body.orientacoes ?? null }); s._v++;
+    Object.assign(s, { ...q.body, orientacoes: q.body.orientacoes ?? null, protocoloId: q.body.protocoloId ?? null }); s._v++;
     return ok(serServico(ctx, s), { ETag: etagServico(s) });
   },
   agendaArquivarServico: (q) => {
@@ -422,10 +477,11 @@ export const handlersAgenda: Record<string, (q: Q) => Res> = {
     let a;
     if (r.ehEquipe(ctx)) {
       const dur = b.duracaoMinutos ?? s.duracaoMinutos;
+      const acp = b.acompanhamento ? validarAcompanhamento(ctx, s, b) : undefined;
       if (!b.encaixe && ocupado(q.org, b.profissionalId, inicioMs, inicioMs + dur * MINUTO)) throw new ErroApi('HORARIO_INDISPONIVEL', 'Já existe um agendamento neste horário. Escolha outro ou marque como encaixe.');
-      a = criarAgendamento(q.org, { pacienteId: pac.id, servicoId: s.id, profissionalId: b.profissionalId, inicioMs, duracaoMinutos: dur, origem: 'EQUIPE', porId: ctx.usuario.id, local: b.local, observacao: b.observacao, encaixe: b.encaixe });
+      a = criarAgendamento(q.org, { pacienteId: pac.id, servicoId: s.id, profissionalId: b.profissionalId, inicioMs, duracaoMinutos: dur, origem: 'EQUIPE', porId: ctx.usuario.id, local: b.local, observacao: b.observacao, encaixe: b.encaixe, acompanhamento: acp });
     } else {
-      for (const campo of ['duracaoMinutos', 'local', 'observacao', 'encaixe']) if (b[campo] !== undefined) throw invalido(campo, 'Campo exclusivo da equipe.');
+      for (const campo of ['duracaoMinutos', 'local', 'observacao', 'encaixe', 'acompanhamento']) if (b[campo] !== undefined) throw invalido(campo, 'Campo exclusivo da equipe.');
       if (!s.autoagendavel) throw invalido('servicoId', 'Este serviço é marcado pela equipe.');
       const dia = partesLocais(inicioMs, q.org.config.fuso).data;
       const livre = horariosLivres(q.org, s, b.profissionalId, dia, dia, true).some((h) => h.inicioMs === inicioMs);

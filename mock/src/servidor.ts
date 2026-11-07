@@ -51,8 +51,10 @@ function carregarCenario(cenario: any) {
     }
   }
   // Linha do tempo do cenário: tudo passa pelos mesmos jobs que o relógio dispara (RN-ACO).
+  // Procedimento da agenda que originou o acompanhamento (RN-AGE-008): a ligação vem do agendamento no cenário.
+  const agendamentoDe = new Map<string, string>((cenario.agenda?.agendamentos ?? []).filter((x: any) => x.acompanhamentoId).map((x: any) => [x.acompanhamentoId, x.id]));
   for (const a of cenario.acompanhamentos ?? []) {
-    agendar(`seed:${a.id}:criar`, Date.parse(a.criadoEm), () => r.criarAcompanhamento(org, { ...a, seed: a }));
+    agendar(`seed:${a.id}:criar`, Date.parse(a.criadoEm), () => r.criarAcompanhamento(org, { ...a, agendamentoId: agendamentoDe.get(a.id) ?? null, seed: a }));
     for (const [i, m] of (a.mensagens ?? []).entries())
       agendar(`seed:${a.id}:msg:${i}`, Date.parse(m.em), () => r.postarMensagem(org, org.conversas.get(org.acompanhamentos.get(a.id).conversaId), { tipo: 'TEXTO', autorId: m.autorId, texto: m.texto, idCliente: crypto.randomUUID() }));
     for (const [i, x] of (a.resolverAlertas ?? []).entries())

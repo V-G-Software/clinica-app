@@ -222,6 +222,7 @@ export function serAcompanhamento(ctx: Ctx, a: any) {
     dataInicio: a.dataInicio, diaAtual: diaAtual(org, a), totalDias: a.protocolo.duracaoDias, status: a.status,
     equipe: a.equipeIds.filter((id: string) => org.usuarios.has(id)).map((id: string) => refUsuario(org, id)),
     conversaId: conversa && (participa(conversa, ctx.usuario.id) || ehEquipe(ctx)) ? conversa.id : null,
+    agendamentoId: a.agendamentoId ?? null,
     resumoCheckins: { respondidos: conta('RESPONDIDO'), pendentes: conta('DISPONIVEL'), expirados: conta('EXPIRADO'), agendados: conta('AGENDADO') },
     alertasAbertos: ehEquipe(ctx) ? [...org.alertas.values()].filter((x) => x.acompanhamentoId === a.id && x.status === 'ABERTO').length : 0,
     proximoCheckin: prox ? resumoCheckin(org, prox) : null,
@@ -444,13 +445,13 @@ export function obterFormularioVersao(org: Org, id: string, versao?: number) {
 
 export function criarAcompanhamento(
   org: Org,
-  d: { id?: string; pacienteId: string; protocoloId: string; dataInicio: string; equipeIds: string[]; criadoPor: string; observacao: string | null; seed?: any },
+  d: { id?: string; pacienteId: string; protocoloId: string; dataInicio: string; equipeIds: string[]; criadoPor: string; observacao: string | null; agendamentoId?: string | null; seed?: any },
 ) {
   const protocolo = structuredClone(obterProtocoloVersao(org, d.protocoloId)); // RN-ACO-003: congela a versão
   const fuso = org.config.fuso;
   const a: any = {
     id: d.id ?? novoId('acp'), pacienteId: d.pacienteId, protocolo, dataInicio: d.dataInicio, equipeIds: [...new Set(d.equipeIds)],
-    status: 'AGENDADO', observacao: d.observacao, motivoEncerramento: null, criadoEm: agoraIso(), criadoPor: d.criadoPor, conversaId: null, _v: 1, seed: d.seed,
+    status: 'AGENDADO', observacao: d.observacao, agendamentoId: d.agendamentoId ?? null, motivoEncerramento: null, criadoEm: agoraIso(), criadoPor: d.criadoPor, conversaId: null, _v: 1, seed: d.seed,
   };
   org.acompanhamentos.set(a.id, a);
   const agora = agoraMs();

@@ -4,7 +4,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
-import { CalendarClock, MapPin, MessageCircle } from 'lucide-vue-next';
+import { Activity, CalendarClock, MapPin, MessageCircle } from 'lucide-vue-next';
 import type { Agendamento } from '@clinica/contrato-tipos';
 import { api, ok } from '@/api';
 import { ErroApi } from '@/api/erros';
@@ -12,7 +12,7 @@ import { useAppStore } from '@/app/store';
 import { useSessaoStore } from '@/sessao/store';
 import { formatarDataHora, formatarHora } from '@/i18n/datas';
 import { hojeNoFuso } from '@/i18n/dias';
-import { capitalizar } from '@/i18n/termos';
+import { artigo, capitalizar, flexao } from '@/i18n/termos';
 import { comEtag } from '@/dados/etag';
 import { criarChave, useTermos } from '@/dados/util';
 import { useMensagemErro } from '@/dados/erro';
@@ -24,7 +24,7 @@ import Conflito from '@/ds/Conflito.vue';
 import Dialogo from '@/ds/Dialogo.vue';
 import EstadoConsulta from '@/ds/EstadoConsulta.vue';
 import EscolherHorario from './EscolherHorario.vue';
-import { ACAO_HISTORICO, paraUtc, STATUS } from './util';
+import { ACAO_HISTORICO, diaNoFuso, paraUtc, STATUS } from './util';
 
 const rota = useRoute();
 const router = useRouter();
@@ -37,11 +37,16 @@ const id = computed(() => rota.params.agendamentoId as string);
 const q = useQuery({ queryKey: ['agendamento', id], queryFn: () => comEtag(api().GET('/v1/agendamentos/{agendamentoId}', { params: { path: { agendamentoId: id.value } } })) });
 const a = computed(() => q.data.value?.dado);
 const acoes = computed(() => new Set(a.value?.acoesPermitidas ?? []));
+// Acompanhamento ligado (RN-AGE-008): status para avisar o que remarcar/cancelar faz com ele.
+const acpId = computed(() => (sessao.modulos.has('acompanhamento') ? a.value?.acompanhamentoId ?? null : null));
+const acp = useQuery({ queryKey: ['acompanhamento-resumo', acpId], queryFn: () => ok(api().GET('/v1/acompanhamentos/{acompanhamentoId}', { params: { path: { acompanhamentoId: acpId.value! } } })), enabled: computed(() => !!acpId.value) });
+const acpEmAndamento = computed(() => acp.data.value?.status === 'AGENDADO' || acp.data.value?.status === 'ATIVO');
+const tA = computed(() => termo.value('acompanhamento'));
 const quando = computed(() => (a.value ? capitalizar(formatarDataHora(a.value.inicioEm, app.fuso, app.locale, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })) : ''));
 
 const atualizar = async (novo: Agendamento) => {
   q.data.value && (q.data.value.dado = novo);
-  await Promise.all([q.refetch(), qc.invalidateQueries({ queryKey: ['agendamentos'] }), qc.invalidateQueries({ queryKey: ['inicio'] }), qc.invalidateQueries({ queryKey: ['agenda-horarios'] })]);
+  await Promise.all([q.refetch(), qc.invalidateQueries({ queryKey: ['acompanhamento-resumo'] }), qc.invalidateQueries({ queryKey: ['acompanhamentos'] }), qc.invalidateQueries({ queryKey: ['agendamentos'] }), qc.invalidateQueries({ queryKey: ['inicio'] }), qc.invalidateQueries({ queryKey: ['agenda-horarios'] })]);
 };
 const caminho = (acao: 'confirmar' | 'realizar' | 'falta') => `/v1/agendamentos/{agendamentoId}/${acao}` as const;
 const simples = useMutation({
@@ -78,6 +83,7 @@ const remarcar = useMutation({
   } })),
   onSuccess: async (r) => { remarcando.value = false; await atualizar(r); },
 });
+const mudaDia = computed(() => !!(novoInicio.value && a.value && diaNoFuso(novoInicio.value, app.fuso) !== diaNoFuso(a.value.inicioEm, app.fuso)));
 const remarcarOcupado = computed(() => remarcar.error.value instanceof ErroApi && remarcar.error.value.codigo === 'HORARIO_INDISPONIVEL');
 
 // Editar local e observação interna (recurso versionado).
@@ -120,6 +126,10 @@ const erroAcao = computed(() => simples.error.value ?? abrirConversa.error.value
           <p v-if="a.encaixe && !sessao.ehPaciente" class="text-sm text-secundario">Encaixe</p>
           <p v-if="a.status === 'CANCELADO' && a.motivoCancelamento" class="text-sm">Motivo do cancelamento: {{ a.motivoCancelamento }}</p>
         </Cartao>
+        <RouterLink v-if="acpId" :to="`/acompanhamentos/${acpId}`" class="flex min-h-12 items-center gap-3 rounded-xl border-2 border-acao px-4 py-2 font-semibold text-acao">
+          <Activity class="size-5 shrink-0" aria-hidden="true" />
+          <span class="flex-1">{{ capitalizar(tA.singular) }}<span v-if="acp.data.value" class="block text-sm font-normal text-secundario">{{ acp.data.value.protocolo.nome }} · {{ { AGENDADO: 'agendado', ATIVO: 'em andamento', CONCLUIDO: 'concluído', ENCERRADO: 'encerrado' }[acp.data.value.status] }}</span></span>
+        </RouterLink>
         <Aviso v-if="a.orientacoes && (a.status === 'AGENDADO' || a.status === 'CONFIRMADO')" tipo="atencao"><strong>Preparo:</strong> {{ a.orientacoes }}</Aviso>
         <Cartao v-if="!sessao.ehPaciente && (a.observacao || acoes.has('EDITAR'))" class="flex flex-col gap-2">
           <div class="flex items-center justify-between"><h2 class="font-bold">Observação interna</h2><Botao v-if="acoes.has('EDITAR') && !editando" variante="fantasma" @click="editando = true">Editar</Botao></div>
@@ -159,6 +169,7 @@ const erroAcao = computed(() => simples.error.value ?? abrirConversa.error.value
 
     <Dialogo v-model:aberto="cancelando" :titulo="`Cancelar ${termo('consulta').singular}`" descricao="O motivo fica no histórico e vai no aviso.">
       <form class="flex flex-col gap-3" @submit.prevent="cancelar.mutate()">
+        <Aviso v-if="acpEmAndamento && !sessao.ehPaciente" tipo="atencao">{{ capitalizar(artigo(tA)) }} {{ tA.singular }} ligad{{ artigo(tA) }} será {{ flexao(tA, 'encerrado', 'encerrada') }} com este motivo.</Aviso>
         <Aviso v-if="foraDoPrazo" tipo="erro">Pelo app, o prazo para cancelar já passou. Fale com a equipe pela conversa.</Aviso>
         <Aviso v-else-if="cancelar.error.value" tipo="erro" :detalhe="msg(cancelar.error.value)?.suporte">{{ msg(cancelar.error.value)?.texto }}</Aviso>
         <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">Motivo</span><textarea v-model="motivo" rows="3" maxlength="1000" required class="rounded-xl border-2 border-zinc-300 bg-white p-3 dark:border-zinc-600 dark:bg-zinc-800" /></label>
@@ -177,6 +188,7 @@ const erroAcao = computed(() => simples.error.value ?? abrirConversa.error.value
           <label class="flex items-center gap-3"><input v-model="encaixe" type="checkbox" class="size-5" /> Encaixe (pode sobrepor)</label>
         </template>
         <CampoTexto v-model="motivoRemarcar" rotulo="Motivo (opcional)" :maxlength="1000" />
+        <Aviso v-if="acpEmAndamento && mudaDia" tipo="atencao">Outro dia: {{ artigo(tA) }} {{ tA.singular }} atual será {{ flexao(tA, 'encerrado', 'encerrada') }} e {{ flexao(tA, 'um novo', 'uma nova') }} começa no novo dia, com {{ artigo(termo('protocolo')) }} mesm{{ artigo(termo('protocolo')) }} {{ termo('protocolo').singular }} e a mesma equipe.</Aviso>
         <Aviso v-if="remarcarOcupado" tipo="erro">Esse horário já está ocupado. Escolha outro{{ modo === 'OUTRO' ? ' ou marque como encaixe' : '' }}.</Aviso>
         <Aviso v-else-if="remarcar.error.value" tipo="erro" :detalhe="msg(remarcar.error.value)?.suporte">{{ msg(remarcar.error.value)?.texto }}</Aviso>
         <Botao bloco :carregando="remarcar.isPending.value" :desabilitado="!novoInicio" @click="remarcar.mutate()">Remarcar</Botao>
