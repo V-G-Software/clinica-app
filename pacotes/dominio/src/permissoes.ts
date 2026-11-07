@@ -12,6 +12,7 @@ export const TODAS_PERMISSOES = [
   'chat.conversa.ler', 'chat.conversa.criar', 'chat.conversa.gerenciar', 'chat.mensagem.enviar',
   'equipe.membro.ler', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar',
   'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
+  'exames.exame.ler', 'exames.pedido.criar', 'exames.resultado.enviar', 'exames.resultado.revisar',
 ] as const;
 
 /** Tabela da seção 9.6. [DECISÃO 3]: secretária vê check-ins e alertas por padrão. */
@@ -24,10 +25,13 @@ export const PERMISSOES_POR_PERFIL: Record<Perfil, readonly string[]> = {
     'acompanhamento.checkin.ler', 'acompanhamento.alerta.ler', 'chat.conversa.ler', 'chat.conversa.criar',
     'chat.conversa.gerenciar', 'chat.mensagem.enviar', 'equipe.membro.ler',
     'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
+    // Pedir e revisar exame é ato do profissional (ADR-0017); a secretaria vê e anexa resultados.
+    'exames.exame.ler', 'exames.resultado.enviar',
   ],
   PACIENTE: [
     'pacientes.paciente.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.checkin.ler',
     'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar', 'agenda.agendamento.ler',
+    'exames.exame.ler',
   ],
 };
 export const temModulo = (modulos: ModuloAtivo[], id: string) => modulos.some((m) => m.id === id);
@@ -38,5 +42,7 @@ export function permissoesDe(modulos: ModuloAtivo[], perfil: Perfil): string[] {
   const base = [...PERMISSOES_POR_PERFIL[perfil]];
   if (perfil === 'PACIENTE' && configModulo(modulos, 'chat').pacientePodeIniciar) base.push('chat.conversa.criar');
   if (perfil === 'PACIENTE' && configModulo(modulos, 'agenda').autoagendamento) base.push('agenda.agendamento.criar');
+  // Exames: o paciente envia resultados, salvo se a organização desligar (padrão: ligado).
+  if (perfil === 'PACIENTE' && configModulo(modulos, 'exames').pacienteEnviaResultados !== false) base.push('exames.resultado.enviar');
   return base.filter((p) => { const m = p.split('.')[0]; return m === 'organizacao' || temModulo(modulos, m); });
 }

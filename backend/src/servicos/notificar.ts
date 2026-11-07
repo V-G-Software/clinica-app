@@ -15,8 +15,9 @@ const TEXTO_DISCRETO: Record<string, string> = {
   ACOMPANHAMENTO_INICIADO: 'Seu acompanhamento foi iniciado', ACOMPANHAMENTO_CONCLUIDO: 'Seu acompanhamento foi concluído',
   CONVITE_ACEITO: 'Um convite foi aceito', SISTEMA: 'Você tem um novo aviso',
   AGENDAMENTO_CRIADO: 'Há um novo agendamento', AGENDAMENTO_ALTERADO: 'Um agendamento foi alterado', AGENDAMENTO_LEMBRETE: 'Lembrete de agendamento',
+  EXAME_PEDIDO: 'Há um novo pedido de exame', EXAME_RESULTADO: 'Há um resultado de exame para revisar', EXAME_REVISADO: 'Um resultado de exame foi revisado',
 };
-const EMAIL_SEM_PUSH = new Set(['CHECKIN_DISPONIVEL', 'CHECKIN_LEMBRETE', 'ALERTA_CRIADO', 'AGENDAMENTO_LEMBRETE', 'AGENDAMENTO_ALTERADO']);
+const EMAIL_SEM_PUSH = new Set(['CHECKIN_DISPONIVEL', 'CHECKIN_LEMBRETE', 'ALERTA_CRIADO', 'AGENDAMENTO_LEMBRETE', 'AGENDAMENTO_ALTERADO', 'EXAME_PEDIDO', 'EXAME_REVISADO']);
 export interface NovaNotificacao { tipo: string; titulo: string; texto: string; destino: unknown; agrupar?: string }
 type Log = { info: (o: unknown, m: string) => void };
 

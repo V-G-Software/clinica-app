@@ -77,6 +77,13 @@ O contrato está em `1.1.0-rc.2`. O módulo entra como minor (`1.2.0-rc.1`), só
 - **Concluir o pedido automaticamente ao chegar o resultado:** o laboratório entrega em partes. Quem conclui é a equipe.
 
 ## Consequências
+- **Implementado no backend (etapa 2):**
+  - migração `0007` (`pedidos_exame`, `resultados_exame` e `resultado_arquivos`, com PK no arquivo: um arquivo entra em um só resultado, inclusive em envios simultâneos);
+  - `servicos/exames.ts` e `modulos/exames.ts`;
+  - `servicos/antivirus.ts` (clamd INSTREAM e o modo `teste`);
+  - `servicos/pdf.ts`, que copia as páginas para um documento novo depois de tirar anotações e ações, e varre a saída.
+  - Testes: protocolo clamd contra servidor falso, PDF com JavaScript, anexos, formulário e link (todos removidos), PDF criptografado, concorrência e seed.
+  - No CI, `ANTIVIRUS_URL=teste`: um ClamAV real baixaria bases de centenas de MB a cada execução.
 - Contrato `1.2.0-rc.1`.
 - Backend (etapa 2): migração com `pedidos_exame` e `resultados_exame`, mais o pipeline de PDF com ClamAV (infraestrutura nova: um contêiner `clamav/clamav` ao lado do backend).
 - Prontuário e integração com laboratório (HL7/FHIR) ficam fora do escopo.

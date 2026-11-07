@@ -13,6 +13,7 @@ import type { Handler, Req, Res } from './http.ts';
 import { autenticar, hashCorpo, orgPorDominio, orgPorSlug, type Org } from './nucleo.ts';
 import { handlersAcompanhamento } from './modulos/acompanhamento.ts';
 import { handlersAgenda } from './modulos/agenda.ts';
+import { handlersExames } from './modulos/exames.ts';
 import { handlersArquivos } from './modulos/arquivos.ts';
 import { handlersChat } from './modulos/chat.ts';
 import { handlersAuth } from './modulos/auth.ts';
@@ -32,7 +33,7 @@ import { LIMITES, contar } from './servicos/limites.ts';
 /** Ids de módulo do catálogo do contrato (`ModuloId`); a tag da operação diz a que módulo ela pertence. */
 const MODULOS_DO_CONTRATO = new Set<string>(contrato.components.schemas.ModuloId.enum);
 
-const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat, ...handlersAgenda };
+const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat, ...handlersAgenda, ...handlersExames };
 const PUBLICAS_COM_LOGIN = new Set(['authSair']);
 
 export function criarServidor() {
@@ -114,8 +115,12 @@ export function criarServidor() {
   app.get('/_arquivos/ver/*', async (req, reply) => {
     const chave = (req.params as any)['*'];
     const q = req.query as any;
-    if (!storageLocal.conferir('GET', chave, Number(q.exp), String(q.ass ?? ''))) return reply.code(403).send();
+    const anexo = q.tipo ? `${q.tipo}|${q.nome ?? ''}` : '';
+    if (!storageLocal.conferir('GET', chave, Number(q.exp), String(q.ass ?? ''), anexo)) return reply.code(403).send();
     const b = await storageLocal.ler(chave);
+    // PDF (ADR-0017): sempre como anexo e com o tipo assinado na URL; o navegador não o abre na origem da API.
+    if (b && q.tipo) return reply.header('Cache-Control', 'private, max-age=60').header('Content-Type', String(q.tipo))
+      .header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(String(q.nome ?? 'arquivo'))}`).send(b);
     return b ? reply.header('Cache-Control', 'private, max-age=60').type('application/octet-stream').header('Content-Type', tipoPorBytes(b)).send(b) : reply.code(404).send();
   });
   app.get('/_arquivos/publico/:org/:id', async (req, reply) => {
