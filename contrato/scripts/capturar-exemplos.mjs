@@ -57,6 +57,9 @@ await cap(O, 'GET', '/v1/agendamentos?de=2026-11-09&ate=2026-11-15', { token: an
 await cap(O, 'GET', '/v1/agendamentos/agd_beatriz_cirurgia', { token: ana, sufixo: 'cirurgia' });
 await cap(O, 'GET', '/v1/agenda/horarios?servicoId=srv_consulta&de=2026-11-09&ate=2026-11-09', { token: marcos, sufixo: 'paciente' });
 await cap(O, 'POST', '/v1/agendamentos', { token: ana, body: { pacienteId: 'pac_marcos', servicoId: 'srv_consulta', profissionalId: 'usr_ana', inicioEm: '2026-11-10T10:00:00Z' }, sufixo: 'erro-horario-indisponivel', idem: true });
+await cap(O, 'GET', '/v1/exames/pedidos/ped_beatriz_preop', { token: ana });
+await cap(O, 'GET', '/v1/exames/resultados?status=AGUARDANDO_REVISAO', { token: ana, sufixo: 'para-revisar' });
+await cap(O, 'GET', '/v1/exames/resultados/res_marcos_tc', { token: marcos, sufixo: 'revisado-paciente' });
 const vet = `${MOCK}/o/vet-amigo`;
 const laura = (await (await fetch(`${vet}/v1/auth/codigo/solicitar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'laura@exemplo.com' }) }), await (await fetch(`${vet}/v1/auth/codigo/verificar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'laura@exemplo.com', codigo: '123456' }) })).json())).tokenAcesso;
 await cap(vet, 'GET', '/v1/sessao', { token: laura, sufixo: 'tutora-dois-pets' });

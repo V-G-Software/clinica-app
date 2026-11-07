@@ -1,5 +1,5 @@
 {
-  "x-gerado-de": "contrato/openapi.yaml (1.1.0-rc.2)",
+  "x-gerado-de": "contrato/openapi.yaml (1.2.0-rc.1)",
   "Perfil": [
     "GESTOR",
     "PROFISSIONAL",
@@ -11,7 +11,8 @@
     "acompanhamento",
     "chat",
     "equipe",
-    "agenda"
+    "agenda",
+    "exames"
   ],
   "Tela": [
     "inicio",
@@ -37,7 +38,13 @@
     "agenda.servicos",
     "agenda.grade",
     "agenda.meus",
-    "agenda.marcar"
+    "agenda.marcar",
+    "exames.lista",
+    "exames.novo",
+    "exames.pedido",
+    "exames.resultado",
+    "exames.meus",
+    "exames.enviar"
   ],
   "TermoChave": [
     "organizacao",
@@ -49,13 +56,15 @@
     "procedimento",
     "checkin",
     "conversa",
-    "consulta"
+    "consulta",
+    "exame"
   ],
   "ContadorChave": [
     "chat.naoLidas",
     "notificacoes.naoLidas",
     "acompanhamento.alertasAbertos",
-    "acompanhamento.checkinsPendentes"
+    "acompanhamento.checkinsPendentes",
+    "exames.resultadosParaRevisar"
   ],
   "Icone": [
     "house",
@@ -79,7 +88,8 @@
     "log-out",
     "calendar-plus",
     "calendar-check",
-    "calendar-clock"
+    "calendar-clock",
+    "flask-conical"
   ],
   "CodigoErro": [
     "AUTENTICACAO_INVALIDA",
@@ -119,7 +129,10 @@
     "SISTEMA",
     "AGENDAMENTO_CRIADO",
     "AGENDAMENTO_ALTERADO",
-    "AGENDAMENTO_LEMBRETE"
+    "AGENDAMENTO_LEMBRETE",
+    "EXAME_PEDIDO",
+    "EXAME_RESULTADO",
+    "EXAME_REVISADO"
   ],
   "TipoEvento": [
     "chat.mensagem.criada",
@@ -135,7 +148,9 @@
     "sessao.manifesto.alterado",
     "sessao.encerrada",
     "agenda.agendamento.criado",
-    "agenda.agendamento.atualizado"
+    "agenda.agendamento.atualizado",
+    "exames.pedido.atualizado",
+    "exames.resultado.atualizado"
   ],
   "TipoSecao": [
     "ACOMPANHAMENTO_ATUAL",
@@ -148,7 +163,9 @@
     "AVISO",
     "CONTATO_ORGANIZACAO",
     "PROXIMA_CONSULTA",
-    "AGENDA_DO_DIA"
+    "AGENDA_DO_DIA",
+    "RESULTADOS_PARA_REVISAR",
+    "EXAMES_PENDENTES"
   ],
   "Etapa": [
     "CONCLUIDO",
@@ -182,7 +199,11 @@
     "agenda.agendamento.ler",
     "agenda.agendamento.criar",
     "agenda.agendamento.gerenciar",
-    "agenda.configuracao.gerenciar"
+    "agenda.configuracao.gerenciar",
+    "exames.exame.ler",
+    "exames.pedido.criar",
+    "exames.resultado.enviar",
+    "exames.resultado.revisar"
   ],
   "TipoCampo": [
     "TEXTO",

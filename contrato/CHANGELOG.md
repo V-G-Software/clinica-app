@@ -2,6 +2,33 @@
 
 Versionamento semântico (seção 4.2). Dentro de `1.x`, só mudanças aditivas.
 
+## 1.2.0-rc.1 — 2026-11-07 (F5, etapa 1)
+
+Módulo `exames`: pedidos de exame, resultados (imagem e PDF) e revisão ([ADR-0017](../docs/adr/0017-modulo-exames.md)). Versão menor, só com adições. Organizações sem o módulo ficam idênticas.
+
+### Incluído
+- **Tag `exames`, 9 operações:**
+  - pedidos (`/v1/exames/pedidos`): listar, criar, obter, `concluir` e `cancelar`;
+  - resultados (`/v1/exames/resultados`): listar, enviar, obter e `revisar`.
+- **Schemas:** `PedidoExame`, `ItemPedidoExame`, `ResultadoExame`, `ResultadoExameResumo` e `ConfigExames`, além dos enums `StatusPedidoExame` e `StatusResultadoExame`.
+- **Parâmetros:** `PedidoExameId` e `ResultadoExameId`.
+- **Catálogos:**
+  - `ModuloId.exames`;
+  - 6 telas `exames.*`;
+  - termo `exame`;
+  - ícone `flask-conical`;
+  - finalidade de arquivo `EXAME`;
+  - notificações `EXAME_PEDIDO`, `EXAME_RESULTADO` e `EXAME_REVISADO`;
+  - eventos `exames.pedido.atualizado` e `exames.resultado.atualizado`;
+  - seções `RESULTADOS_PARA_REVISAR` e `EXAMES_PENDENTES`;
+  - contador `exames.resultadosParaRevisar`;
+  - 4 permissões `exames.*`.
+- **Capacidades:** `capacidades.upload.tiposPermitidosExame` (inclui `application/pdf`).
+- **Configuração da organização:** `OrganizacaoConfiguracao.exames` e `OrganizacaoEdicao.exames` (`pacienteEnviaResultados`).
+
+### Esclarecido
+- **PDF:** só na finalidade `EXAME`. Passa por antivírus e saneamento; o recusado fica `REJEITADO` e nunca é servido. `urlMiniatura` é `null` para PDF.
+
 ## 1.1.0-rc.2 — 2026-11-06 (F4, etapa 4)
 
 Procedimento da agenda ligado ao acompanhamento pós-procedimento (QUESTION-032, decidida). Só adições.

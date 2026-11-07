@@ -94,6 +94,7 @@ function orgConfig(ctx: Ctx) {
     chat: { horarioAtendimento: chat.horarioAtendimento ?? [], mensagemForaDoHorario: chat.mensagemForaDoHorario ?? null, avisoUrgencia: chat.avisoUrgencia ?? null },
     ...(r.temModulo(ctx.org, 'acompanhamento') ? { acompanhamento: { resolverAlertasAoEncerrar: !!r.configModulo(ctx.org, 'acompanhamento').resolverAlertasAoEncerrar } } : {}),
     ...(r.temModulo(ctx.org, 'agenda') ? { agenda: { ...r.configModulo(ctx.org, 'agenda') } } : {}),
+    ...(r.temModulo(ctx.org, 'exames') ? { exames: cfgExames(ctx.org) } : {}),
     acoesPermitidas: ctx.perms.has('organizacao.configuracao.editar') ? ['EDITAR'] : [],
   };
 }
@@ -111,12 +112,15 @@ const ASSINATURAS: Record<string, (b: Buffer) => boolean> = {
   'image/jpeg': (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
   'image/png': (b) => b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
   'image/webp': (b) => b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP',
+  'application/pdf': (b) => ehPdf(b),
 };
 
 import { handlersAgenda } from './agenda.ts';
+import { cfgExames, ehPdf, exigirEnvioDeExame, handlersExames, temVirus, tiposPermitidos } from './exames.ts';
 
 export const handlers: Record<string, Handler> = {
   ...(handlersAgenda as Record<string, Handler>),
+  ...(handlersExames as Record<string, Handler>),
   // ─────────── Público ───────────
   publicoObterConfiguracao: (q) => {
     const o = q.org.config;
@@ -232,7 +236,9 @@ export const handlers: Record<string, Handler> = {
   // ─────────── Arquivos ───────────
   arquivosIniciarEnvio: (q) => {
     const cap = q.org.capacidades.upload;
-    if (!cap.tiposPermitidos.includes(q.body.tipo)) throw new ErroApi('TIPO_ARQUIVO_NAO_PERMITIDO', `Envie ${cap.tiposPermitidos.join(', ')}.`);
+    if (q.body.finalidade === 'EXAME') exigirEnvioDeExame(C(q));
+    const tipos = tiposPermitidos(q.org, q.body.finalidade); // PDF só em EXAME (ADR-0017)
+    if (!tipos.includes(q.body.tipo)) throw new ErroApi('TIPO_ARQUIVO_NAO_PERMITIDO', `Envie ${tipos.join(', ')}.`);
     if (q.body.tamanhoBytes > cap.tamanhoMaximoBytes) throw new ErroApi('ARQUIVO_MUITO_GRANDE', `O limite é ${Math.floor(cap.tamanhoMaximoBytes / 1048576)} MB.`);
     if (q.body.finalidade === 'ORGANIZACAO') r.exigir(C(q), 'organizacao.configuracao.editar');
     const id = novoId('arq');
@@ -252,6 +258,7 @@ export const handlers: Record<string, Handler> = {
       if (!a.bytes) { a.status = 'REJEITADO'; a.motivoRejeicao = 'Arquivo não recebido.'; }
       else if (a.bytes.length > org.capacidades.upload.tamanhoMaximoBytes) { a.status = 'REJEITADO'; a.motivoRejeicao = 'Arquivo maior que o permitido.'; }
       else if (!ASSINATURAS[a.tipo]?.(a.bytes)) { a.status = 'REJEITADO'; a.motivoRejeicao = 'O conteúdo não corresponde ao tipo informado.'; }
+      else if (temVirus(a.bytes)) { a.status = 'REJEITADO'; a.motivoRejeicao = 'O arquivo foi recusado pela verificação de segurança.'; }
       else { a.status = 'DISPONIVEL'; a.tamanhoBytes = a.bytes.length; }
       emitir(org, 'arquivo.processado', { arquivoId: a.id, status: a.status }, [a.donoId]);
     }, 150);
@@ -752,6 +759,10 @@ export const handlers: Record<string, Handler> = {
     if (q.body.agenda) {
       if (!r.temModulo(q.org, 'agenda')) throw new ErroApi('MODULO_NAO_CONTRATADO');
       Object.assign(q.org.modulos.find((m) => m.id === 'agenda').config, q.body.agenda);
+    }
+    if (q.body.exames) {
+      if (!r.temModulo(q.org, 'exames')) throw new ErroApi('MODULO_NAO_CONTRATADO');
+      Object.assign(q.org.modulos.find((m) => m.id === 'exames').config, q.body.exames);
     }
     q.org._vConfig++;
     avisarManifesto(q.org); // RN-EQP-004

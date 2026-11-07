@@ -548,7 +548,8 @@ export interface paths {
         /**
          * Inicia o envio de um arquivo
          * @description Devolve as instruções de envio. O frontend envia os bytes para `envio.url` com o método e
-         *     os cabeçalhos indicados e depois chama `/concluir`. No MVP, só JPEG, PNG e WebP.
+         *     os cabeçalhos indicados e depois chama `/concluir`. JPEG, PNG e WebP; PDF só com finalidade `EXAME`
+         *     (ADR-0017: antivírus e saneamento; recusado vira `REJEITADO`). Outro tipo → 415 `TIPO_ARQUIVO_NAO_PERMITIDO`.
          */
         post: operations["arquivosIniciarEnvio"];
         delete?: never;
@@ -1449,6 +1450,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/exames/pedidos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pedidos de exame (equipe; o paciente vê só os dos pacientes vinculados) */
+        get: operations["examesListarPedidos"];
+        put?: never;
+        /**
+         * Registra um pedido de exame (RN-EXA-002)
+         * @description Só quem tem `exames.pedido.criar` (profissional e gestor). Avisa o paciente (`EXAME_PEDIDO`).
+         */
+        post: operations["examesCriarPedido"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/exames/pedidos/{pedidoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pedido de exame com os resultados ligados */
+        get: operations["examesObterPedido"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/exames/pedidos/{pedidoId}/concluir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Conclui o pedido (equipe); resultados ainda podem ser consultados, mas não ligados a ele */
+        post: operations["examesConcluirPedido"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/exames/pedidos/{pedidoId}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancela o pedido (equipe), com motivo; nada é apagado */
+        post: operations["examesCancelarPedido"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/exames/resultados": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resultados de exame (equipe; o paciente vê só os dos pacientes vinculados) */
+        get: operations["examesListarResultados"];
+        put?: never;
+        /**
+         * Envia um resultado de exame (paciente ou equipe; RN-EXA-003)
+         * @description Os arquivos precisam estar `DISPONIVEL`, com finalidade `EXAME`, enviados pela própria conta.
+         *     O pedido, se informado, precisa ser do mesmo paciente e estar `ABERTO`. O paciente só envia com
+         *     `pacienteEnviaResultados` ligado. Avisa quem revisa (`EXAME_RESULTADO`).
+         */
+        post: operations["examesEnviarResultado"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/exames/resultados/{resultadoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resultado de exame com os arquivos (URLs assinadas) */
+        get: operations["examesObterResultado"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/exames/resultados/{resultadoId}/revisar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Marca o resultado como revisado, com nota opcional ao paciente (RN-EXA-004)
+         * @description Idempotente — revisar de novo não muda o autor nem a data da revisão.
+         */
+        post: operations["examesRevisarResultado"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1521,26 +1654,26 @@ export interface components {
         /** @enum {string} */
         PerfilEquipe: "GESTOR" | "PROFISSIONAL" | "SECRETARIA";
         /** @enum {string} */
-        ModuloId: "pacientes" | "acompanhamento" | "chat" | "equipe" | "agenda";
+        ModuloId: "pacientes" | "acompanhamento" | "chat" | "equipe" | "agenda" | "exames";
         /** @enum {string} */
-        Tela: "inicio" | "notificacoes" | "perfil" | "pacientes.lista" | "pacientes.detalhe" | "pacientes.novo" | "acompanhamento.lista" | "acompanhamento.meus" | "acompanhamento.detalhe" | "acompanhamento.novo" | "acompanhamento.protocolos" | "acompanhamento.protocolo" | "acompanhamento.checkin" | "chat.lista" | "chat.conversa" | "equipe.lista" | "organizacao.configuracao" | "agenda.lista" | "agenda.novo" | "agenda.detalhe" | "agenda.servicos" | "agenda.grade" | "agenda.meus" | "agenda.marcar";
+        Tela: "inicio" | "notificacoes" | "perfil" | "pacientes.lista" | "pacientes.detalhe" | "pacientes.novo" | "acompanhamento.lista" | "acompanhamento.meus" | "acompanhamento.detalhe" | "acompanhamento.novo" | "acompanhamento.protocolos" | "acompanhamento.protocolo" | "acompanhamento.checkin" | "chat.lista" | "chat.conversa" | "equipe.lista" | "organizacao.configuracao" | "agenda.lista" | "agenda.novo" | "agenda.detalhe" | "agenda.servicos" | "agenda.grade" | "agenda.meus" | "agenda.marcar" | "exames.lista" | "exames.novo" | "exames.pedido" | "exames.resultado" | "exames.meus" | "exames.enviar";
         /** @enum {string} */
-        TermoChave: "organizacao" | "paciente" | "responsavel" | "profissional" | "acompanhamento" | "protocolo" | "procedimento" | "checkin" | "conversa" | "consulta";
+        TermoChave: "organizacao" | "paciente" | "responsavel" | "profissional" | "acompanhamento" | "protocolo" | "procedimento" | "checkin" | "conversa" | "consulta" | "exame";
         /** @enum {string} */
-        ContadorChave: "chat.naoLidas" | "notificacoes.naoLidas" | "acompanhamento.alertasAbertos" | "acompanhamento.checkinsPendentes";
+        ContadorChave: "chat.naoLidas" | "notificacoes.naoLidas" | "acompanhamento.alertasAbertos" | "acompanhamento.checkinsPendentes" | "exames.resultadosParaRevisar";
         /**
          * @description Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.
          * @enum {string}
          */
-        Icone: "house" | "users" | "user" | "user-plus" | "activity" | "heart-pulse" | "message-circle" | "bell" | "settings" | "clipboard-list" | "calendar" | "stethoscope" | "paw-print" | "circle-alert" | "file-text" | "camera" | "credit-card" | "circle-help" | "log-out" | "calendar-plus" | "calendar-check" | "calendar-clock";
+        Icone: "house" | "users" | "user" | "user-plus" | "activity" | "heart-pulse" | "message-circle" | "bell" | "settings" | "clipboard-list" | "calendar" | "stethoscope" | "paw-print" | "circle-alert" | "file-text" | "camera" | "credit-card" | "circle-help" | "log-out" | "calendar-plus" | "calendar-check" | "calendar-clock" | "flask-conical";
         /** @enum {string} */
         CodigoErro: "AUTENTICACAO_INVALIDA" | "CODIGO_INVALIDO" | "CODIGO_EXPIRADO" | "MUITAS_TENTATIVAS" | "SESSAO_EXPIRADA" | "SESSAO_REVOGADA" | "PERMISSAO_NEGADA" | "RECURSO_NAO_ENCONTRADO" | "VALIDACAO_FALHOU" | "CONFLITO_VERSAO" | "LIMITE_EXCEDIDO" | "CONVITE_INVALIDO" | "CONVITE_EXPIRADO" | "MODULO_NAO_CONTRATADO" | "ORGANIZACAO_SUSPENSA" | "CHECKIN_INDISPONIVEL" | "CHECKIN_JA_RESPONDIDO" | "CONVERSA_ARQUIVADA" | "ARQUIVO_MUITO_GRANDE" | "TIPO_ARQUIVO_NAO_PERMITIDO" | "ARQUIVO_REJEITADO" | "CURSOR_EXPIRADO" | "ULTIMO_GESTOR" | "INDISPONIVEL_TEMPORARIAMENTE" | "HORARIO_INDISPONIVEL";
         /** @enum {string} */
-        TipoNotificacao: "CHAT_MENSAGEM" | "CHECKIN_DISPONIVEL" | "CHECKIN_LEMBRETE" | "ALERTA_CRIADO" | "ACOMPANHAMENTO_INICIADO" | "ACOMPANHAMENTO_CONCLUIDO" | "CONVITE_ACEITO" | "SISTEMA" | "AGENDAMENTO_CRIADO" | "AGENDAMENTO_ALTERADO" | "AGENDAMENTO_LEMBRETE";
+        TipoNotificacao: "CHAT_MENSAGEM" | "CHECKIN_DISPONIVEL" | "CHECKIN_LEMBRETE" | "ALERTA_CRIADO" | "ACOMPANHAMENTO_INICIADO" | "ACOMPANHAMENTO_CONCLUIDO" | "CONVITE_ACEITO" | "SISTEMA" | "AGENDAMENTO_CRIADO" | "AGENDAMENTO_ALTERADO" | "AGENDAMENTO_LEMBRETE" | "EXAME_PEDIDO" | "EXAME_RESULTADO" | "EXAME_REVISADO";
         /** @enum {string} */
-        TipoEvento: "chat.mensagem.criada" | "chat.conversa.atualizada" | "acompanhamento.checkin.disponivel" | "acompanhamento.checkin.respondido" | "acompanhamento.alerta.criado" | "acompanhamento.alerta.resolvido" | "acompanhamento.acompanhamento.atualizado" | "notificacao.criada" | "contadores.alterados" | "arquivo.processado" | "sessao.manifesto.alterado" | "sessao.encerrada" | "agenda.agendamento.criado" | "agenda.agendamento.atualizado";
+        TipoEvento: "chat.mensagem.criada" | "chat.conversa.atualizada" | "acompanhamento.checkin.disponivel" | "acompanhamento.checkin.respondido" | "acompanhamento.alerta.criado" | "acompanhamento.alerta.resolvido" | "acompanhamento.acompanhamento.atualizado" | "notificacao.criada" | "contadores.alterados" | "arquivo.processado" | "sessao.manifesto.alterado" | "sessao.encerrada" | "agenda.agendamento.criado" | "agenda.agendamento.atualizado" | "exames.pedido.atualizado" | "exames.resultado.atualizado";
         /** @enum {string} */
-        TipoSecao: "ACOMPANHAMENTO_ATUAL" | "CHECKINS_PENDENTES" | "ALERTAS_ABERTOS" | "CHECKINS_DO_DIA" | "ACOMPANHAMENTOS_ATIVOS" | "CONVERSAS_RECENTES" | "ATALHOS" | "AVISO" | "CONTATO_ORGANIZACAO" | "PROXIMA_CONSULTA" | "AGENDA_DO_DIA";
+        TipoSecao: "ACOMPANHAMENTO_ATUAL" | "CHECKINS_PENDENTES" | "ALERTAS_ABERTOS" | "CHECKINS_DO_DIA" | "ACOMPANHAMENTOS_ATIVOS" | "CONVERSAS_RECENTES" | "ATALHOS" | "AVISO" | "CONTATO_ORGANIZACAO" | "PROXIMA_CONSULTA" | "AGENDA_DO_DIA" | "RESULTADOS_PARA_REVISAR" | "EXAMES_PENDENTES";
         /** @enum {string} */
         Severidade: "BAIXA" | "MEDIA" | "ALTA";
         /** @enum {string} */
@@ -1791,7 +1924,7 @@ export interface components {
             pacientesVinculados?: components["schemas"]["PacienteVinculado"][];
         };
         /** @enum {string} */
-        Permissao: "pacientes.paciente.ler" | "pacientes.paciente.criar" | "pacientes.paciente.editar" | "pacientes.paciente.convidar" | "acompanhamento.protocolo.ler" | "acompanhamento.protocolo.gerenciar" | "acompanhamento.acompanhamento.ler" | "acompanhamento.acompanhamento.criar" | "acompanhamento.acompanhamento.encerrar" | "acompanhamento.checkin.ler" | "acompanhamento.checkin.responder" | "acompanhamento.alerta.ler" | "acompanhamento.alerta.resolver" | "chat.conversa.ler" | "chat.conversa.criar" | "chat.conversa.gerenciar" | "chat.mensagem.enviar" | "equipe.membro.ler" | "equipe.membro.gerenciar" | "organizacao.configuracao.editar" | "agenda.agendamento.ler" | "agenda.agendamento.criar" | "agenda.agendamento.gerenciar" | "agenda.configuracao.gerenciar";
+        Permissao: "pacientes.paciente.ler" | "pacientes.paciente.criar" | "pacientes.paciente.editar" | "pacientes.paciente.convidar" | "acompanhamento.protocolo.ler" | "acompanhamento.protocolo.gerenciar" | "acompanhamento.acompanhamento.ler" | "acompanhamento.acompanhamento.criar" | "acompanhamento.acompanhamento.encerrar" | "acompanhamento.checkin.ler" | "acompanhamento.checkin.responder" | "acompanhamento.alerta.ler" | "acompanhamento.alerta.resolver" | "chat.conversa.ler" | "chat.conversa.criar" | "chat.conversa.gerenciar" | "chat.mensagem.enviar" | "equipe.membro.ler" | "equipe.membro.gerenciar" | "organizacao.configuracao.editar" | "agenda.agendamento.ler" | "agenda.agendamento.criar" | "agenda.agendamento.gerenciar" | "agenda.configuracao.gerenciar" | "exames.exame.ler" | "exames.pedido.criar" | "exames.resultado.enviar" | "exames.resultado.revisar";
         Capacidades: {
             tempoReal: {
                 /** @enum {string} */
@@ -1806,6 +1939,8 @@ export interface components {
             upload: {
                 tamanhoMaximoBytes: number;
                 tiposPermitidos: string[];
+                /** @description Tipos aceitos na finalidade `EXAME` (inclui `application/pdf`; ADR-0017). Ausente sem o módulo `exames`. */
+                tiposPermitidosExame?: string[];
             };
         };
         ContatoOrganizacao: {
@@ -1822,7 +1957,7 @@ export interface components {
             /** @description Opcional; o frontend tem um título padrão por tipo. */
             titulo?: string;
             dados: Record<string, never>;
-        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         Notificacao: {
             id: components["schemas"]["Id"];
             tipo: components["schemas"]["TipoNotificacao"];
@@ -1845,7 +1980,7 @@ export interface components {
             criadoEm: components["schemas"]["DataHora"];
         };
         /** @enum {string} */
-        FinalidadeArquivo: "CHECKIN" | "CHAT" | "PERFIL" | "ORGANIZACAO";
+        FinalidadeArquivo: "CHECKIN" | "CHAT" | "PERFIL" | "ORGANIZACAO" | "EXAME";
         EnvioArquivo: {
             arquivoId: components["schemas"]["Id"];
             envio: {
@@ -1891,7 +2026,7 @@ export interface components {
             tipo: components["schemas"]["TipoEvento"];
             ocorridoEm: components["schemas"]["DataHora"];
             dados: Record<string, never>;
-        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         /** @enum {string} */
         TipoPaciente: "PESSOA" | "ANIMAL";
         /** @enum {string} */
@@ -2323,6 +2458,66 @@ export interface components {
             profissional: components["schemas"]["Referencia"];
             paciente: components["schemas"]["Referencia"];
         };
+        /** @enum {string} */
+        StatusPedidoExame: "ABERTO" | "CONCLUIDO" | "CANCELADO";
+        /** @enum {string} */
+        StatusResultadoExame: "AGUARDANDO_REVISAO" | "REVISADO";
+        ItemPedidoExame: {
+            nome: string;
+            /** @description Preparo do item (por exemplo, "jejum de 8 horas"). */
+            orientacoes?: string | null;
+        };
+        ResultadoExameResumo: {
+            id: components["schemas"]["Id"];
+            titulo: string;
+            status: components["schemas"]["StatusResultadoExame"];
+            criadoEm: components["schemas"]["DataHora"];
+        };
+        PedidoExame: {
+            id: components["schemas"]["Id"];
+            paciente: components["schemas"]["Referencia"];
+            solicitante: components["schemas"]["ReferenciaUsuario"];
+            itens: {
+                nome: string;
+                orientacoes: string | null;
+            }[];
+            orientacoes: string | null;
+            /** @description Interna da equipe; sempre `null` para o paciente. */
+            observacao: string | null;
+            status: components["schemas"]["StatusPedidoExame"];
+            motivoCancelamento: string | null;
+            /** @description Resultados ligados ao pedido, do mais antigo para o mais recente. */
+            resultados: components["schemas"]["ResultadoExameResumo"][];
+            criadoEm: components["schemas"]["DataHora"];
+            concluidoEm: components["schemas"]["DataHoraOuNulo"];
+            acoesPermitidas: ("ENVIAR_RESULTADO" | "CONCLUIR" | "CANCELAR")[];
+        };
+        ResultadoExame: {
+            id: components["schemas"]["Id"];
+            paciente: components["schemas"]["Referencia"];
+            pedidoId: components["schemas"]["IdOuNulo"];
+            titulo: string;
+            dataColeta: components["schemas"]["Data"] | null;
+            arquivos: components["schemas"]["Arquivo"][];
+            /** @description Comentário de quem enviou. */
+            comentario: string | null;
+            /** @enum {string} */
+            origem: "PACIENTE" | "EQUIPE";
+            enviadoPor: components["schemas"]["ReferenciaUsuario"];
+            status: components["schemas"]["StatusResultadoExame"];
+            revisao: null | {
+                por: components["schemas"]["ReferenciaUsuario"];
+                revisadoEm: components["schemas"]["DataHora"];
+                /** @description Visível ao paciente. */
+                nota: string | null;
+            };
+            criadoEm: components["schemas"]["DataHora"];
+            acoesPermitidas: "REVISAR"[];
+        };
+        ConfigExames: {
+            /** @description Paciente envia resultados pelo app (RN-EXA-003). Padrão: `true`. */
+            pacienteEnviaResultados: boolean;
+        };
         ConfigAgenda: {
             /** @description Paciente marca sozinho os serviços autoagendáveis. */
             autoagendamento: boolean;
@@ -2360,6 +2555,8 @@ export interface components {
             };
             /** @description Presente quando o módulo `agenda` está contratado. */
             agenda?: components["schemas"]["ConfigAgenda"];
+            /** @description Presente quando o módulo `exames` está contratado. */
+            exames?: components["schemas"]["ConfigExames"];
             acoesPermitidas: "EDITAR"[];
         };
         OrganizacaoEdicao: {
@@ -2391,6 +2588,10 @@ export interface components {
                 lembreteHorasAntes?: number;
                 /** @enum {integer} */
                 intervaloMinutos?: 5 | 10 | 15 | 20 | 30 | 60;
+            };
+            /** @description Exige o módulo `exames` (senão `MODULO_NAO_CONTRATADO`). */
+            exames?: {
+                pacienteEnviaResultados?: boolean;
             };
         };
     };
@@ -2439,6 +2640,8 @@ export interface components {
         ProfissionalId: components["schemas"]["Id"];
         BloqueioId: components["schemas"]["Id"];
         AgendamentoId: components["schemas"]["Id"];
+        PedidoExameId: components["schemas"]["Id"];
+        ResultadoExameId: components["schemas"]["Id"];
         /** @description Primeiro dia do período (inclusive), no fuso da organização. */
         De: components["schemas"]["Data"];
         /** @description Último dia do período (inclusive), no fuso da organização. No máximo 366 dias depois de `de` (31 em `horarios`). */
@@ -5108,6 +5311,266 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Agendamento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesListarPedidos: {
+        parameters: {
+            query?: {
+                pacienteId?: components["schemas"]["Id"];
+                status?: components["schemas"]["StatusPedidoExame"];
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pedidos, do mais recente para o mais antigo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["PedidoExame"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesCriarPedido: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Chave única por operação lógica; repetir devolve a mesma resposta por 24 h. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    pacienteId: components["schemas"]["Id"];
+                    itens: components["schemas"]["ItemPedidoExame"][];
+                    /** @description Orientações gerais ao paciente. */
+                    orientacoes?: string | null;
+                    /** @description Interna da equipe; o paciente não vê. */
+                    observacao?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Pedido registrado */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PedidoExame"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesObterPedido: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pedidoId: components["parameters"]["PedidoExameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pedido */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PedidoExame"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesConcluirPedido: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pedidoId: components["parameters"]["PedidoExameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pedido concluído (repetir não muda nada) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PedidoExame"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesCancelarPedido: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pedidoId: components["parameters"]["PedidoExameId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    motivo: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Pedido cancelado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PedidoExame"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesListarResultados: {
+        parameters: {
+            query?: {
+                pacienteId?: components["schemas"]["Id"];
+                pedidoId?: components["schemas"]["Id"];
+                status?: components["schemas"]["StatusResultadoExame"];
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resultados, do mais recente para o mais antigo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["ResultadoExame"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesEnviarResultado: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Chave única por operação lógica; repetir devolve a mesma resposta por 24 h. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    pacienteId: components["schemas"]["Id"];
+                    pedidoId?: components["schemas"]["IdOuNulo"];
+                    /** @description Por exemplo, "Hemograma completo". */
+                    titulo: string;
+                    dataColeta?: components["schemas"]["Data"] | null;
+                    arquivosIds: components["schemas"]["Id"][];
+                    comentario?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Resultado enviado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoExame"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesObterResultado: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resultadoId: components["parameters"]["ResultadoExameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resultado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoExame"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    examesRevisarResultado: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                resultadoId: components["parameters"]["ResultadoExameId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Visível ao paciente. */
+                    nota?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Resultado revisado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultadoExame"];
                 };
             };
             default: components["responses"]["Erro"];

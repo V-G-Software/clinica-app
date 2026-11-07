@@ -13,6 +13,7 @@ import {
 } from './estado.ts';
 import { handlers, type Res } from './handlers.ts';
 import { carregarAgenda } from './agenda.ts';
+import { carregarExames } from './exames.ts';
 import * as r from './regras.ts';
 import { agoraIso, agoraMs, comRelogioForcado, DIA, definirRelogio, HORA, iso, RELOGIO_INICIAL } from './tempo.ts';
 
@@ -63,6 +64,7 @@ function carregarCenario(cenario: any) {
     if (a.encerrar) agendar(`seed:${a.id}:encerrar`, Date.parse(a.encerrar.em), () => r.encerrarAcompanhamento(org, org.acompanhamentos.get(a.id), a.encerrar.motivo, a.encerrar.por));
   }
   carregarAgenda(org, cenario);
+  carregarExames(org, cenario, r.arquivoDeExemplo);
   for (const c of cenario.conversas ?? []) {
     agendar(`seed:${c.id}:criar`, Date.parse(c.criadoEm), () => {
       const conv = r.criarConversa(org, c.pacienteId, c.participantesIds);
@@ -308,6 +310,8 @@ app.get('/__mock/arquivos/:slug/:id', async (req, reply) => {
   const a = exigirOrg(slug).arquivos.get(id);
   if (!a || a.status !== 'DISPONIVEL' || !a.bytes) return reply.code(404).send();
   if (!(a.publico && q.publico) && Number(q.exp) < agoraMs()) return reply.code(403).send({ erro: 'URL expirada; peça de novo em GET /v1/arquivos/{id}' });
+  // PDF sempre como anexo: o app não renderiza PDF na própria origem (ADR-0017).
+  if (a.tipo === 'application/pdf') reply.header('Content-Disposition', `attachment; filename="${encodeURIComponent(a.nome)}"`);
   return reply.header('Cache-Control', 'private, max-age=60').type(a.tipo).send(a.bytes);
 });
 

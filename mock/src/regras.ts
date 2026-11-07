@@ -7,6 +7,7 @@ import {
 } from './estado.ts';
 import { agoraIso, agoraMs, diferencaDias, HORA, hojeLocal, iso, localParaUtc, MINUTO, partesLocais, somarDias } from './tempo.ts';
 import * as agenda from './agenda.ts';
+import * as exames from './exames.ts';
 
 export const BASE_PUBLICA = (process.env.MOCK_URL_PUBLICA ?? `http://localhost:${process.env.PORT ?? 4010}`).replace(/\/$/, '');
 export const urlApi = (org: Org) => `${BASE_PUBLICA}/o/${org.slug}`;
@@ -24,6 +25,7 @@ const TODAS = [
   'chat.conversa.ler', 'chat.conversa.criar', 'chat.conversa.gerenciar', 'chat.mensagem.enviar',
   'equipe.membro.ler', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar',
   'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
+  'exames.exame.ler', 'exames.pedido.criar', 'exames.resultado.enviar', 'exames.resultado.revisar',
 ];
 const PERMISSOES: Record<Perfil, string[]> = {
   GESTOR: TODAS.filter((p) => p !== 'acompanhamento.checkin.responder'),
@@ -35,10 +37,13 @@ const PERMISSOES: Record<Perfil, string[]> = {
     'acompanhamento.checkin.ler', 'acompanhamento.alerta.ler', 'chat.conversa.ler', 'chat.conversa.criar',
     'chat.conversa.gerenciar', 'chat.mensagem.enviar', 'equipe.membro.ler',
     'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
+    // Pedir e revisar exame é ato do profissional (ADR-0017); a secretaria vê e anexa resultados.
+    'exames.exame.ler', 'exames.resultado.enviar',
   ],
   PACIENTE: [
     'pacientes.paciente.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.checkin.ler',
     'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar', 'agenda.agendamento.ler',
+    'exames.exame.ler',
   ],
 };
 export const temModulo = (org: Org, id: string) => org.modulos.some((m) => m.id === id);
@@ -48,6 +53,7 @@ export function permissoesDe(org: Org, perfil: Perfil): string[] {
   const base = [...PERMISSOES[perfil]];
   if (perfil === 'PACIENTE' && configModulo(org, 'chat').pacientePodeIniciar) base.push('chat.conversa.criar');
   if (perfil === 'PACIENTE' && configModulo(org, 'agenda').autoagendamento) base.push('agenda.agendamento.criar');
+  if (perfil === 'PACIENTE' && exames.cfgExames(org).pacienteEnviaResultados) base.push('exames.resultado.enviar');
   return base.filter((p) => {
     const modulo = p.split('.')[0];
     return modulo === 'organizacao' || temModulo(org, modulo);
@@ -251,7 +257,8 @@ export function urlsArquivo(org: Org, arq: any) {
   const exp = agoraMs() + 5 * MINUTO;
   const assinatura = `${exp.toString(36)}.${arq.id.slice(-6)}`;
   const base = `${BASE_PUBLICA}/__mock/arquivos/${org.slug}/${arq.id}?exp=${exp}&assinatura=${assinatura}`;
-  return { urlVisualizacao: base, urlMiniatura: `${base}&miniatura=1`, urlsExpiramEm: iso(exp) };
+  // PDF não tem miniatura no MVP (ADR-0017): o app mostra um ícone e baixa como anexo.
+  return { urlVisualizacao: base, urlMiniatura: arq.tipo === 'application/pdf' ? null : `${base}&miniatura=1`, urlsExpiramEm: iso(exp) };
 }
 export function serArquivo(org: Org, arq: any) {
   return {
@@ -350,6 +357,10 @@ export function contadores(org: Org, u: Usuario): Record<string, number> {
   if (temModulo(org, 'acompanhamento')) {
     r['acompanhamento.alertasAbertos'] = equipe ? [...org.alertas.values()].filter((a) => a.status === 'ABERTO').length : 0;
     r['acompanhamento.checkinsPendentes'] = [...org.checkins.values()].filter((c) => c.status === 'DISPONIVEL' && (equipe || vinculados.has(c.pacienteId))).length;
+  }
+  if (temModulo(org, 'exames')) {
+    const perms = new Set(u.perfis.filter((p) => p !== 'PACIENTE').flatMap((p) => permissoesDe(org, p)));
+    r['exames.resultadosParaRevisar'] = exames.contadorParaRevisar(org, perms);
   }
   return r;
 }
@@ -717,6 +728,12 @@ function gerarPng(lado: number, rgb: [number, number, number]): Buffer {
   return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), bloco('IHDR', ihdr), bloco('IDAT', deflateSync(bruto)), bloco('IEND', Buffer.alloc(0))]);
 }
 const PNG_EXEMPLO = gerarPng(64, [214, 160, 140]);
+/** Arquivo de exemplo já processado, de qualquer finalidade (seed de resultados de exame). */
+export function arquivoDeExemplo(org: Org, donoId: string, finalidade: string) {
+  const id = novoId('arq');
+  org.arquivos.set(id, { id, nome: 'resultado.png', tipo: 'image/png', tamanhoBytes: PNG_EXEMPLO.length, finalidade, status: 'DISPONIVEL', motivoRejeicao: null, criadoEm: agoraIso(), donoId, bytes: PNG_EXEMPLO });
+  return id;
+}
 export function fotoDeExemplo(org: Org, donoId: string) {
   const id = novoId('arq');
   org.arquivos.set(id, { id, nome: 'foto.png', tipo: 'image/png', tamanhoBytes: PNG_EXEMPLO.length, finalidade: 'CHECKIN', status: 'DISPONIVEL', motivoRejeicao: null, criadoEm: agoraIso(), donoId, bytes: PNG_EXEMPLO });
@@ -738,6 +755,7 @@ export function navegacao(ctx: Ctx) {
       itens.push({ id: 'acompanhamentos', rotulo: cap(t('acompanhamento').plural), icone: 'activity', grupo: 'PRINCIPAL', destino: { tela: 'acompanhamento.lista' }, ...(perms.has('acompanhamento.alerta.ler') ? { contador: 'acompanhamento.alertasAbertos' } : {}) });
     if (perms.has('chat.conversa.ler')) itens.push({ id: 'conversas', rotulo: cap(t('conversa').plural), icone: 'message-circle', grupo: 'PRINCIPAL', destino: { tela: 'chat.lista' }, contador: 'chat.naoLidas' });
     if (perms.has('pacientes.paciente.ler')) itens.push({ id: 'pacientes', rotulo: cap(t('paciente').plural), icone: animal ? 'paw-print' : 'users', grupo: 'PRINCIPAL', destino: { tela: 'pacientes.lista' } });
+    if (perms.has('exames.exame.ler')) itens.push({ id: 'exames', rotulo: cap(t('exame').plural), icone: 'flask-conical', grupo: 'PRINCIPAL', destino: { tela: 'exames.lista' }, ...(perms.has('exames.resultado.revisar') ? { contador: 'exames.resultadosParaRevisar' } : {}) });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'SECUNDARIO', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
     if (perms.has('acompanhamento.protocolo.ler')) itens.push({ id: 'protocolos', rotulo: cap(t('protocolo').plural), icone: 'clipboard-list', grupo: 'SECUNDARIO', destino: { tela: 'acompanhamento.protocolos' } });
     if (perms.has('agenda.configuracao.gerenciar')) itens.push({ id: 'agenda-servicos', rotulo: 'Serviços e horários', icone: 'calendar-clock', grupo: 'SECUNDARIO', destino: { tela: 'agenda.servicos' } });
@@ -747,6 +765,7 @@ export function navegacao(ctx: Ctx) {
     const a = t('acompanhamento');
     if (perms.has('acompanhamento.acompanhamento.ler')) itens.push({ id: 'meus-acompanhamentos', rotulo: `${flex(a.genero, 'Meu', 'Minha')} ${a.singular}`, icone: 'heart-pulse', grupo: 'PRINCIPAL', destino: { tela: 'acompanhamento.meus' }, contador: 'acompanhamento.checkinsPendentes' });
     if (perms.has('agenda.agendamento.ler')) itens.push({ id: 'minhas-consultas', rotulo: `${flex(consulta.genero, 'Meus', 'Minhas')} ${consulta.plural}`, icone: 'calendar', grupo: 'PRINCIPAL', destino: { tela: 'agenda.meus' } });
+    if (perms.has('exames.exame.ler')) itens.push({ id: 'meus-exames', rotulo: `${flex(t('exame').genero, 'Meus', 'Minhas')} ${t('exame').plural}`, icone: 'flask-conical', grupo: 'PRINCIPAL', destino: { tela: 'exames.meus' } });
     if (perms.has('chat.conversa.ler')) itens.push({ id: 'conversas', rotulo: cap(t('conversa').plural), icone: 'message-circle', grupo: 'PRINCIPAL', destino: { tela: 'chat.lista' }, contador: 'chat.naoLidas' });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'PRINCIPAL', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
   }
@@ -793,6 +812,7 @@ export function telaInicial(ctx: Ctx) {
   const hoje = hojeLocal(org.config.fuso);
   if (org.config.avisoInicio) secoes.push({ id: 'aviso', tipo: 'AVISO', dados: org.config.avisoInicio });
   secoes.push(...agenda.secoesInicio(ctx));
+  secoes.push(...exames.secoesInicio(ctx));
   if (ehEquipe(ctx)) {
     if (temModulo(org, 'acompanhamento') && ctx.perms.has('acompanhamento.alerta.ler')) {
       const ordem: Record<string, number> = { ALTA: 0, MEDIA: 1, BAIXA: 2 };

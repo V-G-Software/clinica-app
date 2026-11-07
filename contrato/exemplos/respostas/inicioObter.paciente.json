@@ -73,7 +73,7 @@
           "totalDias": 7,
           "status": "ATIVO",
           "proximoCheckin": {
-            "id": "chk_0mw28tpc00004k",
+            "id": "chk_0mw28tpc00004s",
             "acompanhamentoId": "acp_marcos",
             "paciente": {
               "id": "pac_marcos",
@@ -93,7 +93,7 @@
         "dados": {
           "itens": [
             {
-              "id": "chk_0mw28tpc00004k",
+              "id": "chk_0mw28tpc00004s",
               "acompanhamentoId": "acp_marcos",
               "paciente": {
                 "id": "pac_marcos",
@@ -113,7 +113,7 @@
         "dados": {
           "itens": [
             {
-              "id": "cnv_0mw28tpc00004p",
+              "id": "cnv_0mw28tpc00004x",
               "titulo": "Clínica Modelo Otorrino",
               "paciente": {
                 "id": "pac_marcos",
@@ -126,23 +126,23 @@
                   "usuarioId": "usr_ana",
                   "nome": "Dra. Ana Lima",
                   "perfil": "PROFISSIONAL",
-                  "lidoAte": "msg_0mw6fxio00007l"
+                  "lidoAte": "msg_0mw6fxio00007x"
                 },
                 {
                   "usuarioId": "usr_julia",
                   "nome": "Júlia Ramos",
                   "perfil": "SECRETARIA",
-                  "lidoAte": "msg_0mw6f1d9c0007j"
+                  "lidoAte": "msg_0mw6f1d9c0007v"
                 },
                 {
                   "usuarioId": "usr_marcos",
                   "nome": "Marcos Souza",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw6gcy800007n"
+                  "lidoAte": "msg_0mw6gcy800007z"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw7s5mo00008y",
+                "id": "msg_0mw7s5mo00009a",
                 "resumo": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
                 "autorNome": null,
                 "enviadoEm": "2026-11-08T12:00:00Z"

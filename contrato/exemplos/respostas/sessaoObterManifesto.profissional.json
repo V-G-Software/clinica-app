@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.1.0-rc.1"
+      "versao": "1.2.0-rc.1"
     },
     "organizacao": {
       "id": "org_otorrino",
@@ -90,6 +90,11 @@
         "singular": "consulta",
         "plural": "consultas",
         "genero": "F"
+      },
+      "exame": {
+        "singular": "exame",
+        "plural": "exames",
+        "genero": "M"
       }
     },
     "modulos": [
@@ -164,6 +169,13 @@
           "lembreteHorasAntes": 24,
           "intervaloMinutos": 30
         }
+      },
+      {
+        "id": "exames",
+        "versao": "1.0",
+        "config": {
+          "pacienteEnviaResultados": true
+        }
       }
     ],
     "navegacao": [
@@ -215,6 +227,16 @@
         }
       },
       {
+        "id": "exames",
+        "rotulo": "Exames",
+        "icone": "flask-conical",
+        "grupo": "SECUNDARIO",
+        "destino": {
+          "tela": "exames.lista"
+        },
+        "contador": "exames.resultadosParaRevisar"
+      },
+      {
         "id": "notificacoes",
         "rotulo": "Notificações",
         "icone": "bell",
@@ -263,7 +285,11 @@
       "equipe.membro.ler",
       "agenda.agendamento.ler",
       "agenda.agendamento.criar",
-      "agenda.agendamento.gerenciar"
+      "agenda.agendamento.gerenciar",
+      "exames.exame.ler",
+      "exames.pedido.criar",
+      "exames.resultado.enviar",
+      "exames.resultado.revisar"
     ],
     "capacidades": {
       "tempoReal": {
@@ -280,14 +306,21 @@
           "image/jpeg",
           "image/png",
           "image/webp"
+        ],
+        "tiposPermitidosExame": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "application/pdf"
         ]
       }
     },
     "contadores": {
-      "notificacoes.naoLidas": 7,
+      "notificacoes.naoLidas": 8,
       "chat.naoLidas": 7,
       "acompanhamento.alertasAbertos": 1,
-      "acompanhamento.checkinsPendentes": 3
+      "acompanhamento.checkinsPendentes": 3,
+      "exames.resultadosParaRevisar": 1
     }
   }
 }

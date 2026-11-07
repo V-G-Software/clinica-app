@@ -55,6 +55,40 @@
         }
       },
       {
+        "id": "exames-pendentes",
+        "tipo": "EXAMES_PENDENTES",
+        "dados": {
+          "itens": [
+            {
+              "id": "ped_thor_hemograma",
+              "paciente": {
+                "id": "pac_thor",
+                "nome": "Thor"
+              },
+              "solicitante": {
+                "usuarioId": "usr_renata",
+                "nome": "Dra. Renata Campos",
+                "perfil": "PROFISSIONAL"
+              },
+              "itens": [
+                {
+                  "nome": "Hemograma",
+                  "orientacoes": "Jejum de 6 horas."
+                }
+              ],
+              "orientacoes": "Pode ser feito na clínica ou em laboratório veterinário.",
+              "observacao": null,
+              "status": "ABERTO",
+              "motivoCancelamento": null,
+              "resultados": [],
+              "criadoEm": "2026-11-06T16:30:00Z",
+              "concluidoEm": null,
+              "acoesPermitidas": []
+            }
+          ]
+        }
+      },
+      {
         "id": "acompanhamento-atual-acp_thor",
         "tipo": "ACOMPANHAMENTO_ATUAL",
         "titulo": "Thor",
@@ -66,7 +100,7 @@
           "totalDias": 10,
           "status": "ATIVO",
           "proximoCheckin": {
-            "id": "chk_0mw53peo00006b",
+            "id": "chk_0mw53peo00006l",
             "acompanhamentoId": "acp_thor",
             "paciente": {
               "id": "pac_thor",
@@ -93,7 +127,7 @@
         "dados": {
           "itens": [
             {
-              "id": "cnv_0mw53peo00006j",
+              "id": "cnv_0mw53peo00006t",
               "titulo": "Clínica Vet Amigo",
               "paciente": {
                 "id": "pac_thor",
@@ -118,11 +152,11 @@
                   "usuarioId": "usr_laura",
                   "nome": "Laura Martins",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw7v6xuo0009c"
+                  "lidoAte": "msg_0mw7v6xuo0009o"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw7v6xuo0009c",
+                "id": "msg_0mw7v6xuo0009o",
                 "resumo": "Dia 2 · apetite normal · aspecto ferida vermelha ou inchada",
                 "autorNome": "Laura Martins",
                 "enviadoEm": "2026-11-08T13:25:00Z"

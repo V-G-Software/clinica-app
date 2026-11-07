@@ -36,6 +36,16 @@ Primeiro acesso: `carlos@modelo-otorrino.exemplo` / `Provisoria@1` percorre `TRO
 
 O lembrete sai `lembreteHorasAntes` antes do horário, como job `agendamento:{id}:lembrete`. Para vê-lo, avance o relógio.
 
+## Exames (1.2 — ADR-0017)
+
+| Cenário | Módulo `exames` | O que tem |
+|---|---|---|
+| `modelo-otorrino` | ligado; **paciente envia resultados** | pedido pré-operatório da Beatriz (3 exames, aberto) com o hemograma enviado por ela aguardando revisão; tomografia do Marcos enviada pela equipe, revisada pelo Carlos (pedido concluído) |
+| `vet-amigo` | ligado; **só a equipe envia** | pedido de hemograma do Thor, aberto |
+| `fisio-movimento` | desligado | rotas `exames` respondem 404 `MODULO_NAO_CONTRATADO`; PDF é recusado (415) |
+
+PDF só é aceito com a finalidade `EXAME`. O mock simula o antivírus: um arquivo que contém a assinatura de teste EICAR fica `REJEITADO`. PDF é servido como anexo (`Content-Disposition: attachment`) e não tem miniatura.
+
 ## Relógio simulado e simuladores (fora do contrato)
 
 O relógio começa em `2026-11-08T13:30:00Z` (10:30 em São Paulo) e anda junto com o tempo real.
