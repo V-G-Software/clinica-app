@@ -6,7 +6,7 @@ Construído a partir de `docs/PROMPT_FRONTEND.md`, sobre o contrato (`@clinica/c
 pnpm mock                          # http://localhost:4010
 pnpm --filter frontend dev         # http://localhost:5173/?org=modelo-otorrino
 pnpm --filter frontend test        # unitários (Vitest)
-pnpm --filter frontend e2e         # E2E FE0–FE5 com Playwright (mock e dev server no ar)
+pnpm --filter frontend e2e         # E2E FE0–FE6 com Playwright (mock e dev server no ar)
 pnpm --filter frontend e2e:a11y    # auditoria de acessibilidade (axe-core)
 pnpm --filter frontend build:homologacao && pnpm --filter frontend preview:homologacao  # produção + CSP em :4173
 pnpm --filter frontend e2e:csp     # fluxos com a CSP ativa
@@ -16,6 +16,17 @@ pnpm --filter frontend build       # build de produção + service worker
 Em desenvolvimento, `?org=` escolhe a organização (fica lembrado) e o botão de chave inglesa troca de organização e avança o relógio do mock. Logins de teste: `mock/README.md`.
 
 ## Estado
+
+### F6 · receita e atestado (ADR-0018)
+| Critério de saída | Situação |
+|---|---|
+| Médico emite receita simples ou atestado (afastamento/comparecimento) a partir da lista, da ficha do paciente ou da conversa | `e2e/fe6.mjs` |
+| CID no atestado só com autorização expressa (CFM 1.658/2002): bloqueado no app e no servidor | `e2e/fe6.mjs`, `tests/unit/documentos.test.ts` |
+| Assinatura em lote: uma autorização no certificado em nuvem para vários rascunhos; ida ao PSC e volta ao app com o resultado | `e2e/fe6.mjs` (mock) e `e2e/backend-real.mjs` (PAdES real com o PSC de teste; SHA-256 do PDF = validação pública) |
+| Paciente recebe pela conversa (link do PDF, nunca `<img>`) e em "Meus documentos"; rascunho nunca aparece para ele; anulado sinalizado | `e2e/fe6.mjs` |
+| Sem provedor configurado, o app explica e não oferece assinar | `EscolherProvedor.vue` |
+| Permissões: secretária sem acesso (rota bloqueada); vet só receita; fisio sem o módulo | `e2e/fe6.mjs` |
+| Acessibilidade | `e2e/acessibilidade.mjs` inclui as telas de documentos (claro e escuro): zero violações graves |
 
 ### F5 · exames (ADR-0017)
 | Critério de saída | Situação |

@@ -33,11 +33,11 @@ async function reaplicarMarca() {
 }
 const q = useQuery({ queryKey: ['organizacao'], queryFn: () => comEtag(api().GET('/v1/organizacao', {})) });
 const f = reactive({ nome: '', telefone: '', email: '', endereco: '', cor: '#000000', boasVindasTitulo: '', boasVindasTexto: '', mensagemForaDoHorario: '', avisoUrgencia: '', horario: [] as Array<{ diaSemana: number; inicio: string; fim: string }>, logoArquivoId: undefined as string | null | undefined, resolverAlertasAoEncerrar: false,
-  agenda: null as null | { autoagendamento: boolean; antecedenciaMinimaHoras: number; janelaDias: number; cancelamentoAteHoras: number; lembreteHorasAntes: number; intervaloMinutos: 5 | 10 | 15 | 20 | 30 | 60 }, exames: null as null | { pacienteEnviaResultados: boolean } });
+  agenda: null as null | { autoagendamento: boolean; antecedenciaMinimaHoras: number; janelaDias: number; cancelamentoAteHoras: number; lembreteHorasAntes: number; intervaloMinutos: 5 | 10 | 15 | 20 | 30 | 60 }, exames: null as null | { pacienteEnviaResultados: boolean }, documentos: null as null | { tiposPermitidos: Array<'RECEITA' | 'ATESTADO'>; entregarPeloChat: boolean } });
 watch(() => q.data.value, (d) => {
   if (!d) return;
   const o = d.dado;
-  Object.assign(f, { nome: o.nome, telefone: formatarTelefone(o.contato.telefone), email: o.contato.email ?? '', endereco: o.contato.endereco ?? '', cor: o.tema.corMarca, boasVindasTitulo: o.textos.boasVindasTitulo, boasVindasTexto: o.textos.boasVindasTexto, mensagemForaDoHorario: o.chat.mensagemForaDoHorario ?? '', avisoUrgencia: o.chat.avisoUrgencia ?? '', horario: o.chat.horarioAtendimento.map((h) => ({ ...h })), logoArquivoId: undefined, resolverAlertasAoEncerrar: o.acompanhamento?.resolverAlertasAoEncerrar ?? false, agenda: o.agenda ? { ...o.agenda } : null, exames: o.exames ? { ...o.exames } : null });
+  Object.assign(f, { nome: o.nome, telefone: formatarTelefone(o.contato.telefone), email: o.contato.email ?? '', endereco: o.contato.endereco ?? '', cor: o.tema.corMarca, boasVindasTitulo: o.textos.boasVindasTitulo, boasVindasTexto: o.textos.boasVindasTexto, mensagemForaDoHorario: o.chat.mensagemForaDoHorario ?? '', avisoUrgencia: o.chat.avisoUrgencia ?? '', horario: o.chat.horarioAtendimento.map((h) => ({ ...h })), logoArquivoId: undefined, resolverAlertasAoEncerrar: o.acompanhamento?.resolverAlertasAoEncerrar ?? false, agenda: o.agenda ? { ...o.agenda } : null, exames: o.exames ? { ...o.exames } : null, documentos: o.documentos ? { tiposPermitidos: [...o.documentos.tiposPermitidos], entregarPeloChat: o.documentos.entregarPeloChat } : null });
 }, { immediate: true });
 const temChat = computed(() => sessao.modulos.has('chat'));
 // Presente só com o módulo contratado (o backend omite o bloco sem ele).
@@ -66,6 +66,7 @@ const salvar = useMutation({
       ...(temAcompanhamento.value ? { acompanhamento: { resolverAlertasAoEncerrar: f.resolverAlertasAoEncerrar } } : {}),
       ...(f.agenda ? { agenda: { ...f.agenda } } : {}),
       ...(f.exames ? { exames: { ...f.exames } } : {}),
+      ...(f.documentos ? { documentos: { tiposPermitidos: f.documentos.tiposPermitidos, entregarPeloChat: f.documentos.entregarPeloChat } } : {}),
       ...(temChat.value ? { chat: { horarioAtendimento: f.horario, mensagemForaDoHorario: f.mensagemForaDoHorario || null, avisoUrgencia: f.avisoUrgencia || null } } : {}),
     },
   })),
@@ -153,7 +154,16 @@ const entrada = 'min-h-11 rounded-lg border-2 border-zinc-300 bg-white px-3 dark
             <span class="block text-sm text-secundario">Foto ou PDF (o PDF só com o antivírus ligado no servidor). Desligado, só a equipe anexa resultados.</span></span>
         </label>
       </Cartao>
-      <Botao tipo="submit" bloco :carregando="salvar.isPending.value" :desabilitado="!corValida || f.nome.trim().length < 2">Salvar</Botao>
+      <Cartao v-if="f.documentos" class="flex flex-col gap-3">
+        <h2 class="font-bold">Receitas e atestados</h2>
+        <fieldset class="flex flex-col gap-2"><legend class="mb-1 text-sm font-medium">Documentos que a equipe emite</legend>
+          <label v-for="[v, r] in [['RECEITA', 'Receita simples'], ['ATESTADO', 'Atestado']] as const" :key="v" class="flex items-center gap-3"><input v-model="f.documentos.tiposPermitidos" type="checkbox" :value="v" class="size-5" /> {{ r }}</label>
+        </fieldset>
+        <p v-if="!f.documentos.tiposPermitidos.length" class="text-sm text-erro" role="alert">Mantenha ao menos um tipo.</p>
+        <label class="flex items-start gap-3"><input v-model="f.documentos.entregarPeloChat" type="checkbox" class="mt-0.5 size-5 shrink-0" />
+          <span>Entregar pela conversa<span class="block text-sm text-secundario">O documento assinado chega como mensagem para {{ artigoPlural(termo('paciente')) }} {{ termo('paciente').plural }}. Desligado, chega só por notificação e em "Meus documentos".</span></span></label>
+      </Cartao>
+      <Botao tipo="submit" bloco :carregando="salvar.isPending.value" :desabilitado="!corValida || f.nome.trim().length < 2 || (!!f.documentos && !f.documentos.tiposPermitidos.length)">Salvar</Botao>
     </form>
   </div>
 </template>

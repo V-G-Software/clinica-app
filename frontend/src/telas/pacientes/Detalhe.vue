@@ -6,7 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
-import { Activity, FlaskConical, MessageCircle, Pencil, QrCode } from 'lucide-vue-next';
+import { Activity, FilePenLine, FlaskConical, MessageCircle, Pencil, QrCode } from 'lucide-vue-next';
 import type { PacienteEntrada } from '@clinica/contrato-tipos';
 import { api, ok } from '@/api';
 import { ErroApi } from '@/api/erros';
@@ -86,6 +86,7 @@ const AVISO: Record<string, string> = { PUSH: 'Recebe avisos no celular', EMAIL:
           <Botao v-if="acoes.has('ABRIR_CONVERSA')" variante="secundario" :carregando="abrirConversa.isPending.value" @click="abrirConversa.mutate()"><MessageCircle class="size-5" aria-hidden="true" /> {{ capitalizar(termo('conversa').singular) }}</Botao>
           <RouterLink v-if="acoes.has('INICIAR_ACOMPANHAMENTO')" :to="`/acompanhamentos/novo?pacienteId=${p.id}`"><Botao><Activity class="size-5" aria-hidden="true" /> Iniciar {{ termo('acompanhamento').singular }}</Botao></RouterLink>
           <RouterLink v-if="sessao.modulos.has('exames') && sessao.pode('exames.exame.ler')" :to="`/exames?pacienteId=${p.id}`"><Botao variante="secundario"><FlaskConical class="size-5" aria-hidden="true" /> {{ capitalizar(termo('exame').plural) }}</Botao></RouterLink>
+          <RouterLink v-if="sessao.modulos.has('documentos') && sessao.pode('documentos.documento.emitir')" :to="`/documentos/novo?pacienteId=${p.id}`"><Botao variante="secundario"><FilePenLine class="size-5" aria-hidden="true" /> Receita ou atestado</Botao></RouterLink>
         </div>
       </header>
 
