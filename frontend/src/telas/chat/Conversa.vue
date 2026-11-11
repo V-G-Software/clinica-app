@@ -6,7 +6,7 @@ import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { useI18n } from 'vue-i18n';
-import { Archive, Camera, CircleAlert, Clock, RotateCw, Send, TriangleAlert } from 'lucide-vue-next';
+import { Archive, Camera, CircleAlert, Clock, FileText, RotateCw, Send, TriangleAlert } from 'lucide-vue-next';
 import { api, ok } from '@/api';
 import { useAppStore } from '@/app/store';
 import { useSessaoStore } from '@/sessao/store';
@@ -120,7 +120,13 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
             <RouterLink v-if="msg.tipo === 'CHECKIN' && msg.referencia" :to="`/checkins/${msg.referencia.id}`" class="block underline">
               {{ msg.referencia.resumo }}<span v-if="!sessao.ehPaciente && msg.referencia.temAlerta" class="ml-1 font-bold">⚠</span>
             </RouterLink>
-            <div v-if="msg.anexos.length" class="my-1 flex flex-wrap gap-2">
+            <!-- Documento assinado (ADR-0018): o anexo é PDF — link para baixar, nunca <img>. -->
+            <div v-if="msg.referencia?.tipo === 'DOCUMENTO'" class="my-1 flex flex-col gap-1">
+              <a v-for="a in msg.anexos" :key="a.id" :href="a.urlVisualizacao ?? undefined" rel="noopener noreferrer" class="flex min-h-12 items-center gap-2 rounded-lg border-2 border-current/30 px-3 py-2 font-semibold underline">
+                <FileText class="size-5 shrink-0" aria-hidden="true" /> {{ msg.referencia.resumo }} (PDF)<span class="sr-only">: baixar</span>
+              </a>
+            </div>
+            <div v-else-if="msg.anexos.length" class="my-1 flex flex-wrap gap-2">
               <a v-for="a in msg.anexos" :key="a.id" :href="a.urlVisualizacao ?? undefined" target="_blank" rel="noopener noreferrer">
                 <img :src="a.urlMiniatura ?? a.urlVisualizacao ?? ''" alt="Foto" class="size-32 rounded-lg object-cover" @error="qc.invalidateQueries({ queryKey: ['mensagens', id] })" />
               </a>
