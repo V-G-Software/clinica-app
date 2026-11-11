@@ -173,8 +173,8 @@ jobs:
           pnpm migrar && pnpm org:criar --todos
           pnpm start > ../backend.log 2>&1 &
           for i in $(seq 1 30); do curl -sf localhost:4020/diretorio/modelo-otorrino >/dev/null && break; sleep 1; done
-      - name: Conformidade de arquivos, check-in com foto, chat e documentos assinados — S3
-        run: pnpm conformidade testes/06-arquivos.test.ts testes/05-acompanhamento.test.ts testes/07-chat.test.ts testes/14-documentos.test.ts
+      - name: Conformidade de arquivos, check-in com foto, chat, PDF de exame e documentos assinados — S3
+        run: pnpm conformidade testes/06-arquivos.test.ts testes/05-acompanhamento.test.ts testes/07-chat.test.ts testes/13-exames.test.ts testes/14-documentos.test.ts
         env: { CONF_SLUG: modelo-otorrino }
       - name: Quarentena vazia e sem erros
         working-directory: backend

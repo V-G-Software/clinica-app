@@ -42,7 +42,11 @@ class StorageS3 implements Storage {
   async ler(chave: string) {
     try { const r = await this.s3.send(new GetObjectCommand({ Bucket: config.s3.bucket, Key: chave })); return Buffer.from(await r.Body!.transformToByteArray()); } catch { return null; }
   }
-  async gravar(chave: string, bytes: Buffer, tipo: string) { await this.s3.send(new PutObjectCommand({ Bucket: config.s3.bucket, Key: chave, Body: bytes, ContentType: tipo })); }
+  // PDF gravado já como anexo (ADR-0017/0018): defesa em profundidade — mesmo se a URL for gerada sem o
+  // override (ou o provedor S3 ignorá-lo), o navegador baixa em vez de abrir na origem do storage.
+  async gravar(chave: string, bytes: Buffer, tipo: string) {
+    await this.s3.send(new PutObjectCommand({ Bucket: config.s3.bucket, Key: chave, Body: bytes, ContentType: tipo, ...(tipo === 'application/pdf' ? { ContentDisposition: 'attachment' } : {}) }));
+  }
   async remover(chave: string) { await this.s3.send(new DeleteObjectCommand({ Bucket: config.s3.bucket, Key: chave })); }
   async urlVisualizacao(chave: string, exp: number, anexo?: { nome: string; tipo: string }) {
     const extra = anexo ? { ResponseContentType: anexo.tipo, ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(anexo.nome)}` } : {};
