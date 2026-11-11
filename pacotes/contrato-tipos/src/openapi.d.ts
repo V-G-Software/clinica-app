@@ -101,6 +101,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/publico/documentos/{codigo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validação pública de um documento pelo código impresso no PDF (ADR-0018)
+         * @description Para quem recebeu o documento (farmácia, empregador). Não traz conteúdo clínico: só tipo, emissor,
+         *     iniciais do paciente, data, situação e o SHA-256 do PDF assinado. A validade da assinatura ICP-Brasil
+         *     se confere no validador do ITI. Código desconhecido → 404. Com limite de requisições.
+         */
+        get: operations["publicoValidarDocumento"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/entrar": {
         parameters: {
             query?: never;
@@ -1582,6 +1604,145 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/documentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Documentos (equipe; o paciente vê só os assinados ou anulados dos pacientes vinculados) */
+        get: operations["documentosListar"];
+        put?: never;
+        /**
+         * Cria um rascunho de receita ou atestado (RN-DOC-002)
+         * @description Só com `documentos.documento.emitir` e registro profissional cadastrado (senão `REGISTRO_PROFISSIONAL_AUSENTE`).
+         *     Informe o bloco do tipo (`receita` ou `atestado`). Tipo fora de `ConfigDocumentos.tiposPermitidos` → 422.
+         */
+        post: operations["documentosCriar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documentos/{documentoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Documento (com o PDF assinado, por URL assinada, quando houver) */
+        get: operations["documentosObter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edita o conteúdo do rascunho (só o emissor; If-Match) */
+        patch: operations["documentosEditar"];
+        trace?: never;
+    };
+    "/v1/documentos/{documentoId}/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Descarta o rascunho (só o emissor); nada é apagado */
+        post: operations["documentosDescartar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documentos/{documentoId}/anular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Anula um documento assinado, com motivo (emissor ou gestor; RN-DOC-004)
+         * @description O paciente é avisado (`DOCUMENTO_ANULADO`) e a validação pública passa a `ANULADO`. O PDF continua guardado.
+         */
+        post: operations["documentosAnular"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documentos/assinaturas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inicia a assinatura de 1 a 10 rascunhos próprios no PSC escolhido (OAuth com PKCE)
+         * @description Os documentos passam a `ASSINANDO`. O app abre `urlAutorizacao`; o médico autoriza no app do provedor,
+         *     que volta ao retorno público do backend, e este redireciona o navegador para `retornoUrl` com
+         *     `?assinatura={id}`. `retornoUrl` precisa ser de uma origem do frontend da organização.
+         *     Provedor desconhecido ou nenhum configurado → `ASSINATURA_INDISPONIVEL`.
+         */
+        post: operations["documentosIniciarAssinatura"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documentos/assinaturas/{sessaoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Situação da sessão de assinatura (só quem a iniciou) */
+        get: operations["documentosObterAssinatura"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/documentos/assinaturas/retorno": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retorno do PSC (redirecionamento do navegador; público, protegido pelo `state`)
+         * @description O PSC redireciona para cá com `code` e `state` (ou `error`). O backend troca o código, assina os
+         *     hashes e responde 302 para o `retornoUrl` da sessão com `?assinatura={id}`. `state` desconhecido,
+         *     usado ou expirado → 302 com `?assinatura=invalida` para a origem principal do frontend.
+         */
+        get: operations["documentosRetornoAssinatura"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1654,26 +1815,26 @@ export interface components {
         /** @enum {string} */
         PerfilEquipe: "GESTOR" | "PROFISSIONAL" | "SECRETARIA";
         /** @enum {string} */
-        ModuloId: "pacientes" | "acompanhamento" | "chat" | "equipe" | "agenda" | "exames";
+        ModuloId: "pacientes" | "acompanhamento" | "chat" | "equipe" | "agenda" | "exames" | "documentos";
         /** @enum {string} */
-        Tela: "inicio" | "notificacoes" | "perfil" | "pacientes.lista" | "pacientes.detalhe" | "pacientes.novo" | "acompanhamento.lista" | "acompanhamento.meus" | "acompanhamento.detalhe" | "acompanhamento.novo" | "acompanhamento.protocolos" | "acompanhamento.protocolo" | "acompanhamento.checkin" | "chat.lista" | "chat.conversa" | "equipe.lista" | "organizacao.configuracao" | "agenda.lista" | "agenda.novo" | "agenda.detalhe" | "agenda.servicos" | "agenda.grade" | "agenda.meus" | "agenda.marcar" | "exames.lista" | "exames.novo" | "exames.pedido" | "exames.resultado" | "exames.meus" | "exames.enviar";
+        Tela: "inicio" | "notificacoes" | "perfil" | "pacientes.lista" | "pacientes.detalhe" | "pacientes.novo" | "acompanhamento.lista" | "acompanhamento.meus" | "acompanhamento.detalhe" | "acompanhamento.novo" | "acompanhamento.protocolos" | "acompanhamento.protocolo" | "acompanhamento.checkin" | "chat.lista" | "chat.conversa" | "equipe.lista" | "organizacao.configuracao" | "agenda.lista" | "agenda.novo" | "agenda.detalhe" | "agenda.servicos" | "agenda.grade" | "agenda.meus" | "agenda.marcar" | "exames.lista" | "exames.novo" | "exames.pedido" | "exames.resultado" | "exames.meus" | "exames.enviar" | "documentos.lista" | "documentos.novo" | "documentos.detalhe" | "documentos.meus";
         /** @enum {string} */
         TermoChave: "organizacao" | "paciente" | "responsavel" | "profissional" | "acompanhamento" | "protocolo" | "procedimento" | "checkin" | "conversa" | "consulta" | "exame";
         /** @enum {string} */
-        ContadorChave: "chat.naoLidas" | "notificacoes.naoLidas" | "acompanhamento.alertasAbertos" | "acompanhamento.checkinsPendentes" | "exames.resultadosParaRevisar";
+        ContadorChave: "chat.naoLidas" | "notificacoes.naoLidas" | "acompanhamento.alertasAbertos" | "acompanhamento.checkinsPendentes" | "exames.resultadosParaRevisar" | "documentos.paraAssinar";
         /**
          * @description Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.
          * @enum {string}
          */
-        Icone: "house" | "users" | "user" | "user-plus" | "activity" | "heart-pulse" | "message-circle" | "bell" | "settings" | "clipboard-list" | "calendar" | "stethoscope" | "paw-print" | "circle-alert" | "file-text" | "camera" | "credit-card" | "circle-help" | "log-out" | "calendar-plus" | "calendar-check" | "calendar-clock" | "flask-conical";
+        Icone: "house" | "users" | "user" | "user-plus" | "activity" | "heart-pulse" | "message-circle" | "bell" | "settings" | "clipboard-list" | "calendar" | "stethoscope" | "paw-print" | "circle-alert" | "file-text" | "camera" | "credit-card" | "circle-help" | "log-out" | "calendar-plus" | "calendar-check" | "calendar-clock" | "flask-conical" | "file-pen-line";
         /** @enum {string} */
-        CodigoErro: "AUTENTICACAO_INVALIDA" | "CODIGO_INVALIDO" | "CODIGO_EXPIRADO" | "MUITAS_TENTATIVAS" | "SESSAO_EXPIRADA" | "SESSAO_REVOGADA" | "PERMISSAO_NEGADA" | "RECURSO_NAO_ENCONTRADO" | "VALIDACAO_FALHOU" | "CONFLITO_VERSAO" | "LIMITE_EXCEDIDO" | "CONVITE_INVALIDO" | "CONVITE_EXPIRADO" | "MODULO_NAO_CONTRATADO" | "ORGANIZACAO_SUSPENSA" | "CHECKIN_INDISPONIVEL" | "CHECKIN_JA_RESPONDIDO" | "CONVERSA_ARQUIVADA" | "ARQUIVO_MUITO_GRANDE" | "TIPO_ARQUIVO_NAO_PERMITIDO" | "ARQUIVO_REJEITADO" | "CURSOR_EXPIRADO" | "ULTIMO_GESTOR" | "INDISPONIVEL_TEMPORARIAMENTE" | "HORARIO_INDISPONIVEL";
+        CodigoErro: "AUTENTICACAO_INVALIDA" | "CODIGO_INVALIDO" | "CODIGO_EXPIRADO" | "MUITAS_TENTATIVAS" | "SESSAO_EXPIRADA" | "SESSAO_REVOGADA" | "PERMISSAO_NEGADA" | "RECURSO_NAO_ENCONTRADO" | "VALIDACAO_FALHOU" | "CONFLITO_VERSAO" | "LIMITE_EXCEDIDO" | "CONVITE_INVALIDO" | "CONVITE_EXPIRADO" | "MODULO_NAO_CONTRATADO" | "ORGANIZACAO_SUSPENSA" | "CHECKIN_INDISPONIVEL" | "CHECKIN_JA_RESPONDIDO" | "CONVERSA_ARQUIVADA" | "ARQUIVO_MUITO_GRANDE" | "TIPO_ARQUIVO_NAO_PERMITIDO" | "ARQUIVO_REJEITADO" | "CURSOR_EXPIRADO" | "ULTIMO_GESTOR" | "INDISPONIVEL_TEMPORARIAMENTE" | "HORARIO_INDISPONIVEL" | "REGISTRO_PROFISSIONAL_AUSENTE" | "ASSINATURA_INDISPONIVEL";
         /** @enum {string} */
-        TipoNotificacao: "CHAT_MENSAGEM" | "CHECKIN_DISPONIVEL" | "CHECKIN_LEMBRETE" | "ALERTA_CRIADO" | "ACOMPANHAMENTO_INICIADO" | "ACOMPANHAMENTO_CONCLUIDO" | "CONVITE_ACEITO" | "SISTEMA" | "AGENDAMENTO_CRIADO" | "AGENDAMENTO_ALTERADO" | "AGENDAMENTO_LEMBRETE" | "EXAME_PEDIDO" | "EXAME_RESULTADO" | "EXAME_REVISADO";
+        TipoNotificacao: "CHAT_MENSAGEM" | "CHECKIN_DISPONIVEL" | "CHECKIN_LEMBRETE" | "ALERTA_CRIADO" | "ACOMPANHAMENTO_INICIADO" | "ACOMPANHAMENTO_CONCLUIDO" | "CONVITE_ACEITO" | "SISTEMA" | "AGENDAMENTO_CRIADO" | "AGENDAMENTO_ALTERADO" | "AGENDAMENTO_LEMBRETE" | "EXAME_PEDIDO" | "EXAME_RESULTADO" | "EXAME_REVISADO" | "DOCUMENTO_DISPONIVEL" | "DOCUMENTO_ANULADO";
         /** @enum {string} */
-        TipoEvento: "chat.mensagem.criada" | "chat.conversa.atualizada" | "acompanhamento.checkin.disponivel" | "acompanhamento.checkin.respondido" | "acompanhamento.alerta.criado" | "acompanhamento.alerta.resolvido" | "acompanhamento.acompanhamento.atualizado" | "notificacao.criada" | "contadores.alterados" | "arquivo.processado" | "sessao.manifesto.alterado" | "sessao.encerrada" | "agenda.agendamento.criado" | "agenda.agendamento.atualizado" | "exames.pedido.atualizado" | "exames.resultado.atualizado";
+        TipoEvento: "chat.mensagem.criada" | "chat.conversa.atualizada" | "acompanhamento.checkin.disponivel" | "acompanhamento.checkin.respondido" | "acompanhamento.alerta.criado" | "acompanhamento.alerta.resolvido" | "acompanhamento.acompanhamento.atualizado" | "notificacao.criada" | "contadores.alterados" | "arquivo.processado" | "sessao.manifesto.alterado" | "sessao.encerrada" | "agenda.agendamento.criado" | "agenda.agendamento.atualizado" | "exames.pedido.atualizado" | "exames.resultado.atualizado" | "documentos.documento.atualizado" | "documentos.assinatura.atualizada";
         /** @enum {string} */
-        TipoSecao: "ACOMPANHAMENTO_ATUAL" | "CHECKINS_PENDENTES" | "ALERTAS_ABERTOS" | "CHECKINS_DO_DIA" | "ACOMPANHAMENTOS_ATIVOS" | "CONVERSAS_RECENTES" | "ATALHOS" | "AVISO" | "CONTATO_ORGANIZACAO" | "PROXIMA_CONSULTA" | "AGENDA_DO_DIA" | "RESULTADOS_PARA_REVISAR" | "EXAMES_PENDENTES";
+        TipoSecao: "ACOMPANHAMENTO_ATUAL" | "CHECKINS_PENDENTES" | "ALERTAS_ABERTOS" | "CHECKINS_DO_DIA" | "ACOMPANHAMENTOS_ATIVOS" | "CONVERSAS_RECENTES" | "ATALHOS" | "AVISO" | "CONTATO_ORGANIZACAO" | "PROXIMA_CONSULTA" | "AGENDA_DO_DIA" | "RESULTADOS_PARA_REVISAR" | "EXAMES_PENDENTES" | "DOCUMENTOS_PARA_ASSINAR";
         /** @enum {string} */
         Severidade: "BAIXA" | "MEDIA" | "ALTA";
         /** @enum {string} */
@@ -1924,7 +2085,7 @@ export interface components {
             pacientesVinculados?: components["schemas"]["PacienteVinculado"][];
         };
         /** @enum {string} */
-        Permissao: "pacientes.paciente.ler" | "pacientes.paciente.criar" | "pacientes.paciente.editar" | "pacientes.paciente.convidar" | "acompanhamento.protocolo.ler" | "acompanhamento.protocolo.gerenciar" | "acompanhamento.acompanhamento.ler" | "acompanhamento.acompanhamento.criar" | "acompanhamento.acompanhamento.encerrar" | "acompanhamento.checkin.ler" | "acompanhamento.checkin.responder" | "acompanhamento.alerta.ler" | "acompanhamento.alerta.resolver" | "chat.conversa.ler" | "chat.conversa.criar" | "chat.conversa.gerenciar" | "chat.mensagem.enviar" | "equipe.membro.ler" | "equipe.membro.gerenciar" | "organizacao.configuracao.editar" | "agenda.agendamento.ler" | "agenda.agendamento.criar" | "agenda.agendamento.gerenciar" | "agenda.configuracao.gerenciar" | "exames.exame.ler" | "exames.pedido.criar" | "exames.resultado.enviar" | "exames.resultado.revisar";
+        Permissao: "pacientes.paciente.ler" | "pacientes.paciente.criar" | "pacientes.paciente.editar" | "pacientes.paciente.convidar" | "acompanhamento.protocolo.ler" | "acompanhamento.protocolo.gerenciar" | "acompanhamento.acompanhamento.ler" | "acompanhamento.acompanhamento.criar" | "acompanhamento.acompanhamento.encerrar" | "acompanhamento.checkin.ler" | "acompanhamento.checkin.responder" | "acompanhamento.alerta.ler" | "acompanhamento.alerta.resolver" | "chat.conversa.ler" | "chat.conversa.criar" | "chat.conversa.gerenciar" | "chat.mensagem.enviar" | "equipe.membro.ler" | "equipe.membro.gerenciar" | "organizacao.configuracao.editar" | "agenda.agendamento.ler" | "agenda.agendamento.criar" | "agenda.agendamento.gerenciar" | "agenda.configuracao.gerenciar" | "exames.exame.ler" | "exames.pedido.criar" | "exames.resultado.enviar" | "exames.resultado.revisar" | "documentos.documento.ler" | "documentos.documento.emitir";
         Capacidades: {
             tempoReal: {
                 /** @enum {string} */
@@ -1942,6 +2103,14 @@ export interface components {
                 /** @description Tipos aceitos na finalidade `EXAME` (inclui `application/pdf`; ADR-0017). Ausente sem o módulo `exames`. */
                 tiposPermitidosExame?: string[];
             };
+            /** @description Presente com o módulo `documentos`, para quem emite. `provedores` vazio = o servidor não tem PSC configurado e não há como assinar (ADR-0018). */
+            assinatura?: {
+                provedores: {
+                    id: string;
+                    /** @description Nome comercial do certificado em nuvem (por exemplo, "BirdID"). */
+                    nome: string;
+                }[];
+            };
         };
         ContatoOrganizacao: {
             telefone: components["schemas"]["Telefone"] | null;
@@ -1957,7 +2126,7 @@ export interface components {
             /** @description Opcional; o frontend tem um título padrão por tipo. */
             titulo?: string;
             dados: Record<string, never>;
-        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         Notificacao: {
             id: components["schemas"]["Id"];
             tipo: components["schemas"]["TipoNotificacao"];
@@ -1979,8 +2148,11 @@ export interface components {
             dispositivo: string | null;
             criadoEm: components["schemas"]["DataHora"];
         };
-        /** @enum {string} */
-        FinalidadeArquivo: "CHECKIN" | "CHAT" | "PERFIL" | "ORGANIZACAO" | "EXAME";
+        /**
+         * @description `DOCUMENTO` só o servidor cria (PDF assinado, ADR-0018); `POST /v1/arquivos` com ela → 422.
+         * @enum {string}
+         */
+        FinalidadeArquivo: "CHECKIN" | "CHAT" | "PERFIL" | "ORGANIZACAO" | "EXAME" | "DOCUMENTO";
         EnvioArquivo: {
             arquivoId: components["schemas"]["Id"];
             envio: {
@@ -2026,7 +2198,7 @@ export interface components {
             tipo: components["schemas"]["TipoEvento"];
             ocorridoEm: components["schemas"]["DataHora"];
             dados: Record<string, never>;
-        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         /** @enum {string} */
         TipoPaciente: "PESSOA" | "ANIMAL";
         /** @enum {string} */
@@ -2323,7 +2495,7 @@ export interface components {
             anexos: components["schemas"]["ArquivoResumo"][];
             referencia: {
                 /** @enum {string} */
-                tipo: "CHECKIN" | "ACOMPANHAMENTO";
+                tipo: "CHECKIN" | "ACOMPANHAMENTO" | "DOCUMENTO";
                 id: components["schemas"]["Id"];
                 resumo: string;
                 temAlerta: boolean;
@@ -2518,6 +2690,112 @@ export interface components {
             /** @description Paciente envia resultados pelo app (RN-EXA-003). Padrão: `true`. */
             pacienteEnviaResultados: boolean;
         };
+        /** @enum {string} */
+        TipoDocumento: "RECEITA" | "ATESTADO";
+        /** @enum {string} */
+        StatusDocumento: "RASCUNHO" | "ASSINANDO" | "ASSINADO" | "DESCARTADO" | "ANULADO";
+        /** @description Receita simples. Controle especial (Portaria 344/98) e antimicrobianos ficam fora do app. */
+        ConteudoReceita: {
+            itens: {
+                /** @description Nome, concentração e forma (por exemplo, "Amoxicilina 500 mg, cápsula"). */
+                medicamento: string;
+                posologia: string;
+                /** @description Por exemplo, "1 caixa" ou "21 cápsulas". */
+                quantidade?: string | null;
+            }[];
+            orientacoes?: string | null;
+        };
+        /**
+         * @description AFASTAMENTO exige `dias`; COMPARECIMENTO exige `horaInicio` e `horaFim`. `cid` só com
+         *     `cidAutorizado: true` (autorização expressa do paciente; CFM 1.658/2002), senão 422.
+         */
+        ConteudoAtestado: {
+            /** @enum {string} */
+            modalidade: "AFASTAMENTO" | "COMPARECIMENTO";
+            /** @description Início do afastamento ou dia do comparecimento. */
+            data: components["schemas"]["Data"];
+            dias?: number | null;
+            horaInicio?: string | null;
+            horaFim?: string | null;
+            cid?: string | null;
+            /** @default false */
+            cidAutorizado: boolean;
+            observacoes?: string | null;
+        };
+        RegistroProfissional: {
+            /**
+             * @example CRM
+             * @example CRMV
+             */
+            conselho: string;
+            numero: string;
+            uf: string;
+        };
+        Documento: {
+            id: components["schemas"]["Id"];
+            tipo: components["schemas"]["TipoDocumento"];
+            paciente: components["schemas"]["Referencia"];
+            emissor: components["schemas"]["ReferenciaUsuario"];
+            /** @description Registro do emissor no momento da emissão (impresso no PDF). */
+            registro: components["schemas"]["RegistroProfissional"];
+            status: components["schemas"]["StatusDocumento"];
+            receita: components["schemas"]["ConteudoReceita"] | null;
+            atestado: components["schemas"]["ConteudoAtestado"] | null;
+            /** @description PDF assinado (finalidade `DOCUMENTO`), só em `ASSINADO` e `ANULADO`. */
+            arquivo: components["schemas"]["Arquivo"] | null;
+            /** @description Código da validação pública (`/v1/publico/documentos/{codigo}`), só depois de assinado. */
+            codigoValidacao: string | null;
+            /** @description Mensagem do chat que levou o documento ao paciente (nula sem o chat ou com `entregarPeloChat` desligado). */
+            entrega: null | {
+                conversaId: components["schemas"]["Id"];
+                mensagemId: components["schemas"]["Id"];
+                entregueEm: components["schemas"]["DataHora"];
+            };
+            motivoAnulacao: string | null;
+            /** @description Motivo da última tentativa de assinatura que falhou (o rascunho volta a `RASCUNHO`). */
+            erroAssinatura: string | null;
+            criadoEm: components["schemas"]["DataHora"];
+            assinadoEm: components["schemas"]["DataHoraOuNulo"];
+            anuladoEm: components["schemas"]["DataHoraOuNulo"];
+            acoesPermitidas: ("EDITAR" | "DESCARTAR" | "ASSINAR" | "ANULAR")[];
+        };
+        SessaoAssinatura: {
+            id: components["schemas"]["Id"];
+            /** @enum {string} */
+            status: "AGUARDANDO_AUTORIZACAO" | "ASSINANDO" | "CONCLUIDA" | "FALHOU" | "EXPIRADA";
+            provedor: string;
+            documentosIds: components["schemas"]["Id"][];
+            /**
+             * Format: uri
+             * @description Só em `AGUARDANDO_AUTORIZACAO`.
+             */
+            urlAutorizacao: string | null;
+            erro: string | null;
+            criadoEm: components["schemas"]["DataHora"];
+            expiraEm: components["schemas"]["DataHora"];
+        };
+        ValidacaoDocumento: {
+            codigo: string;
+            tipo: components["schemas"]["TipoDocumento"];
+            /** @enum {string} */
+            situacao: "VALIDO" | "ANULADO";
+            emissor: {
+                nome: string;
+                registro: components["schemas"]["RegistroProfissional"];
+            };
+            /** @example B. C. */
+            pacienteIniciais: string;
+            organizacao: string;
+            assinadoEm: components["schemas"]["DataHora"];
+            anuladoEm: components["schemas"]["DataHoraOuNulo"];
+            /** @description SHA-256 do PDF assinado */
+            sha256: string;
+        };
+        ConfigDocumentos: {
+            tiposPermitidos: components["schemas"]["TipoDocumento"][];
+            /** @description Com o módulo `chat`, o documento assinado também chega como mensagem da conversa do paciente. Padrão: `true`. */
+            entregarPeloChat: boolean;
+        };
         ConfigAgenda: {
             /** @description Paciente marca sozinho os serviços autoagendáveis. */
             autoagendamento: boolean;
@@ -2557,6 +2835,8 @@ export interface components {
             agenda?: components["schemas"]["ConfigAgenda"];
             /** @description Presente quando o módulo `exames` está contratado. */
             exames?: components["schemas"]["ConfigExames"];
+            /** @description Presente quando o módulo `documentos` está contratado. */
+            documentos?: components["schemas"]["ConfigDocumentos"];
             acoesPermitidas: "EDITAR"[];
         };
         OrganizacaoEdicao: {
@@ -2592,6 +2872,11 @@ export interface components {
             /** @description Exige o módulo `exames` (senão `MODULO_NAO_CONTRATADO`). */
             exames?: {
                 pacienteEnviaResultados?: boolean;
+            };
+            /** @description Exige o módulo `documentos` (senão `MODULO_NAO_CONTRATADO`). */
+            documentos?: {
+                tiposPermitidos?: components["schemas"]["TipoDocumento"][];
+                entregarPeloChat?: boolean;
             };
         };
     };
@@ -2642,6 +2927,7 @@ export interface components {
         AgendamentoId: components["schemas"]["Id"];
         PedidoExameId: components["schemas"]["Id"];
         ResultadoExameId: components["schemas"]["Id"];
+        DocumentoId: components["schemas"]["Id"];
         /** @description Primeiro dia do período (inclusive), no fuso da organização. */
         De: components["schemas"]["Data"];
         /** @description Último dia do período (inclusive), no fuso da organização. No máximo 366 dias depois de `de` (31 em `horarios`). */
@@ -2772,6 +3058,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Saude"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    publicoValidarDocumento: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                codigo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Documento encontrado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidacaoDocumento"];
                 };
             };
             default: components["responses"]["Erro"];
@@ -5572,6 +5881,263 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ResultadoExame"];
                 };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosListar: {
+        parameters: {
+            query?: {
+                pacienteId?: components["schemas"]["Id"];
+                tipo?: components["schemas"]["TipoDocumento"];
+                status?: components["schemas"]["StatusDocumento"];
+                emissorId?: components["schemas"]["Id"];
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Documentos, do mais recente para o mais antigo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["Documento"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosCriar: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Chave única por operação lógica; repetir devolve a mesma resposta por 24 h. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    pacienteId: components["schemas"]["Id"];
+                    tipo: components["schemas"]["TipoDocumento"];
+                    receita?: components["schemas"]["ConteudoReceita"];
+                    atestado?: components["schemas"]["ConteudoAtestado"];
+                };
+            };
+        };
+        responses: {
+            /** @description Rascunho criado */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Documento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosObter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentoId: components["parameters"]["DocumentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Documento */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Documento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosEditar: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Valor do `ETag` lido. Desatualizado devolve 412 `CONFLITO_VERSAO`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                documentoId: components["parameters"]["DocumentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    receita?: components["schemas"]["ConteudoReceita"];
+                    atestado?: components["schemas"]["ConteudoAtestado"];
+                };
+            };
+        };
+        responses: {
+            /** @description Rascunho atualizado */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Documento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosDescartar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentoId: components["parameters"]["DocumentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rascunho descartado (repetir não muda nada) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Documento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosAnular: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentoId: components["parameters"]["DocumentoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    motivo: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Documento anulado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Documento"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosIniciarAssinatura: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Chave única por operação lógica; repetir devolve a mesma resposta por 24 h. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    documentosIds: components["schemas"]["Id"][];
+                    /** @description `id` de um item de `capacidades.assinatura.provedores`. */
+                    provedor: string;
+                    /** Format: uri */
+                    retornoUrl: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Sessão de assinatura criada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessaoAssinatura"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosObterAssinatura: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessaoId: components["schemas"]["Id"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sessão */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessaoAssinatura"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    documentosRetornoAssinatura: {
+        parameters: {
+            query: {
+                state: string;
+                code?: string;
+                error?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Volta ao app */
+            302: {
+                headers: {
+                    /** @description `retornoUrl` da sessão com `?assinatura={id}`. */
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             default: components["responses"]["Erro"];
         };

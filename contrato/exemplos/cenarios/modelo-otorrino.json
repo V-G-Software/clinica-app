@@ -83,7 +83,8 @@
     },
     { "id": "equipe", "versao": "1.0", "config": {} },
     { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": true, "antecedenciaMinimaHoras": 2, "janelaDias": 30, "cancelamentoAteHoras": 24, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } },
-    { "id": "exames", "versao": "1.0", "config": { "pacienteEnviaResultados": true } }
+    { "id": "exames", "versao": "1.0", "config": { "pacienteEnviaResultados": true } },
+    { "id": "documentos", "versao": "1.0", "config": { "tiposPermitidos": ["RECEITA", "ATESTADO"], "entregarPeloChat": true } }
   ],
   "capacidades": {
     "tempoReal": { "modo": "SSE", "intervaloPollingSegundos": 20 },
@@ -298,6 +299,23 @@
       { "id": "res_marcos_tc", "pacienteId": "pac_marcos", "pedidoId": "ped_marcos_tc", "titulo": "Tomografia dos seios da face", "dataColeta": "2026-10-27",
         "enviadoPor": "usr_julia", "criadoEm": "2026-10-28T15:00:00Z", "comentario": null,
         "revisar": { "em": "2026-10-30T13:00:00Z", "por": "usr_carlos", "nota": "Sem alterações que impeçam a cirurgia." } }
+    ]
+  },
+  "documentos": {
+    "$comentario": "Documentos (ADR-0018). Atestado de afastamento do Rafael assinado no dia da cirurgia e entregue pelo chat; receita do Marcos assinada e anulada (posologia errada); receita da Beatriz em rascunho, para a Dra. Ana assinar. A assinatura do mock é simulada.",
+    "itens": [
+      { "id": "doc_rafael_atestado", "tipo": "ATESTADO", "pacienteId": "pac_rafael", "emissorId": "usr_ana", "criadoEm": "2026-11-07T14:00:00Z",
+        "atestado": { "modalidade": "AFASTAMENTO", "data": "2026-11-07", "dias": 7, "cid": null, "cidAutorizado": false, "observacoes": null },
+        "assinar": { "em": "2026-11-07T14:05:00Z", "codigo": "RAFAEL7DIASSEPTO" } },
+      { "id": "doc_marcos_receita", "tipo": "RECEITA", "pacienteId": "pac_marcos", "emissorId": "usr_ana", "criadoEm": "2026-11-05T12:00:00Z",
+        "receita": { "itens": [{ "medicamento": "Dipirona 500 mg, comprimido", "posologia": "1 comprimido de 6 em 6 horas, se dor.", "quantidade": "1 caixa" }], "orientacoes": null },
+        "assinar": { "em": "2026-11-05T12:05:00Z", "codigo": "MARCOSRECEITA001" },
+        "anular": { "em": "2026-11-05T13:00:00Z", "motivo": "Posologia errada; nova receita enviada pela conversa." } },
+      { "id": "doc_beatriz_receita", "tipo": "RECEITA", "pacienteId": "pac_beatriz", "emissorId": "usr_ana", "criadoEm": "2026-11-08T12:00:00Z",
+        "receita": { "itens": [
+          { "medicamento": "Cloreto de sódio 0,9%, solução nasal", "posologia": "Aplicar 2 jatos em cada narina, 4 vezes ao dia.", "quantidade": "1 frasco" },
+          { "medicamento": "Paracetamol 750 mg, comprimido", "posologia": "1 comprimido de 8 em 8 horas, se dor ou febre.", "quantidade": "1 caixa" }
+        ], "orientacoes": "Começar no dia seguinte à cirurgia." } }
     ]
   }
 }

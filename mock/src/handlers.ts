@@ -95,6 +95,7 @@ function orgConfig(ctx: Ctx) {
     ...(r.temModulo(ctx.org, 'acompanhamento') ? { acompanhamento: { resolverAlertasAoEncerrar: !!r.configModulo(ctx.org, 'acompanhamento').resolverAlertasAoEncerrar } } : {}),
     ...(r.temModulo(ctx.org, 'agenda') ? { agenda: { ...r.configModulo(ctx.org, 'agenda') } } : {}),
     ...(r.temModulo(ctx.org, 'exames') ? { exames: cfgExames(ctx.org) } : {}),
+    ...(r.temModulo(ctx.org, 'documentos') ? { documentos: cfgDocumentos(ctx.org) } : {}),
     acoesPermitidas: ctx.perms.has('organizacao.configuracao.editar') ? ['EDITAR'] : [],
   };
 }
@@ -117,10 +118,12 @@ const ASSINATURAS: Record<string, (b: Buffer) => boolean> = {
 
 import { handlersAgenda } from './agenda.ts';
 import { cfgExames, ehPdf, exigirEnvioDeExame, handlersExames, temVirus, tiposPermitidos } from './exames.ts';
+import { cfgDocumentos, handlersDocumentos } from './documentos.ts';
 
 export const handlers: Record<string, Handler> = {
   ...(handlersAgenda as Record<string, Handler>),
   ...(handlersExames as Record<string, Handler>),
+  ...(handlersDocumentos as Record<string, Handler>),
   // ─────────── Público ───────────
   publicoObterConfiguracao: (q) => {
     const o = q.org.config;
@@ -236,6 +239,7 @@ export const handlers: Record<string, Handler> = {
   // ─────────── Arquivos ───────────
   arquivosIniciarEnvio: (q) => {
     const cap = q.org.capacidades.upload;
+    if (q.body.finalidade === 'DOCUMENTO') throw invalido('finalidade', 'Documentos são gerados pelo servidor.');
     if (q.body.finalidade === 'EXAME') exigirEnvioDeExame(C(q));
     const tipos = tiposPermitidos(q.org, q.body.finalidade); // PDF só em EXAME (ADR-0017)
     if (!tipos.includes(q.body.tipo)) throw new ErroApi('TIPO_ARQUIVO_NAO_PERMITIDO', `Envie ${tipos.join(', ')}.`);
@@ -763,6 +767,10 @@ export const handlers: Record<string, Handler> = {
     if (q.body.exames) {
       if (!r.temModulo(q.org, 'exames')) throw new ErroApi('MODULO_NAO_CONTRATADO');
       Object.assign(q.org.modulos.find((m) => m.id === 'exames').config, q.body.exames);
+    }
+    if (q.body.documentos) {
+      if (!r.temModulo(q.org, 'documentos')) throw new ErroApi('MODULO_NAO_CONTRATADO');
+      Object.assign(q.org.modulos.find((m) => m.id === 'documentos').config, q.body.documentos);
     }
     q.org._vConfig++;
     avisarManifesto(q.org); // RN-EQP-004

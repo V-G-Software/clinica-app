@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.2.0-rc.1"
+      "versao": "1.3.0-rc.1"
     },
     "organizacao": {
       "id": "org_otorrino",
@@ -176,6 +176,17 @@
         "config": {
           "pacienteEnviaResultados": true
         }
+      },
+      {
+        "id": "documentos",
+        "versao": "1.0",
+        "config": {
+          "tiposPermitidos": [
+            "RECEITA",
+            "ATESTADO"
+          ],
+          "entregarPeloChat": true
+        }
       }
     ],
     "navegacao": [
@@ -237,6 +248,16 @@
         "contador": "exames.resultadosParaRevisar"
       },
       {
+        "id": "documentos",
+        "rotulo": "Documentos",
+        "icone": "file-pen-line",
+        "grupo": "SECUNDARIO",
+        "destino": {
+          "tela": "documentos.lista"
+        },
+        "contador": "documentos.paraAssinar"
+      },
+      {
         "id": "notificacoes",
         "rotulo": "Notificações",
         "icone": "bell",
@@ -289,7 +310,9 @@
       "exames.exame.ler",
       "exames.pedido.criar",
       "exames.resultado.enviar",
-      "exames.resultado.revisar"
+      "exames.resultado.revisar",
+      "documentos.documento.ler",
+      "documentos.documento.emitir"
     ],
     "capacidades": {
       "tempoReal": {
@@ -313,14 +336,23 @@
           "image/webp",
           "application/pdf"
         ]
+      },
+      "assinatura": {
+        "provedores": [
+          {
+            "id": "teste",
+            "nome": "Certificado de teste (simulado)"
+          }
+        ]
       }
     },
     "contadores": {
       "notificacoes.naoLidas": 8,
-      "chat.naoLidas": 7,
+      "chat.naoLidas": 6,
       "acompanhamento.alertasAbertos": 1,
       "acompanhamento.checkinsPendentes": 3,
-      "exames.resultadosParaRevisar": 1
+      "exames.resultadosParaRevisar": 1,
+      "documentos.paraAssinar": 1
     }
   }
 }

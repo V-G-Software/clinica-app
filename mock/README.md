@@ -46,6 +46,18 @@ O lembrete sai `lembreteHorasAntes` antes do horário, como job `agendamento:{id
 
 PDF só é aceito com a finalidade `EXAME`. O mock simula o antivírus: um arquivo que contém a assinatura de teste EICAR fica `REJEITADO`. PDF é servido como anexo (`Content-Disposition: attachment`) e não tem miniatura.
 
+## Documentos (1.3 — ADR-0018)
+
+| Cenário | Módulo `documentos` | O que tem |
+|---|---|---|
+| `modelo-otorrino` | receita e atestado; entrega pelo chat | atestado de 7 dias do Rafael, assinado e entregue na conversa (validação `RAFAEL7DIASSEPTO`); receita do Marcos assinada e **anulada** (`MARCOSRECEITA001`); receita da Beatriz em **rascunho** para a Dra. Ana assinar |
+| `vet-amigo` | **só receita**; entrega pelo chat | receita do Thor assinada pela Dra. Renata (CRMV), entregue à tutora (`THORRECEITAVET01`) |
+| `fisio-movimento` | desligado | rotas `documentos` e a validação pública respondem 404 |
+
+**PSC simulado.** `capacidades.assinatura.provedores` traz `teste`. A `urlAutorizacao` aponta para `/__mock/psc/{slug}/autorizar`, que autoriza na hora e redireciona (302) para o retorno público com `code`. O retorno assina e volta ao `retornoUrl` com `?assinatura={id}`. Para simular a recusa, chame o retorno com `state` e `error=access_denied`. O PDF gerado é um PDF de verdade, mas a assinatura é simulada e o rodapé diz que **não tem validade jurídica**.
+
+Validação pública: `GET /o/{slug}/v1/publico/documentos/{codigo}`.
+
 ## Relógio simulado e simuladores (fora do contrato)
 
 O relógio começa em `2026-11-08T13:30:00Z` (10:30 em São Paulo) e anda junto com o tempo real.
