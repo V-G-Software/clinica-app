@@ -1,7 +1,8 @@
 // E2E do critério de saída da F2: o MESMO frontend, apontado para o backend real só pelo endereço do
 // diretório (VITE_DIRETORIO_URL), faz o fluxo principal — login da equipe (senha + MFA) e do paciente
 // (código), check-in respondido, alerta chegando à equipe em tempo real, chat nos dois sentidos, agenda e
-// exames (pedido → foto + PDF pelo antivírus e saneamento reais → revisão com nota, em tempo real).
+// exames (pedido → foto + PDF pelo antivírus e saneamento reais → revisão com nota, em tempo real) e
+// documentos (receita assinada em PAdES pelo PSC de teste, entregue pelo chat, conferida pela validação pública).
 // Sem /__mock: o estado é preparado pela própria API (acompanhamento retroativo com check-in aberto).
 // Pré-requisitos: backend com MODO_TESTE_CODIGO_EMAIL=123456 e MODO_TESTE_TOTP=000000, semeado;
 // frontend com VITE_DIRETORIO_URL=http://localhost:4020/diretorio. Uso: node e2e/backend-real.mjs [capturas]
@@ -169,6 +170,29 @@ await ana.getByRole('button', { name: 'Marcar como revisado' }).click();
 await passo(ana.getByText(/Revisado por/), 'exames: equipe revisa com nota');
 await passo(marcos.getByText('Audição dentro do normal.'), 'exames: paciente vê a nota sem recarregar');
 await foto(marcos, 'real-6-exame-revisado');
+
+// ─── Documentos (F6): receita assinada em PAdES pelo PSC de teste do backend, entregue pelo chat ───
+await ana.goto(`${APP}/documentos/novo?pacienteId=pac_marcos&tipo=RECEITA`);
+await ana.getByText('Marcos Souza').waitFor();
+await ana.getByLabel('Medicamento 1').fill('Ibuprofeno 400 mg, comprimido');
+await ana.getByLabel('Posologia 1').fill('1 comprimido de 8 em 8 horas por 3 dias, após as refeições.');
+await ana.getByRole('button', { name: 'Salvar e assinar' }).click();
+await ana.waitForURL(/\/documentos\?assinatura=ass_/, { timeout: 30000 })
+  .then(() => ok(true, 'documentos: ida ao PSC de teste e volta ao app'), () => ok(false, 'documentos: ida ao PSC de teste e volta ao app'));
+await passo(ana.getByText(/1 documento assinado e enviado/), 'documentos: assinado e enviado (backend real)', 20000);
+await ana.getByRole('button', { name: 'Assinados', exact: true }).click();
+await ana.getByText('Marcos Souza · Receita').first().click();
+await passo(ana.getByText(/Código de validação:/), 'documentos: código de validação');
+const codigoDoc = (await ana.locator('strong.font-mono').innerText()).trim();
+const urlDoc = await ana.getByRole('link', { name: /PDF assinado/ }).getAttribute('href');
+const pdfDoc = Buffer.from(await (await fetch(urlDoc)).arrayBuffer());
+const valid = await (await fetch(`${API}/v1/publico/documentos/${codigoDoc}`)).json();
+const { createHash } = await import('node:crypto');
+ok(valid.situacao === 'VALIDO' && valid.sha256 === createHash('sha256').update(pdfDoc).digest('hex'), 'documentos: PDF baixado é o mesmo da validação pública (SHA-256)');
+ok(/\/SubFilter\s*\/ETSI\.CAdES\.detached/.test(pdfDoc.toString('latin1')), 'documentos: PDF com assinatura PAdES');
+await marcos.goto(`${APP}/documentos/meus`);
+await passo(marcos.getByText(/Ibuprofeno 400 mg/), 'documentos: paciente vê a receita em "Meus documentos"');
+await foto(marcos, 'real-7-documento');
 
 // Limpeza: encerra o acompanhamento de teste.
 await api('POST', `/v1/acompanhamentos/${acp.id}/encerrar`, { token: tokenAna, body: { motivo: 'E2E concluído.' } });

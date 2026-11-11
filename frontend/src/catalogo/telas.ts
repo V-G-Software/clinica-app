@@ -8,7 +8,7 @@ export interface DefinicaoTela {
   rota: string;
   componente: () => Promise<Component>;
   /** Módulo exigido (núcleo = undefined). */
-  modulo?: 'pacientes' | 'acompanhamento' | 'chat' | 'equipe' | 'agenda' | 'exames';
+  modulo?: 'pacientes' | 'acompanhamento' | 'chat' | 'equipe' | 'agenda' | 'exames' | 'documentos';
   publico: 'todos' | 'equipe' | 'paciente' | 'gestor';
   fase: string;
 }
@@ -47,6 +47,10 @@ export const CATALOGO: DefinicaoTela[] = [
   def('exames.enviar', '/exames/enviar', 'todos', 'F5', 'exames', () => import('@/telas/exames/Enviar.vue')),
   def('exames.pedido', '/exames/pedidos/:pedidoId', 'todos', 'F5', 'exames', () => import('@/telas/exames/Pedido.vue')),
   def('exames.resultado', '/exames/resultados/:resultadoId', 'todos', 'F5', 'exames', () => import('@/telas/exames/Resultado.vue')),
+  def('documentos.lista', '/documentos', 'equipe', 'F6', 'documentos', () => import('@/telas/documentos/Lista.vue')),
+  def('documentos.novo', '/documentos/novo', 'equipe', 'F6', 'documentos', () => import('@/telas/documentos/Novo.vue')),
+  def('documentos.meus', '/documentos/meus', 'paciente', 'F6', 'documentos', () => import('@/telas/documentos/Meus.vue')),
+  def('documentos.detalhe', '/documentos/:documentoId', 'todos', 'F6', 'documentos', () => import('@/telas/documentos/Detalhe.vue')),
   def('organizacao.configuracao', '/configuracoes', 'gestor', 'FE2', undefined, () => import('@/telas/organizacao/Configuracao.vue')),
 ];
 export const telaPorNome = new Map(CATALOGO.map((d) => [d.tela as string, d]));
@@ -62,7 +66,7 @@ export function caminhoDe(tela: string, parametros: Record<string, string> = {})
   });
   if (faltou) return null;
   // Atalhos de criação aceitam contexto opcional (paciente, pedido) na query.
-  const extras = ({ 'acompanhamento.novo': ['pacienteId'], 'agenda.novo': ['pacienteId'], 'exames.novo': ['pacienteId'], 'exames.enviar': ['pacienteId', 'pedidoId'] } as Record<string, string[]>)[d.tela] ?? [];
+  const extras = ({ 'acompanhamento.novo': ['pacienteId'], 'agenda.novo': ['pacienteId'], 'exames.novo': ['pacienteId'], 'exames.enviar': ['pacienteId', 'pedidoId'], 'documentos.novo': ['pacienteId', 'tipo'] } as Record<string, string[]>)[d.tela] ?? [];
   const q = extras.filter((k) => parametros[k]).map((k) => `${k}=${encodeURIComponent(parametros[k])}`).join('&');
   return q ? `${caminho}?${q}` : caminho;
 }

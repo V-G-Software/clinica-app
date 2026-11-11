@@ -37,6 +37,11 @@ export type PedidoExame = S['PedidoExame'];
 export type ResultadoExame = S['ResultadoExame'];
 export type ResultadoExameResumo = S['ResultadoExameResumo'];
 export type ConfigExames = S['ConfigExames'];
+export type Documento = S['Documento'];
+export type ConteudoReceita = S['ConteudoReceita'];
+export type ConteudoAtestado = S['ConteudoAtestado'];
+export type SessaoAssinatura = S['SessaoAssinatura'];
+export type ConfigDocumentos = S['ConfigDocumentos'];
 
 // Catálogos fechados (7.2). O frontend ignora valores fora deles (compatibilidade para frente).
 export type Perfil = S['Perfil'];

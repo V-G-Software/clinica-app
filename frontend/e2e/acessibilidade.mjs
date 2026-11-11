@@ -65,7 +65,7 @@ for (const esquema of ['light', 'dark']) {
     await conv.waitFor({ timeout: 5000 }).catch(() => undefined);
     if (await conv.count()) { await conv.click(); await p.getByRole('textbox', { name: 'Mensagem' }).waitFor({ timeout: 5000 }).catch(() => undefined); graves += await auditar(p, `${slug}/${esquema} conversa paciente`); }
     await p.goto(`${APP}/perfil`); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} perfil`);
-    for (const [rota, nome] of [['/agenda/minhas', 'minhas consultas'], ['/agenda/marcar', 'marcar consulta'], ['/exames/meus', 'meus exames'], ['/exames/enviar', 'enviar resultado']]) {
+    for (const [rota, nome] of [['/agenda/minhas', 'minhas consultas'], ['/agenda/marcar', 'marcar consulta'], ['/exames/meus', 'meus exames'], ['/exames/enviar', 'enviar resultado'], ['/documentos/meus', 'meus documentos']]) {
       await p.goto(`${APP}${rota}`);
       await titulo(p);
       if (p.url().includes('/indisponivel')) continue; // sem agenda ou sem autoagendamento
@@ -104,7 +104,15 @@ for (const esquema of ['light', 'dark']) {
       await ped.waitFor({ timeout: 5000 }).catch(() => undefined);
       if (await ped.count()) { await ped.click(); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} pedido de exame`); }
     }
-    for (const [rota, nome] of [['/conversas', 'conversas equipe'], ['/configuracoes', 'configurações'], ['/equipe', 'equipe'], ['/agenda', 'agenda'], ['/agenda/novo', 'nova consulta'], ['/agenda/servicos', 'serviços'], ['/agenda/grade', 'horários e bloqueios'], ['/exames', 'exames'], ['/exames/novo', 'novo pedido de exame']]) {
+    await p.goto(`${APP}/documentos`);
+    await titulo(p);
+    if (!p.url().includes('/indisponivel')) {
+      await p.getByRole('button', { name: 'Assinados', exact: true }).click();
+      const doc = p.locator('main a[href^="/documentos/doc_"]').first();
+      await doc.waitFor({ timeout: 5000 }).catch(() => undefined);
+      if (await doc.count()) { await doc.click(); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} documento assinado`); }
+    }
+    for (const [rota, nome] of [['/conversas', 'conversas equipe'], ['/configuracoes', 'configurações'], ['/equipe', 'equipe'], ['/agenda', 'agenda'], ['/agenda/novo', 'nova consulta'], ['/agenda/servicos', 'serviços'], ['/agenda/grade', 'horários e bloqueios'], ['/exames', 'exames'], ['/exames/novo', 'novo pedido de exame'], ['/documentos', 'documentos'], ['/documentos/novo', 'receita ou atestado']]) {
       await p.goto(`${APP}${rota}`);
       await titulo(p);
       if (p.url().includes('/indisponivel')) continue; // módulo/perfil sem acesso

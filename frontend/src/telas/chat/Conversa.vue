@@ -6,7 +6,7 @@ import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { useI18n } from 'vue-i18n';
-import { Archive, Camera, CircleAlert, Clock, FileText, RotateCw, Send, TriangleAlert } from 'lucide-vue-next';
+import { Archive, Camera, CircleAlert, Clock, FilePenLine, FileText, RotateCw, Send, TriangleAlert } from 'lucide-vue-next';
 import { api, ok } from '@/api';
 import { useAppStore } from '@/app/store';
 import { useSessaoStore } from '@/sessao/store';
@@ -100,6 +100,8 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
         <button v-if="acoes.has('ARQUIVAR')" type="button" class="text-sm text-acao underline" @click="arquivar.mutate()">Arquivar</button>
         <button v-if="acoes.has('REABRIR')" type="button" class="text-sm text-acao underline" @click="reabrir.mutate()">Reabrir</button>
       </div>
+      <!-- Receita/atestado direto da conversa (ADR-0018): assinado, chega aqui como mensagem. -->
+      <RouterLink v-if="!sessao.ehPaciente && conversa.data.value && sessao.modulos.has('documentos') && sessao.pode('documentos.documento.emitir')" :to="`/documentos/novo?pacienteId=${encodeURIComponent(conversa.data.value.paciente.id)}`" class="mt-2 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-acao underline"><FilePenLine class="size-4" aria-hidden="true" /> Receita ou atestado</RouterLink>
     </header>
     <div v-if="sessao.ehPaciente && cfgChat.avisoUrgencia" class="flex gap-2 bg-red-50 px-4 py-2 text-sm text-red-900 dark:bg-red-950 dark:text-red-100" role="note">
       <CircleAlert class="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {{ cfgChat.avisoUrgencia }}
@@ -125,6 +127,7 @@ const dataDe = (iso: string) => formatarData(new Intl.DateTimeFormat('en-CA', { 
               <a v-for="a in msg.anexos" :key="a.id" :href="a.urlVisualizacao ?? undefined" rel="noopener noreferrer" class="flex min-h-12 items-center gap-2 rounded-lg border-2 border-current/30 px-3 py-2 font-semibold underline">
                 <FileText class="size-5 shrink-0" aria-hidden="true" /> {{ msg.referencia.resumo }} (PDF)<span class="sr-only">: baixar</span>
               </a>
+              <RouterLink v-if="sessao.modulos.has('documentos')" :to="`/documentos/${msg.referencia.id}`" class="text-sm underline">Ver detalhes e validação</RouterLink>
             </div>
             <div v-else-if="msg.anexos.length" class="my-1 flex flex-wrap gap-2">
               <a v-for="a in msg.anexos" :key="a.id" :href="a.urlVisualizacao ?? undefined" target="_blank" rel="noopener noreferrer">

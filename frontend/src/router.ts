@@ -32,6 +32,10 @@ export function telaPermitida(d: DefinicaoTela, s: ReturnType<typeof useSessaoSt
   if (d.tela === 'agenda.marcar') return s.pode('agenda.agendamento.criar');
   if (d.tela === 'agenda.servicos' || d.tela === 'agenda.grade') return s.pode('agenda.configuracao.gerenciar');
   if (d.tela === 'organizacao.configuracao') return s.pode('organizacao.configuracao.editar');
+  if (d.tela === 'exames.novo') return s.pode('exames.pedido.criar');
+  // Documentos (ADR-0018): a secretaria não tem acesso (receita revela tratamento).
+  if (d.tela === 'documentos.novo') return s.pode('documentos.documento.emitir');
+  if (d.tela.startsWith('documentos.')) return s.pode('documentos.documento.ler');
   return true;
 }
 
