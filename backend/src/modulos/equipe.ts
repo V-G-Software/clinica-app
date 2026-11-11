@@ -10,6 +10,7 @@ import { serMembro } from '../serializar.ts';
 import { enviarEmail } from '../servicos/email.ts';
 import { revogarSessoesDoUsuario } from './auth.ts';
 import type { Tx } from '../db.ts';
+import { cfgDocumentos } from '../servicos/documentos.ts';
 
 const URL_FRONTEND = (process.env.URL_FRONTEND ?? 'http://localhost:5173').replace(/\/$/, '');
 async function obterMembro(tx: Tx, ctx: Ctx, id: string): Promise<Usuario> {
@@ -25,12 +26,14 @@ function orgConfig(ctx: Ctx) {
   const acomp = ctx.org.modulos.find((m) => m.id === 'acompanhamento');
   const agenda = ctx.org.modulos.find((m) => m.id === 'agenda');
   const exames = ctx.org.modulos.find((m) => m.id === 'exames');
+  const docs = ctx.org.modulos.find((m) => m.id === 'documentos');
   return {
     nome: ctx.org.nome, contato: c.contato, tema: { corMarca: c.tema.corMarca, logoUrl: c.tema.logoUrl ?? null }, textos: c.textos,
     chat: { horarioAtendimento: chat.horarioAtendimento ?? [], mensagemForaDoHorario: chat.mensagemForaDoHorario ?? null, avisoUrgencia: chat.avisoUrgencia ?? null },
     ...(acomp ? { acompanhamento: { resolverAlertasAoEncerrar: !!acomp.config?.resolverAlertasAoEncerrar } } : {}),
     ...(agenda ? { agenda: { ...agenda.config } } : {}),
     ...(exames ? { exames: { pacienteEnviaResultados: exames.config?.pacienteEnviaResultados !== false } } : {}),
+    ...(docs ? { documentos: cfgDocumentos(ctx.org) } : {}),
     acoesPermitidas: ctx.perms.has('organizacao.configuracao.editar') ? ['EDITAR'] : [],
   };
 }
@@ -125,6 +128,11 @@ export const handlersEquipe: Record<string, Handler> = {
       const exames = modulos.find((m) => m.id === 'exames');
       if (!exames) throw new ErroApi('MODULO_NAO_CONTRATADO');
       exames.config = { ...exames.config, ...q.body.exames };
+    }
+    if (q.body.documentos) {
+      const docs = modulos.find((m) => m.id === 'documentos');
+      if (!docs) throw new ErroApi('MODULO_NAO_CONTRATADO');
+      docs.config = { ...docs.config, ...q.body.documentos };
     }
     // UPDATE com versão (otimista): concorrência entre dois gestores vira 412.
     const r = await q.tx.query('UPDATE organizacoes SET nome = $2, configuracao = $3, modulos = $4, versao = versao + 1 WHERE id = $1 AND versao = $5 RETURNING versao',

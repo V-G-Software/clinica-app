@@ -13,6 +13,7 @@ import { criarAcompanhamento, criarAlerta, encerrarAcompanhamento, resolverAlert
 import { postarMensagem } from '../src/servicos/chat.ts';
 import * as agenda from '../src/servicos/agenda.ts';
 import * as exames from '../src/servicos/exames.ts';
+import * as documentos from '../src/servicos/documentos.ts';
 import { storage } from '../src/servicos/storage.ts';
 
 const silencioso: Log = { info: () => undefined, warn: () => undefined, error: (o, m) => console.error(m, o) };
@@ -66,6 +67,12 @@ export function deslocarCenario(cen: any, fuso: string, agora = Date.now()) {
     ...(cen.exames ? { exames: {
       pedidos: (cen.exames.pedidos ?? []).map((p: any) => ({ ...p, criadoEm: ms(p.criadoEm), ...Object.fromEntries(['concluir', 'cancelar'].filter((k) => p[k]).map((k) => [k, { ...p[k], em: ms(p[k].em) }])) })),
       resultados: (cen.exames.resultados ?? []).map((x: any) => ({ ...x, criadoEm: ms(x.criadoEm), dataColeta: x.dataColeta && somarDias(x.dataColeta, dias), revisar: x.revisar && { ...x.revisar, em: ms(x.revisar.em) } })),
+    } } : {}),
+    ...(cen.documentos ? { documentos: {
+      itens: (cen.documentos.itens ?? []).map((x: any) => ({
+        ...x, criadoEm: ms(x.criadoEm), atestado: x.atestado && { ...x.atestado, data: somarDias(x.atestado.data, dias) },
+        assinar: x.assinar && { ...x.assinar, em: ms(x.assinar.em) }, anular: x.anular && { ...x.anular, em: ms(x.anular.em) },
+      })),
     } } : {}),
   };
 }
@@ -168,6 +175,19 @@ export async function semearF2(c: pg.Client, org: Org, cenario: any, agora = Dat
           comentario: x.comentario ?? null, enviadoPor: x.enviadoPor, origem: autor?.perfis.some((pf: string) => pf !== 'PACIENTE') ? 'EQUIPE' : 'PACIENTE', criadoEm: new Date(x.criadoEm) }, silencioso);
       } });
       if (x.revisar) passos.push({ em: Date.parse(x.revisar.em), fazer: async () => { await exames.revisarResultado(tx, org, await linha('resultados_exame', x.id), x.revisar.por, x.revisar.nota ?? null, silencioso, new Date(x.revisar.em)); } });
+    }
+  }
+  // Documentos (ADR-0018): assinados no seed com o PSC de teste (certificado simulado, sem validade).
+  if (cen.documentos && org.modulos.some((m) => m.id === 'documentos')) {
+    const linha = async (id: string) => (await tx.query('SELECT * FROM documentos WHERE organizacao_id = $1 AND id = $2 FOR UPDATE', [org.id, id])).rows[0];
+    for (const x of cen.documentos.itens ?? []) {
+      passos.push({ em: Date.parse(x.criadoEm), fazer: async () => {
+        await documentos.criarDocumento(tx, org, { id: x.id, pacienteId: x.pacienteId, emissorId: x.emissorId, tipo: x.tipo, receita: x.receita, atestado: x.atestado, criadoEm: new Date(x.criadoEm) });
+      } });
+      if (x.assinar) passos.push({ em: Date.parse(x.assinar.em), fazer: async () => {
+        await documentos.assinarDocumentos(tx, org, [x.id], documentos.assinadorDeTeste, silencioso, { em: new Date(x.assinar.em), codigos: x.assinar.codigo ? { [x.id]: x.assinar.codigo } : {} });
+      } });
+      if (x.anular) passos.push({ em: Date.parse(x.anular.em), fazer: async () => { await documentos.anular(tx, org, await linha(x.id), x.anular.motivo, silencioso, new Date(x.anular.em)); } });
     }
   }
   for (const cv of cen.conversas ?? []) {

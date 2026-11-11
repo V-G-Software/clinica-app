@@ -46,6 +46,7 @@ export async function adicionarParticipante(tx: Tx, org: Org, conversaId: string
 
 export function resumoMensagem(m: { tipo: string; texto: string | null; referencia: any }) {
   if (m.tipo === 'CHECKIN') return m.referencia?.resumo ?? 'Check-in respondido';
+  if (m.referencia?.tipo === 'DOCUMENTO') return `📄 ${m.referencia.resumo}`;
   if (m.tipo === 'ANEXO') return m.texto ? `📷 ${m.texto}` : '📷 Foto';
   return (m.texto ?? '').slice(0, 120);
 }

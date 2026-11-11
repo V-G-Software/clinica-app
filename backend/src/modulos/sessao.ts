@@ -4,6 +4,7 @@ import { secoesInicioAcompanhamento } from './acompanhamento.ts';
 import { secoesInicioChat } from './chat.ts';
 import { secoesInicioAgenda } from './agenda.ts';
 import { capacidadeUpload, secoesInicioExames } from '../servicos/exames.ts';
+import { provedoresAnunciados, secoesInicioDocumentos } from '../servicos/documentos.ts';
 import { capacidadePush } from '../servicos/push.ts';
 import { montarNavegacao, temModulo, type Termo } from '@clinica/dominio';
 import { versaoContrato } from '@clinica/contrato-validador';
@@ -28,7 +29,11 @@ export async function manifesto(tx: Tx, ctx: Ctx) {
     modulos: org.modulos,
     navegacao: montarNavegacao({ equipe: ehEquipeCtx(ctx), permissoes: ctx.perms, modulos: org.modulos, termos: org.termos as Record<string, Termo> }),
     permissoes: [...ctx.perms],
-    capacidades: { ...org.capacidades, upload: capacidadeUpload(org), push: capacidadePush() },
+    capacidades: {
+      ...org.capacidades, upload: capacidadeUpload(org), push: capacidadePush(),
+      // Só para quem emite (ADR-0018): provedores vazios = não há como assinar.
+      ...(temModulo(org.modulos, 'documentos') && ctx.perms.has('documentos.documento.emitir') ? { assinatura: { provedores: provedoresAnunciados() } } : {}),
+    },
     contadores: await contadoresDe(tx, org, u.id),
     ...(ctx.perfil === 'PACIENTE' ? { pacientesVinculados: await pacientesVinculados(tx, org, u.id) } : {}),
   };
@@ -80,7 +85,7 @@ export const handlersSessao: Record<string, Handler> = {
     const org = q.org;
     const secoes: any[] = [];
     if (org.configuracao.avisoInicio) secoes.push({ id: 'aviso', tipo: 'AVISO', dados: org.configuracao.avisoInicio });
-    secoes.push(...await secoesInicioAgenda(q.tx, ctx), ...await secoesInicioExames(q.tx, ctx), ...await secoesInicioAcompanhamento(q.tx, ctx), ...await secoesInicioChat(q.tx, ctx));
+    secoes.push(...await secoesInicioAgenda(q.tx, ctx), ...await secoesInicioExames(q.tx, ctx), ...await secoesInicioDocumentos(q.tx, ctx), ...await secoesInicioAcompanhamento(q.tx, ctx), ...await secoesInicioChat(q.tx, ctx));
     if (ehEquipeCtx(ctx)) {
       const t = org.termos as Record<string, Termo>;
       const g = (x: Termo, m: string, f: string) => (x.genero === 'F' ? f : m);

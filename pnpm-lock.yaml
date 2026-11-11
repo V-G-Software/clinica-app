@@ -50,9 +50,18 @@ importers:
       '@node-rs/argon2':
         specifier: ^2.0.2
         version: 2.2.2
+      '@signpdf/placeholder-pdf-lib':
+        specifier: 3.3.0
+        version: 3.3.0(pdf-lib@1.17.1)
+      '@signpdf/utils':
+        specifier: 3.3.0
+        version: 3.3.0
       fastify:
         specifier: ^5.6.0
         version: 5.12.8
+      node-forge:
+        specifier: 1.4.0
+        version: 1.4.0
       nodemailer:
         specifier: ^7.0.13
         version: 7.0.13
@@ -62,6 +71,9 @@ importers:
       pg:
         specifier: ^8.13.0
         version: 8.23.1
+      qrcode:
+        specifier: 1.5.4
+        version: 1.5.4
       sharp:
         specifier: 0.34.5
         version: 0.34.5
@@ -75,12 +87,18 @@ importers:
       '@types/node':
         specifier: ^22.15.0
         version: 22.20.5
+      '@types/node-forge':
+        specifier: 1.3.11
+        version: 1.3.11
       '@types/nodemailer':
         specifier: ^8.0.2
         version: 8.0.2
       '@types/pg':
         specifier: ^8.11.0
         version: 8.23.1
+      '@types/qrcode':
+        specifier: 1.5.5
+        version: 1.5.5
       '@types/web-push':
         specifier: ^3.6.4
         version: 3.6.4
@@ -1847,6 +1865,16 @@ packages:
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
 
+  '@signpdf/placeholder-pdf-lib@3.3.0':
+    resolution: {integrity: sha512-DT1s617z88NvvCmo+z8jaz7lNzy7b7/fwo/movJGukpfSkl4FaLNRXIHNBCTRCP9TUb6F/axK1JulES/jY7mLQ==}
+    engines: {node: '>=12', yarn: '>=1.22.18'}
+    peerDependencies:
+      pdf-lib: ^1.17.1
+
+  '@signpdf/utils@3.3.0':
+    resolution: {integrity: sha512-ArOP0MIhCfdChh1oZkog81TPeSY2e5TvHQmXJ682T4+SKb6Z609uAZhqMQZ9xm+YenEf/eNMSE5KVwU+EudXug==}
+    engines: {node: '>=12', yarn: '>=1.22.18'}
+
   '@sinclair/typebox@0.27.12':
     resolution: {integrity: sha512-hhyNJ+nbR6ZR7pToHvllEFun9TL0sbL+tk/ON75lo+Xas054uez98qRbsuNt7MBCyZKK4+8Yli/OAGZhmfBZ/g==}
 
@@ -2112,6 +2140,9 @@ packages:
   '@types/markdown-escape@1.1.3':
     resolution: {integrity: sha512-JIc1+s3y5ujKnt/+N+wq6s/QdL2qZ11fP79MijrVXsAAnzSxCbT2j/3prHRouJdZ2yFLN3vkP0HytfnoCczjOw==}
 
+  '@types/node-forge@1.3.11':
+    resolution: {integrity: sha512-FQx220y22OKNTqaByeBGqHWYz4cl94tpcxeFdvBo3wjG6XPBuZ0BNgNZRV5J5TFmmcsJ4IzsLkmGRiQbnYsBEQ==}
+
   '@types/node@22.20.5':
     resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
 
@@ -2120,6 +2151,9 @@ packages:
 
   '@types/pg@8.23.1':
     resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
+
+  '@types/qrcode@1.5.5':
+    resolution: {integrity: sha512-CdfBi/e3Qk+3Z/fXYShipBT13OJ2fDO2Q2w5CIP5anLTLIndQG9z6P1cnm+8zCWSpm5dnxMFd/uREtb0EXuQzg==}
 
   '@types/qrcode@1.5.6':
     resolution: {integrity: sha512-te7NQcV2BOvdj2b1hCAHzAoMNuj65kNBMz0KBaxM6c3VGBOhU0dURQKOtH8CFNI/dsKkwlv32p26qYQTWoB5bw==}
@@ -3596,6 +3630,10 @@ packages:
     peerDependenciesMeta:
       encoding:
         optional: true
+
+  node-forge@1.4.0:
+    resolution: {integrity: sha512-LarFH0+6VfriEhqMMcLX2F7SwSXeWwnEAJEsYm5QKWchiVYVvJyV9v7UDvUv+w5HO23ZpQTXDv/GxdDdMyOuoQ==}
+    engines: {node: '>= 6.13.0'}
 
   node-readfiles@0.2.0:
     resolution: {integrity: sha512-SU00ZarexNlE4Rjdm83vglt5Y9yiQ+XI1XpflWlb7q7UTN1JUItm69xMeiQCTxtTfnzt+83T8Cx+vI2ED++VDA==}
@@ -6479,6 +6517,13 @@ snapshots:
 
   '@scarf/scarf@1.4.0': {}
 
+  '@signpdf/placeholder-pdf-lib@3.3.0(pdf-lib@1.17.1)':
+    dependencies:
+      '@signpdf/utils': 3.3.0
+      pdf-lib: 1.17.1
+
+  '@signpdf/utils@3.3.0': {}
+
   '@sinclair/typebox@0.27.12': {}
 
   '@smithy/core@3.39.0':
@@ -6889,6 +6934,10 @@ snapshots:
 
   '@types/markdown-escape@1.1.3': {}
 
+  '@types/node-forge@1.3.11':
+    dependencies:
+      '@types/node': 22.20.5
+
   '@types/node@22.20.5':
     dependencies:
       undici-types: 6.21.0
@@ -6902,6 +6951,10 @@ snapshots:
       '@types/node': 22.20.5
       pg-protocol: 1.16.1
       pg-types: 2.2.0
+
+  '@types/qrcode@1.5.5':
+    dependencies:
+      '@types/node': 22.20.5
 
   '@types/qrcode@1.5.6':
     dependencies:
@@ -8483,6 +8536,8 @@ snapshots:
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
+
+  node-forge@1.4.0: {}
 
   node-readfiles@0.2.0:
     dependencies:

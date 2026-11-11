@@ -47,7 +47,18 @@ export const config = {
   versaoMinimaFrontend: e.VERSAO_MINIMA_FRONTEND ?? '0.1.0',
   // Antivírus para PDF (ADR-0017): tcp://host:3310 (clamd) ou "teste" (EICAR; fora de produção). Sem ele, sem PDF.
   antivirus: e.ANTIVIRUS_URL || null,
+  // Assinatura de documentos (ADR-0018). PSC_TESTE=1 liga o PSC simulado (certificado autoassinado, sem
+  // validade; recusado em produção). PSC_PROVEDORES: JSON com os PSC reais cadastrados (API do ITI):
+  //   [{"id":"birdid","nome":"BirdID","base":"https://...","clientId":"...","clientSecret":"..."}]
+  psc: { teste: e.PSC_TESTE === '1', provedores: lerProvedores(e.PSC_PROVEDORES) },
 };
+function lerProvedores(json: string | undefined): Array<{ id: string; nome: string; base: string; clientId: string; clientSecret: string }> {
+  if (!json) return [];
+  const l = JSON.parse(json);
+  if (!Array.isArray(l) || l.some((p) => !p.id || !p.nome || !/^https:\/\//.test(p.base ?? '') || !p.clientId || !p.clientSecret)) throw new Error('PSC_PROVEDORES inválido: cada item precisa de id, nome, base (https), clientId e clientSecret');
+  return l;
+}
+if (config.producao && config.psc.teste) throw new Error('PSC_TESTE não pode ser usado em produção');
 if (config.producao && config.antivirus === 'teste') throw new Error('ANTIVIRUS_URL=teste não pode ser usado em produção');
 if (config.producao && (config.modoTeste.codigoEmail || config.modoTeste.totp)) throw new Error('MODO_TESTE_* não pode ser usado em produção');
 if (config.producao && !config.segredoAssinatura) throw new Error('SEGREDO_ASSINATURA é obrigatório em produção');

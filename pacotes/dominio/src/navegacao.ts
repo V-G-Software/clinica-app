@@ -17,6 +17,7 @@ export function montarNavegacao(o: { equipe: boolean; permissoes: Set<string>; m
     if (p.has('chat.conversa.ler')) itens.push({ id: 'conversas', rotulo: cap(t.conversa.plural), icone: 'message-circle', grupo: 'PRINCIPAL', destino: { tela: 'chat.lista' }, contador: 'chat.naoLidas' });
     if (p.has('pacientes.paciente.ler')) itens.push({ id: 'pacientes', rotulo: cap(t.paciente.plural), icone: animal ? 'paw-print' : 'users', grupo: 'PRINCIPAL', destino: { tela: 'pacientes.lista' } });
     if (p.has('exames.exame.ler')) itens.push({ id: 'exames', rotulo: cap(exame.plural), icone: 'flask-conical', grupo: 'PRINCIPAL', destino: { tela: 'exames.lista' }, ...(p.has('exames.resultado.revisar') ? { contador: 'exames.resultadosParaRevisar' } : {}) });
+    if (p.has('documentos.documento.ler')) itens.push({ id: 'documentos', rotulo: 'Documentos', icone: 'file-pen-line', grupo: 'PRINCIPAL', destino: { tela: 'documentos.lista' }, ...(p.has('documentos.documento.emitir') ? { contador: 'documentos.paraAssinar' } : {}) });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'SECUNDARIO', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
     if (p.has('acompanhamento.protocolo.ler')) itens.push({ id: 'protocolos', rotulo: cap(t.protocolo.plural), icone: 'clipboard-list', grupo: 'SECUNDARIO', destino: { tela: 'acompanhamento.protocolos' } });
     if (p.has('agenda.configuracao.gerenciar')) itens.push({ id: 'agenda-servicos', rotulo: 'Serviços e horários', icone: 'calendar-clock', grupo: 'SECUNDARIO', destino: { tela: 'agenda.servicos' } });
@@ -29,6 +30,7 @@ export function montarNavegacao(o: { equipe: boolean; permissoes: Set<string>; m
     if (p.has('chat.conversa.ler')) itens.push({ id: 'conversas', rotulo: cap(t.conversa.plural), icone: 'message-circle', grupo: 'PRINCIPAL', destino: { tela: 'chat.lista' }, contador: 'chat.naoLidas' });
     // Exames depois de Conversas: na barra do celular (5 lugares), o chat é o canal principal do paciente.
     if (p.has('exames.exame.ler')) itens.push({ id: 'meus-exames', rotulo: `${flex(exame, 'Meus', 'Minhas')} ${exame.plural}`, icone: 'flask-conical', grupo: 'PRINCIPAL', destino: { tela: 'exames.meus' } });
+    if (p.has('documentos.documento.ler')) itens.push({ id: 'meus-documentos', rotulo: 'Meus documentos', icone: 'file-pen-line', grupo: 'PRINCIPAL', destino: { tela: 'documentos.meus' } });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'PRINCIPAL', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
   }
   itens.push({ id: 'perfil', rotulo: 'Meu perfil', icone: 'user', grupo: o.equipe ? 'SECUNDARIO' : 'PRINCIPAL', destino: { tela: 'perfil' } });

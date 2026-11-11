@@ -8,7 +8,7 @@ export const STATUS_POR_CODIGO: Record<string, number> = {
   CONVITE_EXPIRADO: 410, MODULO_NAO_CONTRATADO: 404, ORGANIZACAO_SUSPENSA: 403, CHECKIN_INDISPONIVEL: 409,
   CHECKIN_JA_RESPONDIDO: 409, CONVERSA_ARQUIVADA: 409, ARQUIVO_MUITO_GRANDE: 413,
   TIPO_ARQUIVO_NAO_PERMITIDO: 415, ARQUIVO_REJEITADO: 422, CURSOR_EXPIRADO: 410, ULTIMO_GESTOR: 409,
-  INDISPONIVEL_TEMPORARIAMENTE: 503, HORARIO_INDISPONIVEL: 409,
+  INDISPONIVEL_TEMPORARIAMENTE: 503, HORARIO_INDISPONIVEL: 409, REGISTRO_PROFISSIONAL_AUSENTE: 422, ASSINATURA_INDISPONIVEL: 422,
 };
 const TITULOS: Record<string, string> = {
   AUTENTICACAO_INVALIDA: 'E-mail ou senha incorretos', CODIGO_INVALIDO: 'Código inválido', CODIGO_EXPIRADO: 'Código expirado',
@@ -19,7 +19,7 @@ const TITULOS: Record<string, string> = {
   CHECKIN_INDISPONIVEL: 'Check-in indisponível', CHECKIN_JA_RESPONDIDO: 'Check-in já respondido', CONVERSA_ARQUIVADA: 'Conversa arquivada',
   ARQUIVO_MUITO_GRANDE: 'Arquivo muito grande', TIPO_ARQUIVO_NAO_PERMITIDO: 'Tipo de arquivo não permitido', ARQUIVO_REJEITADO: 'Arquivo rejeitado',
   CURSOR_EXPIRADO: 'Histórico expirado', ULTIMO_GESTOR: 'A organização precisa de ao menos um gestor', INDISPONIVEL_TEMPORARIAMENTE: 'Indisponível no momento',
-  HORARIO_INDISPONIVEL: 'Horário indisponível',
+  HORARIO_INDISPONIVEL: 'Horário indisponível', REGISTRO_PROFISSIONAL_AUSENTE: 'Registro profissional não cadastrado', ASSINATURA_INDISPONIVEL: 'Assinatura digital indisponível',
 };
 
 export class ErroApi extends Error {

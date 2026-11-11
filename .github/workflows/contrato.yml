@@ -74,6 +74,7 @@ jobs:
       MODO_TESTE_CODIGO_EMAIL: '123456'
       MODO_TESTE_TOTP: '000000'
       ANTIVIRUS_URL: teste  # verificador EICAR (ADR-0017); o protocolo clamd é testado em testes/antivirus.test.ts
+      PSC_TESTE: '1'  # PSC simulado (ADR-0018): assina com certificado autoassinado; recusado em produção
       VALIDAR_RESPOSTA: '1'
       STORAGE_DIR: /tmp/clinica-arquivos
       CONF_DIRETORIO_URL: http://localhost:4020/diretorio
@@ -144,6 +145,7 @@ jobs:
       MODO_TESTE_CODIGO_EMAIL: '123456'
       MODO_TESTE_TOTP: '000000'
       ANTIVIRUS_URL: teste  # verificador EICAR (ADR-0017); o protocolo clamd é testado em testes/antivirus.test.ts
+      PSC_TESTE: '1'  # PSC simulado (ADR-0018): assina com certificado autoassinado; recusado em produção
       VALIDAR_RESPOSTA: '1'
       STORAGE: s3
       S3_ENDPOINT: http://localhost:9000
@@ -171,8 +173,8 @@ jobs:
           pnpm migrar && pnpm org:criar --todos
           pnpm start > ../backend.log 2>&1 &
           for i in $(seq 1 30); do curl -sf localhost:4020/diretorio/modelo-otorrino >/dev/null && break; sleep 1; done
-      - name: Conformidade de arquivos, check-in com foto e chat — S3
-        run: pnpm conformidade testes/06-arquivos.test.ts testes/05-acompanhamento.test.ts testes/07-chat.test.ts
+      - name: Conformidade de arquivos, check-in com foto, chat, PDF de exame e documentos assinados — S3
+        run: pnpm conformidade testes/06-arquivos.test.ts testes/05-acompanhamento.test.ts testes/07-chat.test.ts testes/13-exames.test.ts testes/14-documentos.test.ts
         env: { CONF_SLUG: modelo-otorrino }
       - name: Quarentena vazia e sem erros
         working-directory: backend

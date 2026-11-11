@@ -2,7 +2,7 @@
 import { novoId } from '../cripto.ts';
 import { um } from '../db.ts';
 import { emitir } from '../eventos.ts';
-import { ErroApi, naoEncontrado, negado } from '../erros.ts';
+import { ErroApi, invalido, naoEncontrado, negado } from '../erros.ts';
 import { C, criado, ok, type Handler } from '../http.ts';
 import { exigir, exigirModulo, iso, type Ctx, type Org } from '../nucleo.ts';
 import { ASSINATURAS, recodificar } from '../servicos/imagem.ts';
@@ -39,6 +39,12 @@ async function obterVisivel(tx: Tx, ctx: Ctx, id: string) {
     const c = await um(tx, 'SELECT paciente_id FROM checkins WHERE organizacao_id = $1 AND id = $2', [ctx.org.id, a.checkin_id]);
     if (c && (ctx.perfil !== 'PACIENTE' || await um(tx, 'SELECT 1 FROM vinculos WHERE organizacao_id = $1 AND usuario_id = $2 AND paciente_id = $3', [ctx.org.id, ctx.usuario.id, c.paciente_id]))) return a;
   }
+  // PDF de documento assinado (ADR-0018): quem vê o documento (equipe com permissão; paciente vinculado, só assinado/anulado).
+  if (a.finalidade === 'DOCUMENTO' && ctx.perms.has('documentos.documento.ler')) {
+    const d = await um(tx, `SELECT paciente_id, status FROM documentos WHERE organizacao_id = $1 AND arquivo_id = $2`, [ctx.org.id, a.id]);
+    if (d && (ctx.perfil !== 'PACIENTE' || ((d.status === 'ASSINADO' || d.status === 'ANULADO')
+      && await um(tx, 'SELECT 1 FROM vinculos WHERE organizacao_id = $1 AND usuario_id = $2 AND paciente_id = $3', [ctx.org.id, ctx.usuario.id, d.paciente_id])))) return a;
+  }
   // Arquivo de resultado de exame: quem vê o resultado (RN-EXA-001).
   if (a.finalidade === 'EXAME' && ctx.perms.has('exames.exame.ler')) {
     const x = await um(tx, `SELECT r.paciente_id FROM resultado_arquivos ra JOIN resultados_exame r ON r.organizacao_id = ra.organizacao_id AND r.id = ra.resultado_id
@@ -52,6 +58,7 @@ export const handlersArquivos: Record<string, Handler> = {
   arquivosIniciarEnvio: async (q) => {
     const ctx = C(q);
     const cap = q.org.capacidades.upload;
+    if (q.body.finalidade === 'DOCUMENTO') throw invalido('finalidade', 'Documentos são gerados pelo servidor.');
     if (q.body.finalidade === 'EXAME') {
       exigirModulo(q.org, 'exames');
       exigir(ctx, 'exames.resultado.enviar');

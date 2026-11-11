@@ -1,6 +1,7 @@
 // Contadores do manifesto e de GET /v1/contadores (badges do menu).
 import { ehEquipe, permissoesDe, temModulo } from '@clinica/dominio';
 import { contadorParaRevisar } from './exames.ts';
+import { contadorParaAssinar } from './documentos.ts';
 import { um, type Tx } from '../db.ts';
 import type { Org } from '../nucleo.ts';
 
@@ -27,5 +28,7 @@ export async function contadoresDe(tx: Tx, org: Org, usuarioId: string): Promise
   }
   if (temModulo(org.modulos, 'exames'))
     r['exames.resultadosParaRevisar'] = u ? await contadorParaRevisar(tx, org, new Set((u.perfis as string[]).filter((p) => p !== 'PACIENTE').flatMap((p) => permissoesDe(org.modulos, p as any)))) : 0;
+  if (temModulo(org.modulos, 'documentos'))
+    r['documentos.paraAssinar'] = u ? await contadorParaAssinar(tx, org, usuarioId, new Set((u.perfis as string[]).filter((p) => p !== 'PACIENTE').flatMap((p) => permissoesDe(org.modulos, p as any)))) : 0;
   return r;
 }

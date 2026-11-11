@@ -14,8 +14,8 @@ Decisão da QUESTION-031 (2026-11-11): assinatura própria com certificado ICP-B
 
 | # | Etapa | Entrega | Depende de |
 |---|---|---|---|
-| 1 | Contrato, mock e conformidade | endpoints, schemas, catálogos, cenários, mock (PSC simulado, PDF, entrega pelo chat, validação pública), testes de conformidade, CHANGELOG | — |
-| 2 | Backend | migração, geração do PDF, PAdES com PSC (adaptador da API do ITI e PSC de teste), sessão de assinatura, entrega pelo chat, validação pública, testes | 1 |
+| 1 ✅ | Contrato, mock e conformidade | endpoints, schemas, catálogos, cenários, mock (PSC simulado, PDF, entrega pelo chat, validação pública), testes de conformidade, CHANGELOG | — |
+| 2 ✅ | Backend | migração, geração do PDF, PAdES com PSC (adaptador da API do ITI e PSC de teste), sessão de assinatura, entrega pelo chat, validação pública, testes | 1 |
 | 3 | Frontend | emitir receita e atestado (inclusive a partir do chat e do paciente), assinar em lote, telas do paciente, seções. E2E contra mock e backend | 1 (mock), 2 (real) |
 
 ## Antes de produção (fora do código)

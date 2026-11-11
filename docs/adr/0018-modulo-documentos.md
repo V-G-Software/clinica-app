@@ -105,6 +105,12 @@ Para ter validade, o documento médico digital precisa de assinatura com certifi
 - **Gerar o PDF no aparelho:** o que se assina tem de ser o que o servidor guarda e entrega.
 
 ## Consequências
+- **Implementado no backend (etapa 2):**
+  - PAdES em duas fases (`servicos/pades.ts`): o espaço da assinatura é reservado, o SHA-256 dos bytes cobertos vai ao PSC (todos os documentos da sessão numa só chamada) e o CMS devolvido é embutido. **Antes de entregar, o backend verifica** que o CMS assina exatamente aquele PDF; se não conferir, nada é assinado nem entregue;
+  - o PSC de teste gera CMS CAdES-BES (`contentType`, `messageDigest`, `signingCertificateV2`) com certificado autoassinado. OpenSSL e Poppler (`pdfsig`) validam a assinatura nos testes;
+  - adaptador genérico da API do ITI para PSC reais (`servicos/psc.ts`), configurado por `PSC_PROVEDORES`. **Não testado contra um PSC real**: falta o cadastro do app em cada provedor (homologação, `docs/operacao/implantacao.md`);
+  - o `state` é guardado só como hash e o verificador PKCE, cifrado. A sessão sai de "aguardando" antes da chamada ao PSC (replay cai em "inválida") e expira por job em 10 minutos.
+  - **Risco conhecido:** a troca do código e a assinatura no PSC acontecem dentro da transação da requisição, com timeouts de 15 s e 30 s. Com o PSC lento, a transação fica aberta por esse tempo. Aceitável no piloto; separar em duas transações se o volume crescer.
 - **Para usar em produção, cada PSC exige o cadastro do app** (e um certificado SSL ICP-Brasil do servidor). Sem cadastro, aquele provedor não aparece.
 - **O médico precisa de certificado em nuvem ativo.** O app explica isso quando a lista de provedores vem vazia ou quando o provedor recusa.
 - **Controlados continuam fora do app.** A tela de receita avisa.
