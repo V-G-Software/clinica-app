@@ -58,6 +58,16 @@ PDF só é aceito com a finalidade `EXAME`. O mock simula o antivírus: um arqui
 
 Validação pública: `GET /o/{slug}/v1/publico/documentos/{codigo}`.
 
+## Prontuário (1.4 — ADR-0019)
+
+| Cenário | Módulo `prontuario` | O que tem |
+|---|---|---|
+| `modelo-otorrino` | ligado | ficha do Marcos (alergia grave a penicilina, losartana, desvio de septo e hipertensão), anamnese, evolução pós-operatória com o modelo "Evolução — otorrinolaringologia" e um **adendo** que corrige a data do retorno; **pedido de cópia** da Beatriz aguardando a equipe |
+| `vet-amigo` | ligado | ficha e evolução do Thor (modelo veterinário, com peso) |
+| `fisio-movimento` | desligado | rotas `prontuario` respondem 404 |
+
+Só o **perfil PROFISSIONAL** lê e escreve. Ana e Renata entram nesse perfil por padrão; no perfil GESTOR, só consultam o log de acesso. A secretária e o paciente não leem: o paciente só pede cópia. Registro finalizado não muda, e a correção é feita por adendo.
+
 ## Relógio simulado e simuladores (fora do contrato)
 
 O relógio começa em `2026-11-08T13:30:00Z` (10:30 em São Paulo) e anda junto com o tempo real.

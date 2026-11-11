@@ -1604,6 +1604,207 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/prontuario/pacientes/{pacienteId}/ficha": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ficha clínica atual do paciente (registra o acesso)
+         * @description Só quem tem `prontuario.prontuario.ler` (profissional). Paciente, secretaria e gestor não profissional → 404. Paciente sem ficha → versão 0 vazia.
+         */
+        get: operations["prontuarioObterFicha"];
+        /** Grava uma nova versão da ficha (If-Match da versão atual; a anterior é preservada) */
+        put: operations["prontuarioAtualizarFicha"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/pacientes/{pacienteId}/ficha/versoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versões anteriores da ficha, da mais recente para a mais antiga (registra o acesso) */
+        get: operations["prontuarioListarVersoesFicha"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/pacientes/{pacienteId}/registros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Registros clínicos do paciente, do mais recente para o mais antigo (registra o acesso)
+         * @description Rascunhos só aparecem para o próprio autor. Descartados não aparecem.
+         */
+        get: operations["prontuarioListarRegistros"];
+        put?: never;
+        /**
+         * Cria anamnese, evolução ou adendo (rascunho, ou já finalizado com `finalizar`)
+         * @description `ADENDO` exige `registroOrigemId` de um registro FINALIZADO do mesmo paciente. `modelo` é um
+         *     formulário com finalidade `PRONTUARIO`; as respostas são validadas contra ele. Exige `texto` ou `respostas`.
+         */
+        post: operations["prontuarioCriarRegistro"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/registros/{registroId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Registro clínico (registra o acesso) */
+        get: operations["prontuarioObterRegistro"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edita o rascunho (só o autor; If-Match). Registro finalizado não muda (422) */
+        patch: operations["prontuarioEditarRegistro"];
+        trace?: never;
+    };
+    "/v1/prontuario/registros/{registroId}/finalizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finaliza o rascunho; a partir daqui é imutável (correção só por adendo) */
+        post: operations["prontuarioFinalizarRegistro"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/registros/{registroId}/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Descarta o rascunho (só o autor). Finalizado não pode ser descartado (422) */
+        post: operations["prontuarioDescartarRegistro"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/pacientes/{pacienteId}/linha-do-tempo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Registros e eventos clínicos dos outros módulos, do mais recente para o mais antigo (registra o acesso) */
+        get: operations["prontuarioLinhaDoTempo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/pacientes/{pacienteId}/acessos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quem acessou o prontuário do paciente (gestão; `prontuario.acesso.auditar`) */
+        get: operations["prontuarioListarAcessos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/copias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pedidos de cópia (equipe com `prontuario.copia.atender`; o paciente vê os próprios) */
+        get: operations["prontuarioListarCopias"];
+        put?: never;
+        /** Paciente pede cópia do prontuário (LGPD art. 19); com pedido em aberto, devolve o mesmo */
+        post: operations["prontuarioSolicitarCopia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/copias/{copiaId}/atender": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gera o PDF do prontuário completo e o disponibiliza ao paciente (avisa) */
+        post: operations["prontuarioAtenderCopia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/prontuario/copias/{copiaId}/recusar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recusa o pedido, com motivo (avisa o paciente) */
+        post: operations["prontuarioRecusarCopia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/documentos": {
         parameters: {
             query?: never;
@@ -1815,26 +2016,26 @@ export interface components {
         /** @enum {string} */
         PerfilEquipe: "GESTOR" | "PROFISSIONAL" | "SECRETARIA";
         /** @enum {string} */
-        ModuloId: "pacientes" | "acompanhamento" | "chat" | "equipe" | "agenda" | "exames" | "documentos";
+        ModuloId: "pacientes" | "acompanhamento" | "chat" | "equipe" | "agenda" | "exames" | "documentos" | "prontuario";
         /** @enum {string} */
-        Tela: "inicio" | "notificacoes" | "perfil" | "pacientes.lista" | "pacientes.detalhe" | "pacientes.novo" | "acompanhamento.lista" | "acompanhamento.meus" | "acompanhamento.detalhe" | "acompanhamento.novo" | "acompanhamento.protocolos" | "acompanhamento.protocolo" | "acompanhamento.checkin" | "chat.lista" | "chat.conversa" | "equipe.lista" | "organizacao.configuracao" | "agenda.lista" | "agenda.novo" | "agenda.detalhe" | "agenda.servicos" | "agenda.grade" | "agenda.meus" | "agenda.marcar" | "exames.lista" | "exames.novo" | "exames.pedido" | "exames.resultado" | "exames.meus" | "exames.enviar" | "documentos.lista" | "documentos.novo" | "documentos.detalhe" | "documentos.meus";
+        Tela: "inicio" | "notificacoes" | "perfil" | "pacientes.lista" | "pacientes.detalhe" | "pacientes.novo" | "acompanhamento.lista" | "acompanhamento.meus" | "acompanhamento.detalhe" | "acompanhamento.novo" | "acompanhamento.protocolos" | "acompanhamento.protocolo" | "acompanhamento.checkin" | "chat.lista" | "chat.conversa" | "equipe.lista" | "organizacao.configuracao" | "agenda.lista" | "agenda.novo" | "agenda.detalhe" | "agenda.servicos" | "agenda.grade" | "agenda.meus" | "agenda.marcar" | "exames.lista" | "exames.novo" | "exames.pedido" | "exames.resultado" | "exames.meus" | "exames.enviar" | "documentos.lista" | "documentos.novo" | "documentos.detalhe" | "documentos.meus" | "prontuario.paciente" | "prontuario.registro" | "prontuario.copias" | "prontuario.minhas-copias";
         /** @enum {string} */
         TermoChave: "organizacao" | "paciente" | "responsavel" | "profissional" | "acompanhamento" | "protocolo" | "procedimento" | "checkin" | "conversa" | "consulta" | "exame";
         /** @enum {string} */
-        ContadorChave: "chat.naoLidas" | "notificacoes.naoLidas" | "acompanhamento.alertasAbertos" | "acompanhamento.checkinsPendentes" | "exames.resultadosParaRevisar" | "documentos.paraAssinar";
+        ContadorChave: "chat.naoLidas" | "notificacoes.naoLidas" | "acompanhamento.alertasAbertos" | "acompanhamento.checkinsPendentes" | "exames.resultadosParaRevisar" | "documentos.paraAssinar" | "prontuario.copiasPendentes";
         /**
          * @description Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.
          * @enum {string}
          */
-        Icone: "house" | "users" | "user" | "user-plus" | "activity" | "heart-pulse" | "message-circle" | "bell" | "settings" | "clipboard-list" | "calendar" | "stethoscope" | "paw-print" | "circle-alert" | "file-text" | "camera" | "credit-card" | "circle-help" | "log-out" | "calendar-plus" | "calendar-check" | "calendar-clock" | "flask-conical" | "file-pen-line";
+        Icone: "house" | "users" | "user" | "user-plus" | "activity" | "heart-pulse" | "message-circle" | "bell" | "settings" | "clipboard-list" | "calendar" | "stethoscope" | "paw-print" | "circle-alert" | "file-text" | "camera" | "credit-card" | "circle-help" | "log-out" | "calendar-plus" | "calendar-check" | "calendar-clock" | "flask-conical" | "file-pen-line" | "notebook-pen";
         /** @enum {string} */
         CodigoErro: "AUTENTICACAO_INVALIDA" | "CODIGO_INVALIDO" | "CODIGO_EXPIRADO" | "MUITAS_TENTATIVAS" | "SESSAO_EXPIRADA" | "SESSAO_REVOGADA" | "PERMISSAO_NEGADA" | "RECURSO_NAO_ENCONTRADO" | "VALIDACAO_FALHOU" | "CONFLITO_VERSAO" | "LIMITE_EXCEDIDO" | "CONVITE_INVALIDO" | "CONVITE_EXPIRADO" | "MODULO_NAO_CONTRATADO" | "ORGANIZACAO_SUSPENSA" | "CHECKIN_INDISPONIVEL" | "CHECKIN_JA_RESPONDIDO" | "CONVERSA_ARQUIVADA" | "ARQUIVO_MUITO_GRANDE" | "TIPO_ARQUIVO_NAO_PERMITIDO" | "ARQUIVO_REJEITADO" | "CURSOR_EXPIRADO" | "ULTIMO_GESTOR" | "INDISPONIVEL_TEMPORARIAMENTE" | "HORARIO_INDISPONIVEL" | "REGISTRO_PROFISSIONAL_AUSENTE" | "ASSINATURA_INDISPONIVEL";
         /** @enum {string} */
-        TipoNotificacao: "CHAT_MENSAGEM" | "CHECKIN_DISPONIVEL" | "CHECKIN_LEMBRETE" | "ALERTA_CRIADO" | "ACOMPANHAMENTO_INICIADO" | "ACOMPANHAMENTO_CONCLUIDO" | "CONVITE_ACEITO" | "SISTEMA" | "AGENDAMENTO_CRIADO" | "AGENDAMENTO_ALTERADO" | "AGENDAMENTO_LEMBRETE" | "EXAME_PEDIDO" | "EXAME_RESULTADO" | "EXAME_REVISADO" | "DOCUMENTO_DISPONIVEL" | "DOCUMENTO_ANULADO";
+        TipoNotificacao: "CHAT_MENSAGEM" | "CHECKIN_DISPONIVEL" | "CHECKIN_LEMBRETE" | "ALERTA_CRIADO" | "ACOMPANHAMENTO_INICIADO" | "ACOMPANHAMENTO_CONCLUIDO" | "CONVITE_ACEITO" | "SISTEMA" | "AGENDAMENTO_CRIADO" | "AGENDAMENTO_ALTERADO" | "AGENDAMENTO_LEMBRETE" | "EXAME_PEDIDO" | "EXAME_RESULTADO" | "EXAME_REVISADO" | "DOCUMENTO_DISPONIVEL" | "DOCUMENTO_ANULADO" | "COPIA_PRONTUARIO_SOLICITADA" | "COPIA_PRONTUARIO_DISPONIVEL";
         /** @enum {string} */
-        TipoEvento: "chat.mensagem.criada" | "chat.conversa.atualizada" | "acompanhamento.checkin.disponivel" | "acompanhamento.checkin.respondido" | "acompanhamento.alerta.criado" | "acompanhamento.alerta.resolvido" | "acompanhamento.acompanhamento.atualizado" | "notificacao.criada" | "contadores.alterados" | "arquivo.processado" | "sessao.manifesto.alterado" | "sessao.encerrada" | "agenda.agendamento.criado" | "agenda.agendamento.atualizado" | "exames.pedido.atualizado" | "exames.resultado.atualizado" | "documentos.documento.atualizado" | "documentos.assinatura.atualizada";
+        TipoEvento: "chat.mensagem.criada" | "chat.conversa.atualizada" | "acompanhamento.checkin.disponivel" | "acompanhamento.checkin.respondido" | "acompanhamento.alerta.criado" | "acompanhamento.alerta.resolvido" | "acompanhamento.acompanhamento.atualizado" | "notificacao.criada" | "contadores.alterados" | "arquivo.processado" | "sessao.manifesto.alterado" | "sessao.encerrada" | "agenda.agendamento.criado" | "agenda.agendamento.atualizado" | "exames.pedido.atualizado" | "exames.resultado.atualizado" | "documentos.documento.atualizado" | "documentos.assinatura.atualizada" | "prontuario.ficha.atualizada" | "prontuario.registro.atualizado" | "prontuario.copia.atualizada";
         /** @enum {string} */
-        TipoSecao: "ACOMPANHAMENTO_ATUAL" | "CHECKINS_PENDENTES" | "ALERTAS_ABERTOS" | "CHECKINS_DO_DIA" | "ACOMPANHAMENTOS_ATIVOS" | "CONVERSAS_RECENTES" | "ATALHOS" | "AVISO" | "CONTATO_ORGANIZACAO" | "PROXIMA_CONSULTA" | "AGENDA_DO_DIA" | "RESULTADOS_PARA_REVISAR" | "EXAMES_PENDENTES" | "DOCUMENTOS_PARA_ASSINAR";
+        TipoSecao: "ACOMPANHAMENTO_ATUAL" | "CHECKINS_PENDENTES" | "ALERTAS_ABERTOS" | "CHECKINS_DO_DIA" | "ACOMPANHAMENTOS_ATIVOS" | "CONVERSAS_RECENTES" | "ATALHOS" | "AVISO" | "CONTATO_ORGANIZACAO" | "PROXIMA_CONSULTA" | "AGENDA_DO_DIA" | "RESULTADOS_PARA_REVISAR" | "EXAMES_PENDENTES" | "DOCUMENTOS_PARA_ASSINAR" | "COPIAS_PRONTUARIO_PENDENTES";
         /** @enum {string} */
         Severidade: "BAIXA" | "MEDIA" | "ALTA";
         /** @enum {string} */
@@ -2085,7 +2286,7 @@ export interface components {
             pacientesVinculados?: components["schemas"]["PacienteVinculado"][];
         };
         /** @enum {string} */
-        Permissao: "pacientes.paciente.ler" | "pacientes.paciente.criar" | "pacientes.paciente.editar" | "pacientes.paciente.convidar" | "acompanhamento.protocolo.ler" | "acompanhamento.protocolo.gerenciar" | "acompanhamento.acompanhamento.ler" | "acompanhamento.acompanhamento.criar" | "acompanhamento.acompanhamento.encerrar" | "acompanhamento.checkin.ler" | "acompanhamento.checkin.responder" | "acompanhamento.alerta.ler" | "acompanhamento.alerta.resolver" | "chat.conversa.ler" | "chat.conversa.criar" | "chat.conversa.gerenciar" | "chat.mensagem.enviar" | "equipe.membro.ler" | "equipe.membro.gerenciar" | "organizacao.configuracao.editar" | "agenda.agendamento.ler" | "agenda.agendamento.criar" | "agenda.agendamento.gerenciar" | "agenda.configuracao.gerenciar" | "exames.exame.ler" | "exames.pedido.criar" | "exames.resultado.enviar" | "exames.resultado.revisar" | "documentos.documento.ler" | "documentos.documento.emitir";
+        Permissao: "pacientes.paciente.ler" | "pacientes.paciente.criar" | "pacientes.paciente.editar" | "pacientes.paciente.convidar" | "acompanhamento.protocolo.ler" | "acompanhamento.protocolo.gerenciar" | "acompanhamento.acompanhamento.ler" | "acompanhamento.acompanhamento.criar" | "acompanhamento.acompanhamento.encerrar" | "acompanhamento.checkin.ler" | "acompanhamento.checkin.responder" | "acompanhamento.alerta.ler" | "acompanhamento.alerta.resolver" | "chat.conversa.ler" | "chat.conversa.criar" | "chat.conversa.gerenciar" | "chat.mensagem.enviar" | "equipe.membro.ler" | "equipe.membro.gerenciar" | "organizacao.configuracao.editar" | "agenda.agendamento.ler" | "agenda.agendamento.criar" | "agenda.agendamento.gerenciar" | "agenda.configuracao.gerenciar" | "exames.exame.ler" | "exames.pedido.criar" | "exames.resultado.enviar" | "exames.resultado.revisar" | "documentos.documento.ler" | "documentos.documento.emitir" | "prontuario.prontuario.ler" | "prontuario.registro.escrever" | "prontuario.copia.atender" | "prontuario.copia.solicitar" | "prontuario.acesso.auditar";
         Capacidades: {
             tempoReal: {
                 /** @enum {string} */
@@ -2126,7 +2327,7 @@ export interface components {
             /** @description Opcional; o frontend tem um título padrão por tipo. */
             titulo?: string;
             dados: Record<string, never>;
-        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         Notificacao: {
             id: components["schemas"]["Id"];
             tipo: components["schemas"]["TipoNotificacao"];
@@ -2149,10 +2350,10 @@ export interface components {
             criadoEm: components["schemas"]["DataHora"];
         };
         /**
-         * @description `DOCUMENTO` só o servidor cria (PDF assinado, ADR-0018); `POST /v1/arquivos` com ela → 422.
+         * @description `DOCUMENTO` e `PRONTUARIO` só o servidor cria (PDF assinado, ADR-0018; cópia do prontuário, ADR-0019); `POST /v1/arquivos` com elas → 422.
          * @enum {string}
          */
-        FinalidadeArquivo: "CHECKIN" | "CHAT" | "PERFIL" | "ORGANIZACAO" | "EXAME" | "DOCUMENTO";
+        FinalidadeArquivo: "CHECKIN" | "CHAT" | "PERFIL" | "ORGANIZACAO" | "EXAME" | "DOCUMENTO" | "PRONTUARIO";
         EnvioArquivo: {
             arquivoId: components["schemas"]["Id"];
             envio: {
@@ -2198,7 +2399,7 @@ export interface components {
             tipo: components["schemas"]["TipoEvento"];
             ocorridoEm: components["schemas"]["DataHora"];
             dados: Record<string, never>;
-        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         /** @enum {string} */
         TipoPaciente: "PESSOA" | "ANIMAL";
         /** @enum {string} */
@@ -2305,10 +2506,11 @@ export interface components {
         FormularioEntrada: {
             titulo: string;
             /**
+             * @description `PRONTUARIO`: modelo de anamnese ou evolução por especialidade (ADR-0019).
              * @default CHECKIN
              * @enum {string}
              */
-            finalidade: "CHECKIN" | "CADASTRO";
+            finalidade: "CHECKIN" | "CADASTRO" | "PRONTUARIO";
             campos: components["schemas"]["CampoFormulario"][];
         };
         Formulario: {
@@ -2316,7 +2518,7 @@ export interface components {
             versao: number;
             titulo: string;
             /** @enum {string} */
-            finalidade?: "CHECKIN" | "CADASTRO";
+            finalidade?: "CHECKIN" | "CADASTRO" | "PRONTUARIO";
             campos: components["schemas"]["CampoFormulario"][];
             publicadoEm?: components["schemas"]["DataHora"];
             acoesPermitidas?: "EDITAR"[];
@@ -2690,6 +2892,106 @@ export interface components {
             /** @description Paciente envia resultados pelo app (RN-EXA-003). Padrão: `true`. */
             pacienteEnviaResultados: boolean;
         };
+        AlergiaFicha: {
+            substancia: string;
+            reacao: string | null;
+            /** @enum {string} */
+            gravidade: "LEVE" | "MODERADA" | "GRAVE" | "DESCONHECIDA";
+        };
+        MedicamentoFicha: {
+            nome: string;
+            posologia: string | null;
+        };
+        /** @description Problema ou diagnóstico (hipótese ou definitivo). */
+        ProblemaFicha: {
+            descricao: string;
+            cid: string | null;
+            /** @enum {string} */
+            situacao: "ATIVO" | "RESOLVIDO";
+            desde: components["schemas"]["Data"] | null;
+        };
+        AntecedentesFicha: {
+            pessoais: string | null;
+            familiares: string | null;
+            /** @description Tabagismo */
+            habitos: string | null;
+        };
+        FichaClinicaConteudo: {
+            alergias: components["schemas"]["AlergiaFicha"][];
+            medicamentosEmUso: components["schemas"]["MedicamentoFicha"][];
+            problemas: components["schemas"]["ProblemaFicha"][];
+            antecedentes: components["schemas"]["AntecedentesFicha"];
+        };
+        /** @description Versão da ficha clínica. Cada alteração cria uma versão nova; as anteriores ficam em `/versoes`. A versão 0 é a ficha vazia (ninguém editou ainda). */
+        FichaClinica: {
+            pacienteId: components["schemas"]["Id"];
+            versao: number;
+            alergias: components["schemas"]["AlergiaFicha"][];
+            medicamentosEmUso: components["schemas"]["MedicamentoFicha"][];
+            problemas: components["schemas"]["ProblemaFicha"][];
+            antecedentes: components["schemas"]["AntecedentesFicha"];
+            atualizadoEm: components["schemas"]["DataHoraOuNulo"];
+            atualizadoPor: components["schemas"]["ReferenciaUsuario"] | null;
+            acoesPermitidas: "EDITAR"[];
+        };
+        /** @enum {string} */
+        TipoRegistroClinico: "ANAMNESE" | "EVOLUCAO" | "ADENDO";
+        /** @enum {string} */
+        StatusRegistroClinico: "RASCUNHO" | "FINALIZADO" | "DESCARTADO";
+        RegistroClinico: {
+            id: components["schemas"]["Id"];
+            paciente: components["schemas"]["Referencia"];
+            tipo: components["schemas"]["TipoRegistroClinico"];
+            status: components["schemas"]["StatusRegistroClinico"];
+            autor: components["schemas"]["ReferenciaUsuario"];
+            texto: string | null;
+            /** @description Modelo por especialidade (formulário com finalidade `PRONTUARIO`), fixado na versão usada. */
+            modelo: null | {
+                formularioId: components["schemas"]["Id"];
+                versao: number;
+                titulo: string;
+            };
+            respostas: components["schemas"]["Respostas"] | null;
+            agendamentoId: components["schemas"]["IdOuNulo"];
+            /** @description Só em `ADENDO`: o registro finalizado que ele corrige ou complementa. */
+            registroOrigemId: components["schemas"]["IdOuNulo"];
+            /** @description Adendos finalizados deste registro, do mais antigo ao mais recente. */
+            adendosIds: components["schemas"]["Id"][];
+            criadoEm: components["schemas"]["DataHora"];
+            finalizadoEm: components["schemas"]["DataHoraOuNulo"];
+            acoesPermitidas: ("EDITAR" | "FINALIZAR" | "DESCARTAR" | "ADENDAR")[];
+        };
+        ItemLinhaDoTempo: {
+            /** @enum {string} */
+            tipo: "REGISTRO" | "AGENDAMENTO" | "ACOMPANHAMENTO" | "RESULTADO_EXAME" | "DOCUMENTO";
+            id: components["schemas"]["Id"];
+            titulo: string;
+            resumo: string | null;
+            ocorridoEm: components["schemas"]["DataHora"];
+            destino: components["schemas"]["Destino"];
+        };
+        AcessoProntuario: {
+            usuario: components["schemas"]["ReferenciaUsuario"];
+            /** @enum {string} */
+            acao: "LER_FICHA" | "LER_REGISTROS" | "LER_REGISTRO" | "LER_LINHA_DO_TEMPO" | "LER_VERSOES" | "GERAR_COPIA";
+            acessadoEm: components["schemas"]["DataHora"];
+        };
+        CopiaProntuario: {
+            id: components["schemas"]["Id"];
+            paciente: components["schemas"]["Referencia"];
+            solicitante: components["schemas"]["ReferenciaUsuario"];
+            /** @enum {string} */
+            status: "SOLICITADA" | "DISPONIVEL" | "RECUSADA";
+            /** @description 15 dias depois do pedido (LGPD art. 19, II). */
+            prazoEm: components["schemas"]["DataHora"];
+            /** @description PDF do prontuário completo (finalidade `PRONTUARIO`), só em `DISPONIVEL`. */
+            arquivo: components["schemas"]["Arquivo"] | null;
+            motivoRecusa: string | null;
+            atendidoPor: components["schemas"]["ReferenciaUsuario"] | null;
+            criadoEm: components["schemas"]["DataHora"];
+            atendidoEm: components["schemas"]["DataHoraOuNulo"];
+            acoesPermitidas: ("ATENDER" | "RECUSAR")[];
+        };
         /** @enum {string} */
         TipoDocumento: "RECEITA" | "ATESTADO";
         /** @enum {string} */
@@ -2927,6 +3229,9 @@ export interface components {
         AgendamentoId: components["schemas"]["Id"];
         PedidoExameId: components["schemas"]["Id"];
         ResultadoExameId: components["schemas"]["Id"];
+        PacienteProntuarioId: components["schemas"]["Id"];
+        RegistroClinicoId: components["schemas"]["Id"];
+        CopiaProntuarioId: components["schemas"]["Id"];
         DocumentoId: components["schemas"]["Id"];
         /** @description Primeiro dia do período (inclusive), no fuso da organização. */
         De: components["schemas"]["Data"];
@@ -5880,6 +6185,442 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResultadoExame"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioObterFicha: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pacienteId: components["parameters"]["PacienteProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ficha */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaClinica"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioAtualizarFicha: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Valor do `ETag` lido. Desatualizado devolve 412 `CONFLITO_VERSAO`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                pacienteId: components["parameters"]["PacienteProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FichaClinicaConteudo"];
+            };
+        };
+        responses: {
+            /** @description Nova versão */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichaClinica"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioListarVersoesFicha: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path: {
+                pacienteId: components["parameters"]["PacienteProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Versões */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["FichaClinica"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioListarRegistros: {
+        parameters: {
+            query?: {
+                tipo?: components["schemas"]["TipoRegistroClinico"];
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path: {
+                pacienteId: components["parameters"]["PacienteProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registros */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["RegistroClinico"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioCriarRegistro: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Chave única por operação lógica; repetir devolve a mesma resposta por 24 h. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                pacienteId: components["parameters"]["PacienteProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    tipo: components["schemas"]["TipoRegistroClinico"];
+                    texto?: string | null;
+                    formularioId?: components["schemas"]["IdOuNulo"];
+                    respostas?: components["schemas"]["Respostas"] | null;
+                    agendamentoId?: components["schemas"]["IdOuNulo"];
+                    registroOrigemId?: components["schemas"]["IdOuNulo"];
+                    /** @default false */
+                    finalizar?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Registro criado */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistroClinico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioObterRegistro: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registroId: components["parameters"]["RegistroClinicoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registro */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistroClinico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioEditarRegistro: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Valor do `ETag` lido. Desatualizado devolve 412 `CONFLITO_VERSAO`. */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                registroId: components["parameters"]["RegistroClinicoId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    texto?: string | null;
+                    respostas?: components["schemas"]["Respostas"] | null;
+                    agendamentoId?: components["schemas"]["IdOuNulo"];
+                };
+            };
+        };
+        responses: {
+            /** @description Rascunho atualizado */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistroClinico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioFinalizarRegistro: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registroId: components["parameters"]["RegistroClinicoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registro finalizado (repetir não muda nada) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistroClinico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioDescartarRegistro: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registroId: components["parameters"]["RegistroClinicoId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rascunho descartado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistroClinico"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioLinhaDoTempo: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path: {
+                pacienteId: components["parameters"]["PacienteProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Linha do tempo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["ItemLinhaDoTempo"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioListarAcessos: {
+        parameters: {
+            query?: {
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path: {
+                pacienteId: components["parameters"]["PacienteProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Acessos, do mais recente para o mais antigo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["AcessoProntuario"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioListarCopias: {
+        parameters: {
+            query?: {
+                status?: "SOLICITADA" | "DISPONIVEL" | "RECUSADA";
+                /** @description Cursor opaco devolvido em `proximoCursor`. */
+                cursor?: components["parameters"]["Cursor"];
+                limite?: components["parameters"]["Limite"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pedidos, do mais recente para o mais antigo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagina"] & {
+                        itens: components["schemas"]["CopiaProntuario"][];
+                    };
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioSolicitarCopia: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Chave única por operação lógica; repetir devolve a mesma resposta por 24 h. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    pacienteId: components["schemas"]["Id"];
+                };
+            };
+        };
+        responses: {
+            /** @description Já havia um pedido em aberto para este paciente (o mesmo é devolvido) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopiaProntuario"];
+                };
+            };
+            /** @description Pedido registrado; a equipe é avisada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopiaProntuario"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioAtenderCopia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                copiaId: components["parameters"]["CopiaProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cópia disponível */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopiaProntuario"];
+                };
+            };
+            default: components["responses"]["Erro"];
+        };
+    };
+    prontuarioRecusarCopia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                copiaId: components["parameters"]["CopiaProntuarioId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    motivo: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Pedido recusado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopiaProntuario"];
                 };
             };
             default: components["responses"]["Erro"];

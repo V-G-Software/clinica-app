@@ -1,0 +1,33 @@
+{
+  "requisicao": "GET /v1/prontuario/copias?status=SOLICITADA",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "itens": [
+      {
+        "id": "cop_0mw6pkqo000091",
+        "paciente": {
+          "id": "pac_beatriz",
+          "nome": "Beatriz Costa"
+        },
+        "solicitante": {
+          "usuarioId": "usr_beatriz",
+          "nome": "Beatriz Costa",
+          "perfil": "PACIENTE"
+        },
+        "status": "SOLICITADA",
+        "prazoEm": "2026-11-22T18:00:00Z",
+        "arquivo": null,
+        "motivoRecusa": null,
+        "atendidoPor": null,
+        "criadoEm": "2026-11-07T18:00:00Z",
+        "atendidoEm": null,
+        "acoesPermitidas": [
+          "ATENDER",
+          "RECUSAR"
+        ]
+      }
+    ],
+    "proximoCursor": null
+  }
+}
