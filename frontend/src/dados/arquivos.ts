@@ -35,9 +35,12 @@ function enviarBytes(url: string, metodo: string, cabecalhos: Record<string, str
   });
 }
 
-export async function enviarArquivo(arquivo: File, finalidade: 'CHECKIN' | 'CHAT' | 'PERFIL' | 'ORGANIZACAO', opcoes: { aoProgresso?: (p: number) => void; sinal?: AbortSignal } = {}): Promise<Arquivo> {
+/** Tipo do arquivo; alguns aparelhos entregam PDF sem `type` — a extensão desempata (o backend confere os bytes). */
+export const tipoDoArquivo = (a: File) => a.type || (/\.pdf$/i.test(a.name) ? 'application/pdf' : '');
+
+export async function enviarArquivo(arquivo: File, finalidade: 'CHECKIN' | 'CHAT' | 'PERFIL' | 'ORGANIZACAO' | 'EXAME', opcoes: { aoProgresso?: (p: number) => void; sinal?: AbortSignal } = {}): Promise<Arquivo> {
   const blob = await reduzirImagem(arquivo);
-  const tipo = blob.type || arquivo.type;
+  const tipo = blob.type || tipoDoArquivo(arquivo);
   const nome = arquivo.name.replace(/\.(heic|heif|png|webp)$/i, tipo === 'image/jpeg' ? '.jpg' : '$&');
   const ini = await ok(api().POST('/v1/arquivos', {
     params: { header: { 'Idempotency-Key': crypto.randomUUID() } },
@@ -45,7 +48,8 @@ export async function enviarArquivo(arquivo: File, finalidade: 'CHECKIN' | 'CHAT
   }));
   await enviarBytes(ini.envio.url, ini.envio.metodo, ini.envio.cabecalhos, blob, opcoes.aoProgresso, opcoes.sinal);
   await ok(api().POST('/v1/arquivos/{arquivoId}/concluir', { params: { path: { arquivoId: ini.arquivoId } } }));
-  const limite = Date.now() + 15_000;
+  // PDF passa por antivírus e saneamento (ADR-0017): espera mais que a foto.
+  const limite = Date.now() + (tipo === 'application/pdf' ? 60_000 : 15_000);
   for (;;) {
     const a = await ok(api().GET('/v1/arquivos/{arquivoId}', { params: { path: { arquivoId: ini.arquivoId } } }));
     if (a.status === 'DISPONIVEL') return a;

@@ -65,7 +65,7 @@ for (const esquema of ['light', 'dark']) {
     await conv.waitFor({ timeout: 5000 }).catch(() => undefined);
     if (await conv.count()) { await conv.click(); await p.getByRole('textbox', { name: 'Mensagem' }).waitFor({ timeout: 5000 }).catch(() => undefined); graves += await auditar(p, `${slug}/${esquema} conversa paciente`); }
     await p.goto(`${APP}/perfil`); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} perfil`);
-    for (const [rota, nome] of [['/agenda/minhas', 'minhas consultas'], ['/agenda/marcar', 'marcar consulta']]) {
+    for (const [rota, nome] of [['/agenda/minhas', 'minhas consultas'], ['/agenda/marcar', 'marcar consulta'], ['/exames/meus', 'meus exames'], ['/exames/enviar', 'enviar resultado']]) {
       await p.goto(`${APP}${rota}`);
       await titulo(p);
       if (p.url().includes('/indisponivel')) continue; // sem agenda ou sem autoagendamento
@@ -92,7 +92,19 @@ for (const esquema of ['light', 'dark']) {
       await agd.waitFor({ timeout: 5000 }).catch(() => undefined);
       if (await agd.count()) { await agd.click(); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} agendamento`); }
     }
-    for (const [rota, nome] of [['/conversas', 'conversas equipe'], ['/configuracoes', 'configurações'], ['/equipe', 'equipe'], ['/agenda', 'agenda'], ['/agenda/novo', 'nova consulta'], ['/agenda/servicos', 'serviços'], ['/agenda/grade', 'horários e bloqueios']]) {
+    await p.goto(`${APP}/exames`);
+    await titulo(p);
+    if (!p.url().includes('/indisponivel')) {
+      const res = p.locator('main a[href^="/exames/resultados/"]').first();
+      await res.waitFor({ timeout: 5000 }).catch(() => undefined);
+      if (await res.count()) { await res.click(); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} resultado de exame`); }
+      await p.goto(`${APP}/exames`); await titulo(p);
+      await p.getByRole('button', { name: 'Pedidos', exact: true }).click();
+      const ped = p.locator('main a[href^="/exames/pedidos/"]').first();
+      await ped.waitFor({ timeout: 5000 }).catch(() => undefined);
+      if (await ped.count()) { await ped.click(); await p.getByRole('heading', { level: 1 }).waitFor(); graves += await auditar(p, `${slug}/${esquema} pedido de exame`); }
+    }
+    for (const [rota, nome] of [['/conversas', 'conversas equipe'], ['/configuracoes', 'configurações'], ['/equipe', 'equipe'], ['/agenda', 'agenda'], ['/agenda/novo', 'nova consulta'], ['/agenda/servicos', 'serviços'], ['/agenda/grade', 'horários e bloqueios'], ['/exames', 'exames'], ['/exames/novo', 'novo pedido de exame']]) {
       await p.goto(`${APP}${rota}`);
       await titulo(p);
       if (p.url().includes('/indisponivel')) continue; // módulo/perfil sem acesso

@@ -33,11 +33,11 @@ async function reaplicarMarca() {
 }
 const q = useQuery({ queryKey: ['organizacao'], queryFn: () => comEtag(api().GET('/v1/organizacao', {})) });
 const f = reactive({ nome: '', telefone: '', email: '', endereco: '', cor: '#000000', boasVindasTitulo: '', boasVindasTexto: '', mensagemForaDoHorario: '', avisoUrgencia: '', horario: [] as Array<{ diaSemana: number; inicio: string; fim: string }>, logoArquivoId: undefined as string | null | undefined, resolverAlertasAoEncerrar: false,
-  agenda: null as null | { autoagendamento: boolean; antecedenciaMinimaHoras: number; janelaDias: number; cancelamentoAteHoras: number; lembreteHorasAntes: number; intervaloMinutos: 5 | 10 | 15 | 20 | 30 | 60 } });
+  agenda: null as null | { autoagendamento: boolean; antecedenciaMinimaHoras: number; janelaDias: number; cancelamentoAteHoras: number; lembreteHorasAntes: number; intervaloMinutos: 5 | 10 | 15 | 20 | 30 | 60 }, exames: null as null | { pacienteEnviaResultados: boolean } });
 watch(() => q.data.value, (d) => {
   if (!d) return;
   const o = d.dado;
-  Object.assign(f, { nome: o.nome, telefone: formatarTelefone(o.contato.telefone), email: o.contato.email ?? '', endereco: o.contato.endereco ?? '', cor: o.tema.corMarca, boasVindasTitulo: o.textos.boasVindasTitulo, boasVindasTexto: o.textos.boasVindasTexto, mensagemForaDoHorario: o.chat.mensagemForaDoHorario ?? '', avisoUrgencia: o.chat.avisoUrgencia ?? '', horario: o.chat.horarioAtendimento.map((h) => ({ ...h })), logoArquivoId: undefined, resolverAlertasAoEncerrar: o.acompanhamento?.resolverAlertasAoEncerrar ?? false, agenda: o.agenda ? { ...o.agenda } : null });
+  Object.assign(f, { nome: o.nome, telefone: formatarTelefone(o.contato.telefone), email: o.contato.email ?? '', endereco: o.contato.endereco ?? '', cor: o.tema.corMarca, boasVindasTitulo: o.textos.boasVindasTitulo, boasVindasTexto: o.textos.boasVindasTexto, mensagemForaDoHorario: o.chat.mensagemForaDoHorario ?? '', avisoUrgencia: o.chat.avisoUrgencia ?? '', horario: o.chat.horarioAtendimento.map((h) => ({ ...h })), logoArquivoId: undefined, resolverAlertasAoEncerrar: o.acompanhamento?.resolverAlertasAoEncerrar ?? false, agenda: o.agenda ? { ...o.agenda } : null, exames: o.exames ? { ...o.exames } : null });
 }, { immediate: true });
 const temChat = computed(() => sessao.modulos.has('chat'));
 // Presente só com o módulo contratado (o backend omite o bloco sem ele).
@@ -65,6 +65,7 @@ const salvar = useMutation({
       textos: { boasVindasTitulo: f.boasVindasTitulo, boasVindasTexto: f.boasVindasTexto },
       ...(temAcompanhamento.value ? { acompanhamento: { resolverAlertasAoEncerrar: f.resolverAlertasAoEncerrar } } : {}),
       ...(f.agenda ? { agenda: { ...f.agenda } } : {}),
+      ...(f.exames ? { exames: { ...f.exames } } : {}),
       ...(temChat.value ? { chat: { horarioAtendimento: f.horario, mensagemForaDoHorario: f.mensagemForaDoHorario || null, avisoUrgencia: f.avisoUrgencia || null } } : {}),
     },
   })),
@@ -143,6 +144,14 @@ const entrada = 'min-h-11 rounded-lg border-2 border-zinc-300 bg-white px-3 dark
           <label class="flex flex-col gap-1">Intervalo entre horários<select v-model.number="f.agenda.intervaloMinutos" :class="entrada"><option v-for="n in [5, 10, 15, 20, 30, 60]" :key="n" :value="n">{{ n }} min</option></select></label>
         </div>
         <p class="text-sm text-secundario">Mudar o lembrete vale para os próximos agendamentos e remarcações.</p>
+      </Cartao>
+      <Cartao v-if="f.exames" class="flex flex-col gap-3">
+        <h2 class="font-bold">{{ capitalizar(termo('exame').plural) }}</h2>
+        <label class="flex items-start gap-3">
+          <input v-model="f.exames.pacienteEnviaResultados" type="checkbox" class="mt-0.5 size-5 shrink-0" />
+          <span>{{ capitalizar(termo('paciente').singular) }} envia resultados pelo app
+            <span class="block text-sm text-secundario">Foto ou PDF (o PDF só com o antivírus ligado no servidor). Desligado, só a equipe anexa resultados.</span></span>
+        </label>
       </Cartao>
       <Botao tipo="submit" bloco :carregando="salvar.isPending.value" :desabilitado="!corValida || f.nome.trim().length < 2">Salvar</Botao>
     </form>

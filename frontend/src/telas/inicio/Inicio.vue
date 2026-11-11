@@ -22,7 +22,7 @@ const app = useAppStore();
 const quando = (iso: string) => capitalizar(formatarDataHora(iso, app.fuso, app.locale, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }));
 const termo = (k: string): Termo => ((sessao.termos as Record<string, Termo> | undefined)?.[k] ?? TERMOS_PADRAO[k]);
 const { data, isPending, error, refetch } = useQuery({ queryKey: ['inicio'], queryFn: () => ok(api().GET('/v1/inicio', {})) });
-const CONHECIDAS = new Set(['ACOMPANHAMENTO_ATUAL', 'CHECKINS_PENDENTES', 'ALERTAS_ABERTOS', 'CHECKINS_DO_DIA', 'ACOMPANHAMENTOS_ATIVOS', 'CONVERSAS_RECENTES', 'ATALHOS', 'AVISO', 'CONTATO_ORGANIZACAO', 'PROXIMA_CONSULTA', 'AGENDA_DO_DIA']);
+const CONHECIDAS = new Set(['ACOMPANHAMENTO_ATUAL', 'CHECKINS_PENDENTES', 'ALERTAS_ABERTOS', 'CHECKINS_DO_DIA', 'ACOMPANHAMENTOS_ATIVOS', 'CONVERSAS_RECENTES', 'ATALHOS', 'AVISO', 'CONTATO_ORGANIZACAO', 'PROXIMA_CONSULTA', 'AGENDA_DO_DIA', 'RESULTADOS_PARA_REVISAR', 'EXAMES_PENDENTES']);
 const secoes = computed(() => (data.value?.secoes ?? []).filter((s) => CONHECIDAS.has(s.tipo as string)) as Array<{ id: string; tipo: string; titulo?: string; dados: any }>);
 // Com mais de um paciente vinculado (tutora com dois pets), o título "nome da clínica" (RN-CHA-003)
 // fica ambíguo: mostramos o nome do paciente. Ver QUESTION-016.
@@ -59,6 +59,22 @@ const primeiroNome = computed(() => sessao.manifesto?.usuario.nomeExibicao.split
           <strong class="w-12">{{ formatarHora(a.inicioEm, app.fuso, app.locale) }}</strong><span class="flex-1">{{ a.paciente.nome }} · {{ a.servico.nome }}</span><span class="text-secundario">{{ STATUS[a.status as keyof typeof STATUS]?.rotulo }}</span>
         </RouterLink></li></ul>
         <RouterLink to="/agenda" class="text-sm text-acao underline">Ver agenda</RouterLink>
+      </Cartao>
+      <Cartao v-else-if="s.tipo === 'RESULTADOS_PARA_REVISAR'">
+        <h2 class="font-bold">{{ s.titulo ?? 'Resultados para revisar' }} ({{ s.dados.total }})</h2>
+        <p v-if="!s.dados.itens.length" class="text-secundario">Nenhum resultado aguardando revisão.</p>
+        <ul class="mt-1"><li v-for="r in s.dados.itens" :key="r.id"><RouterLink :to="`/exames/resultados/${r.id}`" class="flex min-h-11 items-center gap-3 py-1 text-sm">
+          <span class="flex-1"><strong>{{ r.paciente.nome }}</strong> · {{ r.titulo }}</span><span class="text-secundario">{{ formatarDataHora(r.criadoEm, app.fuso, app.locale, { dateStyle: 'short' }) }}</span>
+        </RouterLink></li></ul>
+        <RouterLink to="/exames" class="text-sm text-acao underline">Ver {{ termo('exame').plural }}</RouterLink>
+      </Cartao>
+      <Cartao v-else-if="s.tipo === 'EXAMES_PENDENTES'">
+        <h2 class="font-bold">{{ s.titulo ?? `Pedidos de ${termo('exame').singular}` }}</h2>
+        <ul class="mt-1"><li v-for="p in s.dados.itens" :key="p.id"><RouterLink :to="`/exames/pedidos/${p.id}`" class="flex min-h-11 flex-col justify-center py-1 text-sm">
+          <strong>{{ p.itens.map((i: any) => i.nome).join(', ') }}</strong>
+          <span class="text-secundario">{{ p.acoesPermitidas.includes('ENVIAR_RESULTADO') ? (p.resultados.length ? 'Resultado enviado · envie outro se precisar' : 'Envie o resultado pelo app') : 'Pedido em aberto' }}<template v-if="(sessao.manifesto?.pacientesVinculados?.length ?? 0) > 1"> · {{ p.paciente.nome }}</template></span>
+        </RouterLink></li></ul>
+        <RouterLink to="/exames/meus" class="text-sm text-acao underline">Ver {{ termo('exame').plural }}</RouterLink>
       </Cartao>
       <Cartao v-else-if="s.tipo === 'CHECKINS_PENDENTES'">
         <h2 class="font-bold">{{ capitalizar(termo('checkin').plural) }} para responder</h2>

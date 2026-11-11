@@ -31,4 +31,5 @@ export const TERMOS_PADRAO: Record<string, Termo> = {
   checkin: { singular: 'check-in', plural: 'check-ins', genero: 'M' },
   conversa: { singular: 'conversa', plural: 'conversas', genero: 'F' },
   consulta: { singular: 'consulta', plural: 'consultas', genero: 'F' },
+  exame: { singular: 'exame', plural: 'exames', genero: 'M' },
 };

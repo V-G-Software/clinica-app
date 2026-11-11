@@ -20,4 +20,4 @@ Desenho em [ADR-0017](../adr/0017-modulo-exames.md).
 |---|---|---|---|
 | 1 ✅ | Contrato, mock e conformidade | endpoints, schemas, catálogos, cenários, mock, testes de conformidade, CHANGELOG | — |
 | 2 ✅ | Backend | migração, regras, notificações, seções, contador, pipeline de PDF (ClamAV e saneamento), testes | 1 |
-| 3 | Frontend | telas da equipe e do paciente, envio de PDF e foto, revisão, seções do início. E2E contra mock e backend | 1 (mock), 2 (real) |
+| 3 ✅ | Frontend | telas da equipe e do paciente, envio de PDF e foto, revisão, seções do início. E2E contra mock e backend | 1 (mock), 2 (real) |

@@ -1,12 +1,15 @@
 // E2E do critério de saída da F2: o MESMO frontend, apontado para o backend real só pelo endereço do
 // diretório (VITE_DIRETORIO_URL), faz o fluxo principal — login da equipe (senha + MFA) e do paciente
-// (código), check-in respondido, alerta chegando à equipe em tempo real, chat nos dois sentidos.
+// (código), check-in respondido, alerta chegando à equipe em tempo real, chat nos dois sentidos, agenda e
+// exames (pedido → foto + PDF pelo antivírus e saneamento reais → revisão com nota, em tempo real).
 // Sem /__mock: o estado é preparado pela própria API (acompanhamento retroativo com check-in aberto).
 // Pré-requisitos: backend com MODO_TESTE_CODIGO_EMAIL=123456 e MODO_TESTE_TOTP=000000, semeado;
 // frontend com VITE_DIRETORIO_URL=http://localhost:4020/diretorio. Uso: node e2e/backend-real.mjs [capturas]
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { EICAR, gerarPdf } from './pdf.mjs';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
@@ -130,6 +133,42 @@ await ana.getByText('Confirmado', { exact: true }).first().waitFor({ timeout: 80
   .then(() => ok(true, 'agenda: confirmação chega à equipe em tempo real'), () => ok(false, 'agenda: confirmação chega à equipe em tempo real'));
 await foto(ana, 'real-5-agenda-confirmada');
 await api('POST', `/v1/agendamentos/${agendamentoId}/cancelar`, { token: tokenAna, body: { motivo: 'E2E concluído.' } });
+
+// ─── Exames (F5): pedido → paciente envia foto + PDF (antivírus e saneamento reais) → revisão com nota ───
+const passo = (p, m, ms = 10000) => p.waitFor({ timeout: ms }).then(() => ok(true, m), () => ok(false, m));
+await ana.goto(`${APP}/exames/novo?pacienteId=pac_marcos`);
+await ana.getByText('Marcos Souza').waitFor();
+await ana.getByLabel('Exame 1', { exact: true }).fill('Audiometria tonal');
+await ana.getByLabel('Preparo (opcional)').fill('Evite ruído alto 24 h antes.');
+await ana.getByRole('button', { name: 'Registrar pedido' }).click();
+await ana.waitForURL(/\/exames\/pedidos\//);
+await passo(ana.getByText('Aberto', { exact: true }), 'exames: pedido registrado (backend real)');
+await marcos.goto(`${APP}/exames/meus`);
+await passo(marcos.getByText(/Evite ruído alto/), 'exames: paciente vê o pedido com preparo');
+await marcos.locator('main a[href^="/exames/enviar?pedidoId="]').first().click();
+await marcos.waitForURL(/\/exames\/enviar\?pedidoId=/);
+const entrada = marcos.getByLabel('Arquivos do resultado');
+await entrada.setInputFiles({ name: 'virus.pdf', mimeType: 'application/pdf', buffer: gerarPdf(EICAR) });
+await passo(marcos.getByRole('alert').filter({ hasText: /./ }), 'exames: antivírus recusa PDF infectado (EICAR)', 20000);
+await entrada.setInputFiles(fileURLToPath(new URL('./foto-teste.png', import.meta.url)));
+await passo(marcos.getByRole('button', { name: /^Remover foto-teste/ }), 'exames: foto enviada ao storage', 20000);
+await entrada.setInputFiles({ name: 'audiometria.pdf', mimeType: 'application/pdf', buffer: gerarPdf() });
+await passo(marcos.getByRole('button', { name: 'Remover audiometria.pdf' }), 'exames: PDF verificado e saneado', 30000);
+await ana.goto(`${APP}/exames`);
+await ana.getByRole('button', { name: /Para revisar/ }).waitFor();
+await marcos.getByRole('button', { name: 'Enviar', exact: true }).click();
+await marcos.waitForURL(/\/exames\/resultados\//);
+await passo(marcos.getByRole('link', { name: /audiometria\.pdf/ }), 'exames: resultado com o PDF para baixar');
+const urlPdf = await marcos.getByRole('link', { name: /audiometria\.pdf/ }).getAttribute('href');
+const resp = await fetch(urlPdf);
+ok(resp.ok && /attachment/.test(resp.headers.get('content-disposition') ?? '') && (await resp.arrayBuffer()).byteLength > 0, 'exames: PDF servido como anexo pela URL assinada');
+await passo(ana.getByText('Audiometria tonal').first(), 'exames: resultado chega à fila da equipe em tempo real');
+await ana.getByText('Audiometria tonal').first().click();
+await ana.getByLabel(/Nota para o paciente/).fill('Audição dentro do normal.');
+await ana.getByRole('button', { name: 'Marcar como revisado' }).click();
+await passo(ana.getByText(/Revisado por/), 'exames: equipe revisa com nota');
+await passo(marcos.getByText('Audição dentro do normal.'), 'exames: paciente vê a nota sem recarregar');
+await foto(marcos, 'real-6-exame-revisado');
 
 // Limpeza: encerra o acompanhamento de teste.
 await api('POST', `/v1/acompanhamentos/${acp.id}/encerrar`, { token: tokenAna, body: { motivo: 'E2E concluído.' } });

@@ -765,8 +765,9 @@ export function navegacao(ctx: Ctx) {
     const a = t('acompanhamento');
     if (perms.has('acompanhamento.acompanhamento.ler')) itens.push({ id: 'meus-acompanhamentos', rotulo: `${flex(a.genero, 'Meu', 'Minha')} ${a.singular}`, icone: 'heart-pulse', grupo: 'PRINCIPAL', destino: { tela: 'acompanhamento.meus' }, contador: 'acompanhamento.checkinsPendentes' });
     if (perms.has('agenda.agendamento.ler')) itens.push({ id: 'minhas-consultas', rotulo: `${flex(consulta.genero, 'Meus', 'Minhas')} ${consulta.plural}`, icone: 'calendar', grupo: 'PRINCIPAL', destino: { tela: 'agenda.meus' } });
-    if (perms.has('exames.exame.ler')) itens.push({ id: 'meus-exames', rotulo: `${flex(t('exame').genero, 'Meus', 'Minhas')} ${t('exame').plural}`, icone: 'flask-conical', grupo: 'PRINCIPAL', destino: { tela: 'exames.meus' } });
     if (perms.has('chat.conversa.ler')) itens.push({ id: 'conversas', rotulo: cap(t('conversa').plural), icone: 'message-circle', grupo: 'PRINCIPAL', destino: { tela: 'chat.lista' }, contador: 'chat.naoLidas' });
+    // Exames depois de Conversas: na barra do celular (5 lugares), o chat é o canal principal do paciente.
+    if (perms.has('exames.exame.ler')) itens.push({ id: 'meus-exames', rotulo: `${flex(t('exame').genero, 'Meus', 'Minhas')} ${t('exame').plural}`, icone: 'flask-conical', grupo: 'PRINCIPAL', destino: { tela: 'exames.meus' } });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'PRINCIPAL', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
   }
   itens.push({ id: 'perfil', rotulo: 'Meu perfil', icone: 'user', grupo: ehEquipe(ctx) ? 'SECUNDARIO' : 'PRINCIPAL', destino: { tela: 'perfil' } });
