@@ -1,6 +1,6 @@
 # Backend de referência
 
-Implementação do contrato (`contrato/openapi.yaml`) em Node 22 + Fastify + PostgreSQL. Decisões em [ADR-0013](../docs/adr/0013-backend-de-referencia.md) (núcleo) e [ADR-0014](../docs/adr/0014-jobs-push-e-email.md) (jobs, push, e-mail) e [ADR-0015](../docs/adr/0015-seguranca-para-o-piloto.md) (segurança do piloto) e [ADR-0016](../docs/adr/0016-modulo-agenda.md) (agenda) e [ADR-0017](../docs/adr/0017-modulo-exames.md) (exames). Fase atual: **F5** — todas as operações do contrato 1.2: núcleo (F1), protocolos, acompanhamentos, check-ins, alertas, chat, jobs agendados, Web Push, e-mail SMTP (F2–F3), o módulo agenda (consultas e cirurgias) e o módulo exames (pedidos, resultados com PDF sob antivírus e saneamento, revisão). PDF exige `ANTIVIRUS_URL` (clamd; `teste` fora de produção).
+Implementação do contrato (`contrato/openapi.yaml`) em Node 22 + Fastify + PostgreSQL. Decisões em [ADR-0013](../docs/adr/0013-backend-de-referencia.md) (núcleo) e [ADR-0014](../docs/adr/0014-jobs-push-e-email.md) (jobs, push, e-mail) e [ADR-0015](../docs/adr/0015-seguranca-para-o-piloto.md) (segurança do piloto) e [ADR-0016](../docs/adr/0016-modulo-agenda.md) (agenda) e [ADR-0017](../docs/adr/0017-modulo-exames.md) (exames) e [ADR-0018](../docs/adr/0018-modulo-documentos.md) (documentos). Fase atual: **F6** — todas as operações do contrato 1.3: núcleo (F1), protocolos, acompanhamentos, check-ins, alertas, chat, jobs agendados, Web Push, e-mail SMTP (F2–F3), o módulo agenda (consultas e cirurgias) e o módulo exames (pedidos, resultados com PDF sob antivírus e saneamento, revisão) e o módulo documentos (receita e atestado em PDF assinado em PAdES por PSC em nuvem, entregues pelo chat, com validação pública). PDF de exame exige `ANTIVIRUS_URL` (clamd; `teste` fora de produção); assinar documentos exige um PSC: `PSC_PROVEDORES` (reais, API do ITI) ou `PSC_TESTE=1` (simulado, fora de produção).
 
 ## Subir localmente
 
@@ -23,7 +23,7 @@ Uma organização nova: `pnpm org:criar --arquivo org.json` (mesmo formato dos c
 ## Testes
 
 ```bash
-pnpm test        # isolamento, eventos, jobs, concorrência, Web Push, imagem, JWT, cabeçalhos, limites e agenda — precisa do banco semeado
+pnpm test        # isolamento, eventos, jobs, concorrência, Web Push, imagem, JWT, cabeçalhos, limites, agenda, exames e PAdES — precisa do banco semeado com PSC_TESTE=1
 pnpm typecheck
 ```
 

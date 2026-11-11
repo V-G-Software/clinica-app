@@ -14,6 +14,8 @@ import { autenticar, hashCorpo, orgPorDominio, orgPorSlug, type Org } from './nu
 import { handlersAcompanhamento } from './modulos/acompanhamento.ts';
 import { handlersAgenda } from './modulos/agenda.ts';
 import { handlersExames } from './modulos/exames.ts';
+import { handlersDocumentos } from './modulos/documentos.ts';
+import { autorizarNoPscTeste } from './servicos/psc.ts';
 import { handlersArquivos } from './modulos/arquivos.ts';
 import { handlersChat } from './modulos/chat.ts';
 import { handlersAuth } from './modulos/auth.ts';
@@ -33,7 +35,7 @@ import { LIMITES, contar } from './servicos/limites.ts';
 /** Ids de módulo do catálogo do contrato (`ModuloId`); a tag da operação diz a que módulo ela pertence. */
 const MODULOS_DO_CONTRATO = new Set<string>(contrato.components.schemas.ModuloId.enum);
 
-const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat, ...handlersAgenda, ...handlersExames };
+const handlers: Record<string, Handler> = { ...handlersPublico, ...handlersAuth, ...handlersSessao, ...handlersNotificacoes, ...handlersArquivos, ...handlersEventos, ...handlersPacientes, ...handlersFormularios, ...handlersEquipe, ...handlersAcompanhamento, ...handlersChat, ...handlersAgenda, ...handlersExames, ...handlersDocumentos };
 const PUBLICAS_COM_LOGIN = new Set(['authSair']);
 
 export function criarServidor() {
@@ -128,6 +130,11 @@ export function criarServidor() {
     const a = await comOrg(org, (tx) => um(tx, `SELECT tipo FROM arquivos WHERE organizacao_id = $1 AND id = $2 AND finalidade = 'ORGANIZACAO' AND status = 'DISPONIVEL'`, [org, id])).catch(() => null);
     const b = a ? await storageLocal.ler(`final/${org}/${id}`) : null;
     return b ? reply.header('Cache-Control', 'public, max-age=3600').type(a.tipo).send(b) : reply.code(404).send();
+  });
+  // "App do provedor" do PSC de teste (PSC_TESTE=1, ADR-0018): autoriza na hora e volta ao retorno com `code`.
+  app.get('/_psc-teste/autorizar', async (req, reply) => {
+    const destino = autorizarNoPscTeste(req.query as any);
+    return destino ? reply.redirect(destino, 302) : reply.code(404).send();
   });
   void iguais; void assinarUrl;
 

@@ -13,6 +13,7 @@ export const TODAS_PERMISSOES = [
   'equipe.membro.ler', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar',
   'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
   'exames.exame.ler', 'exames.pedido.criar', 'exames.resultado.enviar', 'exames.resultado.revisar',
+  'documentos.documento.ler', 'documentos.documento.emitir',
 ] as const;
 
 /** Tabela da seção 9.6. [DECISÃO 3]: secretária vê check-ins e alertas por padrão. */
@@ -31,7 +32,7 @@ export const PERMISSOES_POR_PERFIL: Record<Perfil, readonly string[]> = {
   PACIENTE: [
     'pacientes.paciente.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.checkin.ler',
     'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar', 'agenda.agendamento.ler',
-    'exames.exame.ler',
+    'exames.exame.ler', 'documentos.documento.ler',
   ],
 };
 export const temModulo = (modulos: ModuloAtivo[], id: string) => modulos.some((m) => m.id === id);
