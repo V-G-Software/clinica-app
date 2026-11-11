@@ -1,0 +1,53 @@
+{
+  "requisicao": "GET /v1/documentos/doc_beatriz_receita",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "doc_beatriz_receita",
+    "tipo": "RECEITA",
+    "paciente": {
+      "id": "pac_beatriz",
+      "nome": "Beatriz Costa"
+    },
+    "emissor": {
+      "usuarioId": "usr_ana",
+      "nome": "Dra. Ana Lima",
+      "perfil": "PROFISSIONAL"
+    },
+    "registro": {
+      "conselho": "CRM",
+      "numero": "123456",
+      "uf": "SP"
+    },
+    "status": "RASCUNHO",
+    "receita": {
+      "itens": [
+        {
+          "medicamento": "Cloreto de sódio 0,9%, solução nasal",
+          "posologia": "Aplicar 2 jatos em cada narina, 4 vezes ao dia.",
+          "quantidade": "1 frasco"
+        },
+        {
+          "medicamento": "Paracetamol 750 mg, comprimido",
+          "posologia": "1 comprimido de 8 em 8 horas, se dor ou febre.",
+          "quantidade": "1 caixa"
+        }
+      ],
+      "orientacoes": "Começar no dia seguinte à cirurgia."
+    },
+    "atestado": null,
+    "arquivo": null,
+    "codigoValidacao": null,
+    "entrega": null,
+    "motivoAnulacao": null,
+    "erroAssinatura": null,
+    "criadoEm": "2026-11-08T12:00:00Z",
+    "assinadoEm": null,
+    "anuladoEm": null,
+    "acoesPermitidas": [
+      "EDITAR",
+      "DESCARTAR",
+      "ASSINAR"
+    ]
+  }
+}

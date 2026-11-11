@@ -14,6 +14,7 @@ import {
 import { handlers, type Res } from './handlers.ts';
 import { carregarAgenda } from './agenda.ts';
 import { carregarExames } from './exames.ts';
+import { autorizarNoPsc, carregarDocumentos } from './documentos.ts';
 import * as r from './regras.ts';
 import { agoraIso, agoraMs, comRelogioForcado, DIA, definirRelogio, HORA, iso, RELOGIO_INICIAL } from './tempo.ts';
 
@@ -65,6 +66,7 @@ function carregarCenario(cenario: any) {
   }
   carregarAgenda(org, cenario);
   carregarExames(org, cenario, r.arquivoDeExemplo);
+  carregarDocumentos(org, cenario);
   for (const c of cenario.conversas ?? []) {
     agendar(`seed:${c.id}:criar`, Date.parse(c.criadoEm), () => {
       const conv = r.criarConversa(org, c.pacienteId, c.participantesIds);
@@ -303,6 +305,11 @@ app.put('/__mock/envios/:slug/:id', async (req, reply) => {
   if (req.headers['content-type'] !== a.tipo) return reply.code(400).send({ erro: 'Content-Type diferente do declarado' });
   a.bytes = Buffer.isBuffer(req.body) ? req.body : Buffer.from(String(req.body ?? ''));
   return reply.code(200).send();
+});
+// "App do provedor" de assinatura (PSC simulado, ADR-0018): autoriza na hora e volta ao retorno público.
+app.get('/__mock/psc/:slug/autorizar', async (req, reply) => {
+  const org = exigirOrg((req.params as any).slug);
+  return reply.redirect(autorizarNoPsc(org, String((req.query as any).state ?? '')), 302);
 });
 app.get('/__mock/arquivos/:slug/:id', async (req, reply) => {
   const { slug, id } = req.params as any;

@@ -30,15 +30,15 @@
               "dataColeta": "2026-11-05",
               "arquivos": [
                 {
-                  "id": "arq_0mw4x9xc00005w",
+                  "id": "arq_0mw4x9xc000062",
                   "nome": "resultado.png",
                   "tipo": "image/png",
                   "tamanhoBytes": 179,
                   "finalidade": "EXAME",
                   "status": "DISPONIVEL",
                   "motivoRejeicao": null,
-                  "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc00005w?exp=1794144900042&assinatura=mw7vjsui.00005w",
-                  "urlMiniatura": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc00005w?exp=1794144900042&assinatura=mw7vjsui.00005w&miniatura=1",
+                  "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc000062?exp=1794144900182&assinatura=mw7vjsye.000062",
+                  "urlMiniatura": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc000062?exp=1794144900182&assinatura=mw7vjsye.000062&miniatura=1",
                   "urlsExpiramEm": "2026-11-08T13:35:00Z",
                   "criadoEm": "2026-11-06T12:00:00Z"
                 }
@@ -61,13 +61,70 @@
         }
       },
       {
+        "id": "documentos-para-assinar",
+        "tipo": "DOCUMENTOS_PARA_ASSINAR",
+        "dados": {
+          "total": 1,
+          "itens": [
+            {
+              "id": "doc_beatriz_receita",
+              "tipo": "RECEITA",
+              "paciente": {
+                "id": "pac_beatriz",
+                "nome": "Beatriz Costa"
+              },
+              "emissor": {
+                "usuarioId": "usr_ana",
+                "nome": "Dra. Ana Lima",
+                "perfil": "PROFISSIONAL"
+              },
+              "registro": {
+                "conselho": "CRM",
+                "numero": "123456",
+                "uf": "SP"
+              },
+              "status": "RASCUNHO",
+              "receita": {
+                "itens": [
+                  {
+                    "medicamento": "Cloreto de sódio 0,9%, solução nasal",
+                    "posologia": "Aplicar 2 jatos em cada narina, 4 vezes ao dia.",
+                    "quantidade": "1 frasco"
+                  },
+                  {
+                    "medicamento": "Paracetamol 750 mg, comprimido",
+                    "posologia": "1 comprimido de 8 em 8 horas, se dor ou febre.",
+                    "quantidade": "1 caixa"
+                  }
+                ],
+                "orientacoes": "Começar no dia seguinte à cirurgia."
+              },
+              "atestado": null,
+              "arquivo": null,
+              "codigoValidacao": null,
+              "entrega": null,
+              "motivoAnulacao": null,
+              "erroAssinatura": null,
+              "criadoEm": "2026-11-08T12:00:00Z",
+              "assinadoEm": null,
+              "anuladoEm": null,
+              "acoesPermitidas": [
+                "EDITAR",
+                "DESCARTAR",
+                "ASSINAR"
+              ]
+            }
+          ]
+        }
+      },
+      {
         "id": "alertas",
         "tipo": "ALERTAS_ABERTOS",
         "dados": {
           "total": 1,
           "itens": [
             {
-              "id": "alr_0mw6e57uo0007l",
+              "id": "alr_0mw6e57uo0007u",
               "acompanhamentoId": "acp_marcos",
               "checkinId": "chk_0mw28tpc00004r",
               "paciente": {
@@ -112,7 +169,7 @@
               "expiraEm": "2026-11-09T02:00:00Z"
             },
             {
-              "id": "chk_0mw3o9k0000056",
+              "id": "chk_0mw3o9k000005e",
               "acompanhamentoId": "acp_sonia",
               "paciente": {
                 "id": "pac_sonia",
@@ -124,7 +181,7 @@
               "expiraEm": "2026-11-09T02:00:00Z"
             },
             {
-              "id": "chk_0mw53peo000068",
+              "id": "chk_0mw53peo00006e",
               "acompanhamentoId": "acp_rafael",
               "paciente": {
                 "id": "pac_rafael",
@@ -171,7 +228,7 @@
                   "perfil": "SECRETARIA"
                 }
               ],
-              "conversaId": "cnv_0mw53peo00006f",
+              "conversaId": "cnv_0mw53peo00006l",
               "agendamentoId": "agd_rafael_cirurgia",
               "resumoCheckins": {
                 "respondidos": 0,
@@ -181,7 +238,7 @@
               },
               "alertasAbertos": 0,
               "proximoCheckin": {
-                "id": "chk_0mw53peo000068",
+                "id": "chk_0mw53peo00006e",
                 "acompanhamentoId": "acp_rafael",
                 "paciente": {
                   "id": "pac_rafael",
@@ -228,7 +285,7 @@
                   "perfil": "SECRETARIA"
                 }
               ],
-              "conversaId": "cnv_0mw3o9k000005c",
+              "conversaId": "cnv_0mw3o9k000005k",
               "agendamentoId": null,
               "resumoCheckins": {
                 "respondidos": 1,
@@ -238,7 +295,7 @@
               },
               "alertasAbertos": 0,
               "proximoCheckin": {
-                "id": "chk_0mw3o9k0000056",
+                "id": "chk_0mw3o9k000005e",
                 "acompanhamentoId": "acp_sonia",
                 "paciente": {
                   "id": "pac_sonia",
@@ -337,23 +394,23 @@
                   "usuarioId": "usr_ana",
                   "nome": "Dra. Ana Lima",
                   "perfil": "PROFISSIONAL",
-                  "lidoAte": "msg_0mw6fxio00007x"
+                  "lidoAte": "msg_0mw6fxio000086"
                 },
                 {
                   "usuarioId": "usr_julia",
                   "nome": "Júlia Ramos",
                   "perfil": "SECRETARIA",
-                  "lidoAte": "msg_0mw6f1d9c0007v"
+                  "lidoAte": "msg_0mw6f1d9c00084"
                 },
                 {
                   "usuarioId": "usr_marcos",
                   "nome": "Marcos Souza",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw6gcy800007z"
+                  "lidoAte": "msg_0mw6gcy8000088"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw7s5mo00009a",
+                "id": "msg_0mw7s5mo00009n",
                 "resumo": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
                 "autorNome": null,
                 "enviadoEm": "2026-11-08T12:00:00Z"
@@ -368,7 +425,7 @@
               ]
             },
             {
-              "id": "cnv_0mw53peo00006f",
+              "id": "cnv_0mw53peo00006l",
               "titulo": "Rafael Mendes",
               "paciente": {
                 "id": "pac_rafael",
@@ -381,7 +438,7 @@
                   "usuarioId": "usr_ana",
                   "nome": "Dra. Ana Lima",
                   "perfil": "PROFISSIONAL",
-                  "lidoAte": null
+                  "lidoAte": "msg_0mw6h6j1c0008w"
                 },
                 {
                   "usuarioId": "usr_julia",
@@ -397,12 +454,12 @@
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw6w08000008t",
+                "id": "msg_0mw6w080000098",
                 "resumo": "Mantenha a cabeceira elevada e evite assoar o nariz.",
                 "autorNome": null,
                 "enviadoEm": "2026-11-07T21:00:00Z"
               },
-              "naoLidas": 2,
+              "naoLidas": 1,
               "criadoEm": "2026-11-06T15:00:00Z",
               "acoesPermitidas": [
                 "ENVIAR",
@@ -412,7 +469,7 @@
               ]
             },
             {
-              "id": "cnv_0mw3o9k000005c",
+              "id": "cnv_0mw3o9k000005k",
               "titulo": "Sônia Ribeiro",
               "paciente": {
                 "id": "pac_sonia",
@@ -437,11 +494,11 @@
                   "usuarioId": "usr_sonia",
                   "nome": "Sônia Ribeiro",
                   "perfil": "PACIENTE",
-                  "lidoAte": "msg_0mw6h03k00008j"
+                  "lidoAte": "msg_0mw6h03k00008s"
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw6h03k00008j",
+                "id": "msg_0mw6h03k00008s",
                 "resumo": "Dia 1 · dor 4 · noite regular · sangramento não",
                 "autorNome": "Sônia Ribeiro",
                 "enviadoEm": "2026-11-07T14:00:00Z"

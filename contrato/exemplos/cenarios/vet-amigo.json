@@ -84,7 +84,8 @@
     },
     { "id": "equipe", "versao": "1.0", "config": {} },
     { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": false, "antecedenciaMinimaHoras": 4, "janelaDias": 60, "cancelamentoAteHoras": 12, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } },
-    { "id": "exames", "versao": "1.0", "config": { "pacienteEnviaResultados": false } }
+    { "id": "exames", "versao": "1.0", "config": { "pacienteEnviaResultados": false } },
+    { "id": "documentos", "versao": "1.0", "config": { "tiposPermitidos": ["RECEITA"], "entregarPeloChat": true } }
   ],
   "capacidades": {
     "tempoReal": { "modo": "POLLING", "intervaloPollingSegundos": 15 },
@@ -213,5 +214,13 @@
         "itens": [{ "nome": "Hemograma", "orientacoes": "Jejum de 6 horas." }], "orientacoes": "Pode ser feito na clínica ou em laboratório veterinário.", "observacao": null }
     ],
     "resultados": []
+  },
+  "documentos": {
+    "$comentario": "Documentos (ADR-0018) no veterinário: só receita (sem atestado). Receita do Thor assinada pela Dra. Renata (CRMV) e entregue à tutora pelo chat.",
+    "itens": [
+      { "id": "doc_thor_receita", "tipo": "RECEITA", "pacienteId": "pac_thor", "emissorId": "usr_renata", "criadoEm": "2026-11-06T17:00:00Z",
+        "receita": { "itens": [{ "medicamento": "Meloxicam 0,5 mg, comprimido", "posologia": "1 comprimido a cada 24 horas, por 3 dias, junto com a comida.", "quantidade": "3 comprimidos" }], "orientacoes": "Manter o colar até a retirada dos pontos." },
+        "assinar": { "em": "2026-11-06T17:05:00Z", "codigo": "THORRECEITAVET01" } }
+    ]
   }
 }

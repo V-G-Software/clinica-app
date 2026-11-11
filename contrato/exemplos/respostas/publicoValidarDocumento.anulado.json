@@ -1,0 +1,23 @@
+{
+  "requisicao": "GET /v1/publico/documentos/MARCOSRECEITA001",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "codigo": "MARCOSRECEITA001",
+    "tipo": "RECEITA",
+    "situacao": "ANULADO",
+    "emissor": {
+      "nome": "Dra. Ana Lima",
+      "registro": {
+        "conselho": "CRM",
+        "numero": "123456",
+        "uf": "SP"
+      }
+    },
+    "pacienteIniciais": "M. S.",
+    "organizacao": "Clínica Modelo Otorrino",
+    "assinadoEm": "2026-11-05T12:05:00Z",
+    "anuladoEm": "2026-11-05T13:00:00Z",
+    "sha256": "2c25a8bbfb59309d2255592cb789f5fe55f60bd8d3b5607df538a15b506ea57e"
+  }
+}

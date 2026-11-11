@@ -1,0 +1,62 @@
+{
+  "requisicao": "GET /v1/documentos/doc_rafael_atestado",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "doc_rafael_atestado",
+    "tipo": "ATESTADO",
+    "paciente": {
+      "id": "pac_rafael",
+      "nome": "Rafael Mendes"
+    },
+    "emissor": {
+      "usuarioId": "usr_ana",
+      "nome": "Dra. Ana Lima",
+      "perfil": "PROFISSIONAL"
+    },
+    "registro": {
+      "conselho": "CRM",
+      "numero": "123456",
+      "uf": "SP"
+    },
+    "status": "ASSINADO",
+    "receita": null,
+    "atestado": {
+      "modalidade": "AFASTAMENTO",
+      "data": "2026-11-07",
+      "dias": 7,
+      "horaInicio": null,
+      "horaFim": null,
+      "cid": null,
+      "cidAutorizado": false,
+      "observacoes": null
+    },
+    "arquivo": {
+      "id": "arq_0mw6h6j1c0008v",
+      "nome": "atestado-2026-11-07.pdf",
+      "tipo": "application/pdf",
+      "tamanhoBytes": 1650,
+      "finalidade": "DOCUMENTO",
+      "status": "DISPONIVEL",
+      "motivoRejeicao": null,
+      "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw6h6j1c0008v?exp=1794144900430&assinatura=mw7vjt5a.c0008v",
+      "urlMiniatura": null,
+      "urlsExpiramEm": "2026-11-08T13:35:00Z",
+      "criadoEm": "2026-11-07T14:05:00Z"
+    },
+    "codigoValidacao": "RAFAEL7DIASSEPTO",
+    "entrega": {
+      "conversaId": "cnv_0mw53peo00006l",
+      "mensagemId": "msg_0mw6h6j1c0008w",
+      "entregueEm": "2026-11-07T14:05:00Z"
+    },
+    "motivoAnulacao": null,
+    "erroAssinatura": null,
+    "criadoEm": "2026-11-07T14:00:00Z",
+    "assinadoEm": "2026-11-07T14:05:00Z",
+    "anuladoEm": null,
+    "acoesPermitidas": [
+      "ANULAR"
+    ]
+  }
+}

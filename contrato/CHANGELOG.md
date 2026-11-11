@@ -2,6 +2,36 @@
 
 Versionamento semântico (seção 4.2). Dentro de `1.x`, só mudanças aditivas.
 
+## 1.3.0-rc.1 — 2026-11-11 (F6, etapa 1)
+
+Módulo `documentos`: receita simples e atestado assinados com certificado ICP-Brasil em nuvem (PSC, API do ITI) e entregues pelo chat ([ADR-0018](../docs/adr/0018-modulo-documentos.md); QUESTION-031 decidida). Versão menor, só com adições. Organizações sem o módulo ficam idênticas.
+
+### Incluído
+- **Tag `documentos`, 9 operações:**
+  - `/v1/documentos`: listar, criar rascunho, obter, editar (If-Match), `descartar` e `anular`;
+  - sessão de assinatura: `POST /v1/documentos/assinaturas` (1 a 10 rascunhos, provedor, `retornoUrl`), `GET /v1/documentos/assinaturas/{sessaoId}` e o retorno público do PSC (`GET /v1/documentos/assinaturas/retorno`, 302).
+- **Validação pública:** `GET /v1/publico/documentos/{codigo}` (sem conteúdo clínico; iniciais do paciente e SHA-256 do PDF).
+- **Schemas:** `Documento`, `ConteudoReceita`, `ConteudoAtestado`, `RegistroProfissional`, `SessaoAssinatura`, `ValidacaoDocumento` e `ConfigDocumentos`, além dos enums `TipoDocumento` e `StatusDocumento`.
+- **Parâmetro:** `DocumentoId`.
+- **Catálogos:**
+  - `ModuloId.documentos`;
+  - 4 telas `documentos.*`;
+  - ícone `file-pen-line`;
+  - finalidade de arquivo `DOCUMENTO` (só o servidor cria);
+  - notificações `DOCUMENTO_DISPONIVEL` e `DOCUMENTO_ANULADO`;
+  - eventos `documentos.documento.atualizado` e `documentos.assinatura.atualizada`;
+  - seção `DOCUMENTOS_PARA_ASSINAR`;
+  - contador `documentos.paraAssinar`;
+  - permissões `documentos.documento.ler` e `documentos.documento.emitir`;
+  - erros `REGISTRO_PROFISSIONAL_AUSENTE` e `ASSINATURA_INDISPONIVEL`;
+  - `Mensagem.referencia.tipo = DOCUMENTO` (o documento entregue pelo chat).
+- **Capacidades:** `capacidades.assinatura.provedores` (vazio = não há como assinar).
+- **Configuração da organização:** `OrganizacaoConfiguracao.documentos` e `OrganizacaoEdicao.documentos` (`tiposPermitidos`, `entregarPeloChat`).
+
+### Esclarecido
+- Documento sem assinatura nunca chega ao paciente: o paciente só vê `ASSINADO` e `ANULADO`.
+- Atestado com CID só com `cidAutorizado: true`.
+
 ## 1.2.0-rc.1 — 2026-11-07 (F5, etapa 1)
 
 Módulo `exames`: pedidos de exame, resultados (imagem e PDF) e revisão ([ADR-0017](../docs/adr/0017-modulo-exames.md)). Versão menor, só com adições. Organizações sem o módulo ficam idênticas.

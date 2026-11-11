@@ -1,13 +1,13 @@
 {
-  "requisicao": "GET /v1/conversas/cnv_0mw28tpc00004p/mensagens?limite=10",
+  "requisicao": "GET /v1/conversas/cnv_0mw28tpc00004x/mensagens?limite=10",
   "status": 200,
   "contentType": "application/json",
   "corpo": {
     "itens": [
       {
-        "id": "msg_0mw28tpc00004q",
+        "id": "msg_0mw28tpc00004y",
         "idCliente": null,
-        "conversaId": "cnv_0mw28tpc00004p",
+        "conversaId": "cnv_0mw28tpc00004x",
         "tipo": "SISTEMA",
         "autor": null,
         "texto": "Pós-operatório iniciado: Septoplastia — 7 dias.",
@@ -21,9 +21,37 @@
         "enviadoEm": "2026-11-04T15:00:00Z"
       },
       {
-        "id": "msg_0mw414io000057",
+        "id": "msg_0mw3i0i5c00054",
         "idCliente": null,
-        "conversaId": "cnv_0mw28tpc00004p",
+        "conversaId": "cnv_0mw28tpc00004x",
+        "tipo": "ANEXO",
+        "autor": {
+          "usuarioId": "usr_ana",
+          "nome": "Dra. Ana Lima",
+          "perfil": "PROFISSIONAL"
+        },
+        "texto": "Receita assinada digitalmente.",
+        "anexos": [
+          {
+            "id": "arq_0mw3i0i5c00053",
+            "status": "DISPONIVEL",
+            "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw3i0i5c00053?exp=1794144900339&assinatura=mw7vjt2r.c00053",
+            "urlMiniatura": null,
+            "urlsExpiramEm": "2026-11-08T13:35:00Z"
+          }
+        ],
+        "referencia": {
+          "tipo": "DOCUMENTO",
+          "id": "doc_marcos_receita",
+          "resumo": "Receita",
+          "temAlerta": false
+        },
+        "enviadoEm": "2026-11-05T12:05:00Z"
+      },
+      {
+        "id": "msg_0mw414io00005n",
+        "idCliente": null,
+        "conversaId": "cnv_0mw28tpc00004x",
         "tipo": "ORIENTACAO",
         "autor": null,
         "texto": "Mantenha a cabeceira elevada e evite assoar o nariz.",
@@ -32,9 +60,9 @@
         "enviadoEm": "2026-11-05T21:00:00Z"
       },
       {
-        "id": "msg_0mw4yixpc0005v",
+        "id": "msg_0mw4yixpc0006b",
         "idCliente": null,
-        "conversaId": "cnv_0mw28tpc00004p",
+        "conversaId": "cnv_0mw28tpc00004x",
         "tipo": "CHECKIN",
         "autor": {
           "usuarioId": "usr_marcos",
@@ -45,16 +73,16 @@
         "anexos": [],
         "referencia": {
           "tipo": "CHECKIN",
-          "id": "chk_0mw28tpc00004i",
+          "id": "chk_0mw28tpc00004q",
           "resumo": "Dia 1 · dor 5 · noite regular · sangramento leve",
           "temAlerta": false
         },
         "enviadoEm": "2026-11-06T12:35:00Z"
       },
       {
-        "id": "msg_0mw6e57uo0007e",
+        "id": "msg_0mw6e57uo0007z",
         "idCliente": null,
-        "conversaId": "cnv_0mw28tpc00004p",
+        "conversaId": "cnv_0mw28tpc00004x",
         "tipo": "CHECKIN",
         "autor": {
           "usuarioId": "usr_marcos",
@@ -65,16 +93,16 @@
         "anexos": [],
         "referencia": {
           "tipo": "CHECKIN",
-          "id": "chk_0mw28tpc00004j",
+          "id": "chk_0mw28tpc00004r",
           "resumo": "Dia 2 · dor 8 · noite dormi mal · sangramento leve",
           "temAlerta": true
         },
         "enviadoEm": "2026-11-07T12:40:00Z"
       },
       {
-        "id": "msg_0mw6f1d9c0007j",
-        "idCliente": "94df3922-a931-4d81-a1c6-177ca897cfa1",
-        "conversaId": "cnv_0mw28tpc00004p",
+        "id": "msg_0mw6f1d9c00084",
+        "idCliente": "8c17038e-37e8-42e8-88d4-8439006105f3",
+        "conversaId": "cnv_0mw28tpc00004x",
         "tipo": "TEXTO",
         "autor": {
           "usuarioId": "usr_julia",
@@ -87,9 +115,9 @@
         "enviadoEm": "2026-11-07T13:05:00Z"
       },
       {
-        "id": "msg_0mw6fxio00007l",
-        "idCliente": "a9a7127b-919d-43b7-8bac-fb5da7963447",
-        "conversaId": "cnv_0mw28tpc00004p",
+        "id": "msg_0mw6fxio000086",
+        "idCliente": "9cc5978b-7b9f-4038-abc1-f84e19bd3733",
+        "conversaId": "cnv_0mw28tpc00004x",
         "tipo": "TEXTO",
         "autor": {
           "usuarioId": "usr_ana",
@@ -102,9 +130,9 @@
         "enviadoEm": "2026-11-07T13:30:00Z"
       },
       {
-        "id": "msg_0mw6gcy800007n",
-        "idCliente": "b49a4827-9086-49da-8395-515eec56c9b1",
-        "conversaId": "cnv_0mw28tpc00004p",
+        "id": "msg_0mw6gcy8000088",
+        "idCliente": "f3fbbb35-dc34-4d8b-bf6d-c5d3407c6d73",
+        "conversaId": "cnv_0mw28tpc00004x",
         "tipo": "TEXTO",
         "autor": {
           "usuarioId": "usr_marcos",
@@ -117,9 +145,9 @@
         "enviadoEm": "2026-11-07T13:42:00Z"
       },
       {
-        "id": "msg_0mw7s5mo00008y",
+        "id": "msg_0mw7s5mo00009n",
         "idCliente": null,
-        "conversaId": "cnv_0mw28tpc00004p",
+        "conversaId": "cnv_0mw28tpc00004x",
         "tipo": "ORIENTACAO",
         "autor": null,
         "texto": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
