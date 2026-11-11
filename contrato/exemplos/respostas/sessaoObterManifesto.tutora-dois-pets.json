@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.3.0-rc.1"
+      "versao": "1.4.0-rc.1"
     },
     "organizacao": {
       "id": "org_vet",
@@ -186,6 +186,11 @@
           ],
           "entregarPeloChat": true
         }
+      },
+      {
+        "id": "prontuario",
+        "versao": "1.0",
+        "config": {}
       }
     ],
     "navegacao": [
@@ -237,6 +242,15 @@
         }
       },
       {
+        "id": "minhas-copias",
+        "rotulo": "Cópia do prontuário",
+        "icone": "notebook-pen",
+        "grupo": "SECUNDARIO",
+        "destino": {
+          "tela": "prontuario.minhas-copias"
+        }
+      },
+      {
         "id": "meus-documentos",
         "rotulo": "Meus documentos",
         "icone": "file-pen-line",
@@ -274,7 +288,8 @@
       "chat.mensagem.enviar",
       "agenda.agendamento.ler",
       "exames.exame.ler",
-      "documentos.documento.ler"
+      "documentos.documento.ler",
+      "prontuario.copia.solicitar"
     ],
     "capacidades": {
       "tempoReal": {
@@ -306,7 +321,8 @@
       "acompanhamento.alertasAbertos": 0,
       "acompanhamento.checkinsPendentes": 0,
       "exames.resultadosParaRevisar": 0,
-      "documentos.paraAssinar": 0
+      "documentos.paraAssinar": 0,
+      "prontuario.copiasPendentes": 0
     },
     "pacientesVinculados": [
       {

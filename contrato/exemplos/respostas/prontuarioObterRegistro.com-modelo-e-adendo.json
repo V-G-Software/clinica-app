@@ -1,0 +1,40 @@
+{
+  "requisicao": "GET /v1/prontuario/registros/reg_marcos_evolucao",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "id": "reg_marcos_evolucao",
+    "paciente": {
+      "id": "pac_marcos",
+      "nome": "Marcos Souza"
+    },
+    "tipo": "EVOLUCAO",
+    "status": "FINALIZADO",
+    "autor": {
+      "usuarioId": "usr_ana",
+      "nome": "Dra. Ana Lima",
+      "perfil": "PROFISSIONAL"
+    },
+    "texto": null,
+    "modelo": {
+      "formularioId": "frm_evolucao_otorrino",
+      "versao": 1,
+      "titulo": "Evolução — otorrinolaringologia"
+    },
+    "respostas": {
+      "queixa": "Pós-operatório de septoplastia, dia 2. Dor leve controlada.",
+      "rinoscopia": "Splints em posição, sem sangramento ativo.",
+      "conduta": "Manter lavagem nasal. Retorno em 5 dias para retirada dos splints."
+    },
+    "agendamentoId": null,
+    "registroOrigemId": null,
+    "adendosIds": [
+      "reg_marcos_adendo"
+    ],
+    "criadoEm": "2026-11-07T13:00:00Z",
+    "finalizadoEm": "2026-11-07T13:00:00Z",
+    "acoesPermitidas": [
+      "ADENDAR"
+    ]
+  }
+}

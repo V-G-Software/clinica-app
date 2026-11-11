@@ -64,6 +64,10 @@ await cap(O, 'GET', '/v1/exames/resultados/res_marcos_tc', { token: marcos, sufi
 await cap(O, 'GET', '/v1/documentos/doc_beatriz_receita', { token: ana, sufixo: 'rascunho' });
 await cap(O, 'GET', '/v1/documentos/doc_rafael_atestado', { token: ana, sufixo: 'assinado-entregue-pelo-chat' });
 await cap(O, 'GET', '/v1/publico/documentos/MARCOSRECEITA001', { sufixo: 'anulado' });
+// Prontuário (1.4 — ADR-0019).
+await cap(O, 'GET', '/v1/prontuario/pacientes/pac_marcos/ficha', { token: ana, sufixo: 'marcos' });
+await cap(O, 'GET', '/v1/prontuario/registros/reg_marcos_evolucao', { token: ana, sufixo: 'com-modelo-e-adendo' });
+await cap(O, 'GET', '/v1/prontuario/copias?status=SOLICITADA', { token: ana, sufixo: 'pendentes' });
 const vet = `${MOCK}/o/vet-amigo`;
 const laura = (await (await fetch(`${vet}/v1/auth/codigo/solicitar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'laura@exemplo.com' }) }), await (await fetch(`${vet}/v1/auth/codigo/verificar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'laura@exemplo.com', codigo: '123456' }) })).json())).tokenAcesso;
 await cap(vet, 'GET', '/v1/sessao', { token: laura, sufixo: 'tutora-dois-pets' });

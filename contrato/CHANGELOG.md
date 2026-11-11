@@ -2,6 +2,38 @@
 
 Versionamento semântico (seção 4.2). Dentro de `1.x`, só mudanças aditivas.
 
+## 1.4.0-rc.1 — 2026-11-11 (F7, etapa 1)
+
+Módulo `prontuario`: ficha clínica versionada, anamnese, evolução e adendo imutáveis, linha do tempo, cópia ao paciente sob pedido e auditoria de acesso ([ADR-0019](../docs/adr/0019-modulo-prontuario.md)). Versão menor, só com adições. Organizações sem o módulo ficam idênticas.
+
+### Incluído
+- **Tag `prontuario`, 15 operações:**
+  - ficha (obter, gravar nova versão com If-Match, versões anteriores);
+  - registros (listar, criar, obter, editar rascunho, `finalizar`, `descartar`);
+  - linha do tempo;
+  - log de acesso;
+  - cópias (listar, solicitar, `atender`, `recusar`).
+- **Schemas:**
+  - `FichaClinica` e `FichaClinicaConteudo`, com `AlergiaFicha`, `MedicamentoFicha`, `ProblemaFicha` e `AntecedentesFicha`;
+  - `RegistroClinico`, `ItemLinhaDoTempo`, `AcessoProntuario` e `CopiaProntuario`;
+  - enums `TipoRegistroClinico` e `StatusRegistroClinico`.
+- **Parâmetros:** `PacienteProntuarioId`, `RegistroClinicoId` e `CopiaProntuarioId`.
+- **Catálogos:**
+  - `ModuloId.prontuario`;
+  - 4 telas `prontuario.*`;
+  - ícone `notebook-pen`;
+  - finalidade de formulário `PRONTUARIO` (modelos por especialidade);
+  - finalidade de arquivo `PRONTUARIO` (só o servidor cria);
+  - notificações `COPIA_PRONTUARIO_SOLICITADA` e `COPIA_PRONTUARIO_DISPONIVEL`;
+  - 3 eventos `prontuario.*`;
+  - seção `COPIAS_PRONTUARIO_PENDENTES`;
+  - contador `prontuario.copiasPendentes`;
+  - 5 permissões `prontuario.*`.
+
+### Esclarecido
+- Registro finalizado é imutável: a correção é feita por `ADENDO`. Versão anterior da ficha nunca é sobrescrita.
+- Só o profissional lê o prontuário. Paciente, secretaria e gestor não profissional recebem 404. Toda leitura entra no log de acesso.
+
 ## 1.3.0-rc.1 — 2026-11-11 (F6, etapa 1)
 
 Módulo `documentos`: receita simples e atestado assinados com certificado ICP-Brasil em nuvem (PSC, API do ITI) e entregues pelo chat ([ADR-0018](../docs/adr/0018-modulo-documentos.md); QUESTION-031 decidida). Versão menor, só com adições. Organizações sem o módulo ficam idênticas.

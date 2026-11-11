@@ -9,6 +9,7 @@ import { agoraIso, agoraMs, diferencaDias, HORA, hojeLocal, iso, localParaUtc, M
 import * as agenda from './agenda.ts';
 import * as exames from './exames.ts';
 import * as documentos from './documentos.ts';
+import * as prontuario from './prontuario.ts';
 
 export const BASE_PUBLICA = (process.env.MOCK_URL_PUBLICA ?? `http://localhost:${process.env.PORT ?? 4010}`).replace(/\/$/, '');
 export const urlApi = (org: Org) => `${BASE_PUBLICA}/o/${org.slug}`;
@@ -28,10 +29,12 @@ const TODAS = [
   'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
   'exames.exame.ler', 'exames.pedido.criar', 'exames.resultado.enviar', 'exames.resultado.revisar',
   'documentos.documento.ler', 'documentos.documento.emitir',
+  'prontuario.prontuario.ler', 'prontuario.registro.escrever', 'prontuario.copia.atender', 'prontuario.copia.solicitar', 'prontuario.acesso.auditar',
 ];
 const PERMISSOES: Record<Perfil, string[]> = {
-  GESTOR: TODAS.filter((p) => p !== 'acompanhamento.checkin.responder'),
-  PROFISSIONAL: TODAS.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar', 'agenda.configuracao.gerenciar'].includes(p)),
+  // Prontuário (ADR-0019): o gestor audita, não lê (sigilo é da equipe de saúde); quem lê é o profissional.
+  GESTOR: TODAS.filter((p) => !['acompanhamento.checkin.responder', 'prontuario.prontuario.ler', 'prontuario.registro.escrever', 'prontuario.copia.atender', 'prontuario.copia.solicitar'].includes(p)),
+  PROFISSIONAL: TODAS.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar', 'agenda.configuracao.gerenciar', 'prontuario.copia.solicitar', 'prontuario.acesso.auditar'].includes(p)),
   // [DECISÃO 3] secretária vê check-ins e alertas por padrão.
   SECRETARIA: [
     'pacientes.paciente.ler', 'pacientes.paciente.criar', 'pacientes.paciente.editar', 'pacientes.paciente.convidar',
@@ -45,7 +48,7 @@ const PERMISSOES: Record<Perfil, string[]> = {
   PACIENTE: [
     'pacientes.paciente.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.checkin.ler',
     'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar', 'agenda.agendamento.ler',
-    'exames.exame.ler', 'documentos.documento.ler',
+    'exames.exame.ler', 'documentos.documento.ler', 'prontuario.copia.solicitar',
   ],
 };
 export const temModulo = (org: Org, id: string) => org.modulos.some((m) => m.id === id);
@@ -115,6 +118,7 @@ export function podeVerArquivo(ctx: Ctx, arq: any): boolean {
   if (arq.donoId === ctx.usuario.id) return true;
   if (arq.finalidade === 'ORGANIZACAO' || arq.finalidade === 'PERFIL') return true;
   // Documento assinado (ADR-0018): quem vê o documento vê o PDF (equipe com permissão; paciente vinculado).
+  if (arq.copiaId) return prontuario.podeVerArquivoDeCopia(ctx, arq.copiaId);
   if (arq.documentoId) { const d = documentos.documentosDe(ctx.org).documentos.get(arq.documentoId); if (d && documentos.podeVerDocumento(ctx, d)) return true; }
   if (arq.conversaId) { const c = ctx.org.conversas.get(arq.conversaId); return !!c && participa(c, ctx.usuario.id); }
   if (arq.checkinId) { const c = ctx.org.checkins.get(arq.checkinId); return !!c && ctx.perms.has('acompanhamento.checkin.ler') && podeVerPaciente(ctx, c.pacienteId); }
@@ -370,6 +374,10 @@ export function contadores(org: Org, u: Usuario): Record<string, number> {
   if (temModulo(org, 'documentos')) {
     const perms = new Set(u.perfis.filter((p) => p !== 'PACIENTE').flatMap((p) => permissoesDe(org, p)));
     r['documentos.paraAssinar'] = documentos.contadorParaAssinar(org, u.id, perms);
+  }
+  if (temModulo(org, 'prontuario')) {
+    const perms = new Set(u.perfis.filter((p) => p !== 'PACIENTE').flatMap((p) => permissoesDe(org, p)));
+    r['prontuario.copiasPendentes'] = prontuario.contadorCopiasPendentes(org, perms);
   }
   return r;
 }
@@ -766,6 +774,7 @@ export function navegacao(ctx: Ctx) {
     if (perms.has('pacientes.paciente.ler')) itens.push({ id: 'pacientes', rotulo: cap(t('paciente').plural), icone: animal ? 'paw-print' : 'users', grupo: 'PRINCIPAL', destino: { tela: 'pacientes.lista' } });
     if (perms.has('exames.exame.ler')) itens.push({ id: 'exames', rotulo: cap(t('exame').plural), icone: 'flask-conical', grupo: 'PRINCIPAL', destino: { tela: 'exames.lista' }, ...(perms.has('exames.resultado.revisar') ? { contador: 'exames.resultadosParaRevisar' } : {}) });
     if (perms.has('documentos.documento.ler')) itens.push({ id: 'documentos', rotulo: 'Documentos', icone: 'file-pen-line', grupo: 'PRINCIPAL', destino: { tela: 'documentos.lista' }, ...(perms.has('documentos.documento.emitir') ? { contador: 'documentos.paraAssinar' } : {}) });
+    if (perms.has('prontuario.copia.atender')) itens.push({ id: 'prontuario-copias', rotulo: 'Cópias de prontuário', icone: 'notebook-pen', grupo: 'SECUNDARIO', destino: { tela: 'prontuario.copias' }, contador: 'prontuario.copiasPendentes' });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'SECUNDARIO', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
     if (perms.has('acompanhamento.protocolo.ler')) itens.push({ id: 'protocolos', rotulo: cap(t('protocolo').plural), icone: 'clipboard-list', grupo: 'SECUNDARIO', destino: { tela: 'acompanhamento.protocolos' } });
     if (perms.has('agenda.configuracao.gerenciar')) itens.push({ id: 'agenda-servicos', rotulo: 'Serviços e horários', icone: 'calendar-clock', grupo: 'SECUNDARIO', destino: { tela: 'agenda.servicos' } });
@@ -778,6 +787,7 @@ export function navegacao(ctx: Ctx) {
     if (perms.has('chat.conversa.ler')) itens.push({ id: 'conversas', rotulo: cap(t('conversa').plural), icone: 'message-circle', grupo: 'PRINCIPAL', destino: { tela: 'chat.lista' }, contador: 'chat.naoLidas' });
     // Exames depois de Conversas: na barra do celular (5 lugares), o chat é o canal principal do paciente.
     if (perms.has('exames.exame.ler')) itens.push({ id: 'meus-exames', rotulo: `${flex(t('exame').genero, 'Meus', 'Minhas')} ${t('exame').plural}`, icone: 'flask-conical', grupo: 'PRINCIPAL', destino: { tela: 'exames.meus' } });
+    if (perms.has('prontuario.copia.solicitar')) itens.push({ id: 'minhas-copias', rotulo: 'Cópia do prontuário', icone: 'notebook-pen', grupo: 'SECUNDARIO', destino: { tela: 'prontuario.minhas-copias' } });
     if (perms.has('documentos.documento.ler')) itens.push({ id: 'meus-documentos', rotulo: 'Meus documentos', icone: 'file-pen-line', grupo: 'PRINCIPAL', destino: { tela: 'documentos.meus' } });
     itens.push({ id: 'notificacoes', rotulo: 'Notificações', icone: 'bell', grupo: 'PRINCIPAL', destino: { tela: 'notificacoes' }, contador: 'notificacoes.naoLidas' });
   }
@@ -827,6 +837,7 @@ export function telaInicial(ctx: Ctx) {
   secoes.push(...agenda.secoesInicio(ctx));
   secoes.push(...exames.secoesInicio(ctx));
   secoes.push(...documentos.secoesInicio(ctx));
+  secoes.push(...prontuario.secoesInicio(ctx));
   if (ehEquipe(ctx)) {
     if (temModulo(org, 'acompanhamento') && ctx.perms.has('acompanhamento.alerta.ler')) {
       const ordem: Record<string, number> = { ALTA: 0, MEDIA: 1, BAIXA: 2 };

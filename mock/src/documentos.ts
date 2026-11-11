@@ -113,7 +113,7 @@ export function criarDocumento(org: Org, d: { id?: string; pacienteId: string; e
 }
 
 /** PDF simples, mas válido (com xref), em latin1 com as fontes padrão do PDF. */
-function gerarPdf(linhas: Array<{ t: string; tam?: number; negrito?: boolean }>): Buffer {
+export function gerarPdf(linhas: Array<{ t: string; tam?: number; negrito?: boolean }>): Buffer {
   let y = 800;
   const esc = (s: string) => s.replace(/[\\()]/g, (c) => `\\${c}`).replace(/[^\x20-\xff]/g, '?');
   const conteudo = linhas.map((l) => { const tam = l.tam ?? 11; y -= tam + 7; return `BT /${l.negrito ? 'F2' : 'F1'} ${tam} Tf 50 ${y} Td (${esc(l.t)}) Tj ET`; }).join('\n');
