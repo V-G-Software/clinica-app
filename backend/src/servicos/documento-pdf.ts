@@ -18,7 +18,7 @@ export interface DadosPdf {
 
 const br = (d: string) => d.split('-').reverse().join('/');
 /** Remove o que a WinAnsi não representa (emoji etc.) para o PDF nunca falhar por um caractere. */
-const limpo = (s: string) => s.normalize('NFC').replace(/[^\x20-\x7E\u00A0-\u00FF—–·•“”‘’…]/gu, '');
+export const limpo = (s: string) => s.normalize('NFC').replace(/[^\x20-\x7E\u00A0-\u00FF—–·•“”‘’…]/gu, '');
 
 export async function gerarPdfDocumento(d: DadosPdf): Promise<Uint8Array> {
   const doc = await PDFDocument.create({ updateMetadata: false });
@@ -83,7 +83,7 @@ function rodape(page: PDFPage, normal: PDFFont, negrito: PDFFont, qr: any, d: Da
   if (d.teste) linha('AMBIENTE DE TESTE: assinatura com certificado simulado, SEM VALIDADE JURÍDICA.', negrito, 9);
 }
 
-function quebrar(texto: string, fonte: PDFFont, tam: number, largura: number): string[] {
+export function quebrar(texto: string, fonte: PDFFont, tam: number, largura: number): string[] {
   const linhas: string[] = [];
   for (const paragrafo of texto.split('\n')) {
     let atual = '';
