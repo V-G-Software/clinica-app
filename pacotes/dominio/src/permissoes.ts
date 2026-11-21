@@ -14,12 +14,14 @@ export const TODAS_PERMISSOES = [
   'agenda.agendamento.ler', 'agenda.agendamento.criar', 'agenda.agendamento.gerenciar', 'agenda.configuracao.gerenciar',
   'exames.exame.ler', 'exames.pedido.criar', 'exames.resultado.enviar', 'exames.resultado.revisar',
   'documentos.documento.ler', 'documentos.documento.emitir',
+  'prontuario.prontuario.ler', 'prontuario.registro.escrever', 'prontuario.copia.atender', 'prontuario.copia.solicitar', 'prontuario.acesso.auditar',
 ] as const;
 
 /** Tabela da seção 9.6. [DECISÃO 3]: secretária vê check-ins e alertas por padrão. */
 export const PERMISSOES_POR_PERFIL: Record<Perfil, readonly string[]> = {
-  GESTOR: TODAS_PERMISSOES.filter((p) => p !== 'acompanhamento.checkin.responder'),
-  PROFISSIONAL: TODAS_PERMISSOES.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar', 'agenda.configuracao.gerenciar'].includes(p)),
+  // Prontuário (ADR-0019): o gestor audita, não lê (sigilo é da equipe de saúde); quem lê é o profissional.
+  GESTOR: TODAS_PERMISSOES.filter((p) => !['acompanhamento.checkin.responder', 'prontuario.prontuario.ler', 'prontuario.registro.escrever', 'prontuario.copia.atender', 'prontuario.copia.solicitar'].includes(p)),
+  PROFISSIONAL: TODAS_PERMISSOES.filter((p) => !['acompanhamento.checkin.responder', 'equipe.membro.gerenciar', 'organizacao.configuracao.editar', 'agenda.configuracao.gerenciar', 'prontuario.copia.solicitar', 'prontuario.acesso.auditar'].includes(p)),
   SECRETARIA: [
     'pacientes.paciente.ler', 'pacientes.paciente.criar', 'pacientes.paciente.editar', 'pacientes.paciente.convidar',
     'acompanhamento.protocolo.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.acompanhamento.criar',
@@ -32,7 +34,7 @@ export const PERMISSOES_POR_PERFIL: Record<Perfil, readonly string[]> = {
   PACIENTE: [
     'pacientes.paciente.ler', 'acompanhamento.acompanhamento.ler', 'acompanhamento.checkin.ler',
     'acompanhamento.checkin.responder', 'chat.conversa.ler', 'chat.mensagem.enviar', 'agenda.agendamento.ler',
-    'exames.exame.ler', 'documentos.documento.ler',
+    'exames.exame.ler', 'documentos.documento.ler', 'prontuario.copia.solicitar',
   ],
 };
 export const temModulo = (modulos: ModuloAtivo[], id: string) => modulos.some((m) => m.id === id);

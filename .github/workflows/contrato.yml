@@ -5,7 +5,8 @@ on:
     branches: [main]
 jobs:
   contrato-mock-conformidade:
-    runs-on: ubuntu-latest
+    # Runner fixo: o ubuntu-latest passou a ser 26.04, que o Playwright fixado abaixo ainda não suporta.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +56,7 @@ jobs:
     # Backend de referência contra PostgreSQL 17 real: testes do backend (isolamento, eventos, jobs,
     # concorrência, Web Push), conformidade COMPLETA nas 3 organizações e o frontend real apontado para
     # ele só pelo endereço do diretório (critério de saída da F2). Storage local (S3/MinIO: teste próprio depois).
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:
       postgres:
@@ -126,7 +127,7 @@ jobs:
   backend-s3:
     # Mesmo backend com STORAGE=s3 (URLs pré-assinadas, recodificação, miniatura e limpeza da quarentena)
     # contra um S3 local (moto). Cobre o caminho de produção de arquivos que o job `backend` não exercita.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     services:
       postgres:
