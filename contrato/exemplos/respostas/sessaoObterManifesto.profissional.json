@@ -4,7 +4,7 @@
   "contentType": "application/json",
   "corpo": {
     "contrato": {
-      "versao": "1.3.0-rc.1"
+      "versao": "1.4.0-rc.1"
     },
     "organizacao": {
       "id": "org_otorrino",
@@ -187,6 +187,11 @@
           ],
           "entregarPeloChat": true
         }
+      },
+      {
+        "id": "prontuario",
+        "versao": "1.0",
+        "config": {}
       }
     ],
     "navegacao": [
@@ -258,6 +263,16 @@
         "contador": "documentos.paraAssinar"
       },
       {
+        "id": "prontuario-copias",
+        "rotulo": "Cópias de prontuário",
+        "icone": "notebook-pen",
+        "grupo": "SECUNDARIO",
+        "destino": {
+          "tela": "prontuario.copias"
+        },
+        "contador": "prontuario.copiasPendentes"
+      },
+      {
         "id": "notificacoes",
         "rotulo": "Notificações",
         "icone": "bell",
@@ -312,7 +327,10 @@
       "exames.resultado.enviar",
       "exames.resultado.revisar",
       "documentos.documento.ler",
-      "documentos.documento.emitir"
+      "documentos.documento.emitir",
+      "prontuario.prontuario.ler",
+      "prontuario.registro.escrever",
+      "prontuario.copia.atender"
     ],
     "capacidades": {
       "tempoReal": {
@@ -347,12 +365,13 @@
       }
     },
     "contadores": {
-      "notificacoes.naoLidas": 8,
+      "notificacoes.naoLidas": 9,
       "chat.naoLidas": 6,
       "acompanhamento.alertasAbertos": 1,
       "acompanhamento.checkinsPendentes": 3,
       "exames.resultadosParaRevisar": 1,
-      "documentos.paraAssinar": 1
+      "documentos.paraAssinar": 1,
+      "prontuario.copiasPendentes": 1
     }
   }
 }

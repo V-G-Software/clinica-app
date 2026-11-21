@@ -66,7 +66,7 @@ function validarProtocolo(org: Org, p: any) {
   p.checkins.forEach((ck: any, i: number) => {
     const f = r.obterFormularioVersao(org, ck.formulario.id, ck.formulario.versao);
     if (!f) throw invalido(`checkins.${i}.formulario`, 'Formulário ou versão inexistente.');
-    if (f.finalidade === 'CADASTRO') throw invalido(`checkins.${i}.formulario`, 'Use um formulário de check-in.');
+    if (f.finalidade === 'CADASTRO' || f.finalidade === 'PRONTUARIO') throw invalido(`checkins.${i}.formulario`, 'Use um formulário de check-in.');
     if (ck.dias.some((d: number) => d > p.duracaoDias)) throw invalido(`checkins.${i}.dias`, 'Dia além da duração do protocolo.');
     f.campos.forEach((c: any) => campos.add(c.id));
   });
@@ -119,11 +119,13 @@ const ASSINATURAS: Record<string, (b: Buffer) => boolean> = {
 import { handlersAgenda } from './agenda.ts';
 import { cfgExames, ehPdf, exigirEnvioDeExame, handlersExames, temVirus, tiposPermitidos } from './exames.ts';
 import { cfgDocumentos, handlersDocumentos } from './documentos.ts';
+import { handlersProntuario } from './prontuario.ts';
 
 export const handlers: Record<string, Handler> = {
   ...(handlersAgenda as Record<string, Handler>),
   ...(handlersExames as Record<string, Handler>),
   ...(handlersDocumentos as Record<string, Handler>),
+  ...(handlersProntuario as Record<string, Handler>),
   // ─────────── Público ───────────
   publicoObterConfiguracao: (q) => {
     const o = q.org.config;
@@ -239,7 +241,7 @@ export const handlers: Record<string, Handler> = {
   // ─────────── Arquivos ───────────
   arquivosIniciarEnvio: (q) => {
     const cap = q.org.capacidades.upload;
-    if (q.body.finalidade === 'DOCUMENTO') throw invalido('finalidade', 'Documentos são gerados pelo servidor.');
+    if (q.body.finalidade === 'DOCUMENTO' || q.body.finalidade === 'PRONTUARIO') throw invalido('finalidade', 'Este tipo de arquivo é gerado pelo servidor.');
     if (q.body.finalidade === 'EXAME') exigirEnvioDeExame(C(q));
     const tipos = tiposPermitidos(q.org, q.body.finalidade); // PDF só em EXAME (ADR-0017)
     if (!tipos.includes(q.body.tipo)) throw new ErroApi('TIPO_ARQUIVO_NAO_PERMITIDO', `Envie ${tipos.join(', ')}.`);

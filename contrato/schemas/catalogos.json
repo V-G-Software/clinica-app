@@ -1,5 +1,5 @@
 {
-  "x-gerado-de": "contrato/openapi.yaml (1.3.0-rc.1)",
+  "x-gerado-de": "contrato/openapi.yaml (1.4.0-rc.1)",
   "Perfil": [
     "GESTOR",
     "PROFISSIONAL",
@@ -13,7 +13,8 @@
     "equipe",
     "agenda",
     "exames",
-    "documentos"
+    "documentos",
+    "prontuario"
   ],
   "Tela": [
     "inicio",
@@ -49,7 +50,11 @@
     "documentos.lista",
     "documentos.novo",
     "documentos.detalhe",
-    "documentos.meus"
+    "documentos.meus",
+    "prontuario.paciente",
+    "prontuario.registro",
+    "prontuario.copias",
+    "prontuario.minhas-copias"
   ],
   "TermoChave": [
     "organizacao",
@@ -70,7 +75,8 @@
     "acompanhamento.alertasAbertos",
     "acompanhamento.checkinsPendentes",
     "exames.resultadosParaRevisar",
-    "documentos.paraAssinar"
+    "documentos.paraAssinar",
+    "prontuario.copiasPendentes"
   ],
   "Icone": [
     "house",
@@ -96,7 +102,8 @@
     "calendar-check",
     "calendar-clock",
     "flask-conical",
-    "file-pen-line"
+    "file-pen-line",
+    "notebook-pen"
   ],
   "CodigoErro": [
     "AUTENTICACAO_INVALIDA",
@@ -143,7 +150,9 @@
     "EXAME_RESULTADO",
     "EXAME_REVISADO",
     "DOCUMENTO_DISPONIVEL",
-    "DOCUMENTO_ANULADO"
+    "DOCUMENTO_ANULADO",
+    "COPIA_PRONTUARIO_SOLICITADA",
+    "COPIA_PRONTUARIO_DISPONIVEL"
   ],
   "TipoEvento": [
     "chat.mensagem.criada",
@@ -163,7 +172,10 @@
     "exames.pedido.atualizado",
     "exames.resultado.atualizado",
     "documentos.documento.atualizado",
-    "documentos.assinatura.atualizada"
+    "documentos.assinatura.atualizada",
+    "prontuario.ficha.atualizada",
+    "prontuario.registro.atualizado",
+    "prontuario.copia.atualizada"
   ],
   "TipoSecao": [
     "ACOMPANHAMENTO_ATUAL",
@@ -179,7 +191,8 @@
     "AGENDA_DO_DIA",
     "RESULTADOS_PARA_REVISAR",
     "EXAMES_PENDENTES",
-    "DOCUMENTOS_PARA_ASSINAR"
+    "DOCUMENTOS_PARA_ASSINAR",
+    "COPIAS_PRONTUARIO_PENDENTES"
   ],
   "Etapa": [
     "CONCLUIDO",
@@ -219,7 +232,12 @@
     "exames.resultado.enviar",
     "exames.resultado.revisar",
     "documentos.documento.ler",
-    "documentos.documento.emitir"
+    "documentos.documento.emitir",
+    "prontuario.prontuario.ler",
+    "prontuario.registro.escrever",
+    "prontuario.copia.atender",
+    "prontuario.copia.solicitar",
+    "prontuario.acesso.auditar"
   ],
   "TipoCampo": [
     "TEXTO",

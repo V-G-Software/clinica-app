@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Contrato da API — {{PRODUTO}}
-  version: 1.3.0-rc.1
+  version: 1.4.0-rc.1
   summary: Padrão que todo backend de organização segue para atender o frontend único (PWA).
   description: |
     Fonte da verdade do contrato v1. Spec-first (ADR-0001): tipos, cliente, mock e suíte
@@ -56,6 +56,8 @@ tags:
     description: Módulo `agenda` — consultas, procedimentos (cirurgias), grade, bloqueios e autoagendamento (ADR-0016).
   - name: exames
     description: Módulo `exames` — pedidos de exame, resultados (imagem e PDF) e revisão (ADR-0017).
+  - name: prontuario
+    description: Módulo `prontuario` — ficha clínica versionada, anamnese, evolução e adendo imutáveis, linha do tempo, cópia ao paciente e auditoria de acesso (ADR-0019).
   - name: documentos
     description: Módulo `documentos` — receita e atestado assinados com certificado ICP-Brasil em nuvem e entregues pelo chat (ADR-0018).
 security:
@@ -2481,6 +2483,333 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ResultadoExame' }
         default: { $ref: '#/components/responses/Erro' }
+  # ───────────────────────────── Prontuário (ADR-0019) ─────────────────────────────
+  /v1/prontuario/pacientes/{pacienteId}/ficha:
+    get:
+      operationId: prontuarioObterFicha
+      tags: [prontuario]
+      summary: Ficha clínica atual do paciente (registra o acesso)
+      description: Só quem tem `prontuario.prontuario.ler` (profissional). Paciente, secretaria e gestor não profissional → 404. Paciente sem ficha → versão 0 vazia.
+      parameters:
+        - $ref: '#/components/parameters/PacienteProntuarioId'
+      responses:
+        '200':
+          description: Ficha
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FichaClinica' }
+        default: { $ref: '#/components/responses/Erro' }
+    put:
+      operationId: prontuarioAtualizarFicha
+      tags: [prontuario]
+      summary: Grava uma nova versão da ficha (If-Match da versão atual; a anterior é preservada)
+      parameters:
+        - $ref: '#/components/parameters/PacienteProntuarioId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FichaClinicaConteudo' }
+      responses:
+        '200':
+          description: Nova versão
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FichaClinica' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/pacientes/{pacienteId}/ficha/versoes:
+    get:
+      operationId: prontuarioListarVersoesFicha
+      tags: [prontuario]
+      summary: Versões anteriores da ficha, da mais recente para a mais antiga (registra o acesso)
+      parameters:
+        - $ref: '#/components/parameters/PacienteProntuarioId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Versões
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    required: [itens]
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/FichaClinica' } }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/pacientes/{pacienteId}/registros:
+    get:
+      operationId: prontuarioListarRegistros
+      tags: [prontuario]
+      summary: Registros clínicos do paciente, do mais recente para o mais antigo (registra o acesso)
+      description: Rascunhos só aparecem para o próprio autor. Descartados não aparecem.
+      parameters:
+        - $ref: '#/components/parameters/PacienteProntuarioId'
+        - { name: tipo, in: query, required: false, schema: { $ref: '#/components/schemas/TipoRegistroClinico' } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Registros
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    required: [itens]
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/RegistroClinico' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: prontuarioCriarRegistro
+      tags: [prontuario]
+      summary: Cria anamnese, evolução ou adendo (rascunho, ou já finalizado com `finalizar`)
+      description: |
+        `ADENDO` exige `registroOrigemId` de um registro FINALIZADO do mesmo paciente. `modelo` é um
+        formulário com finalidade `PRONTUARIO`; as respostas são validadas contra ele. Exige `texto` ou `respostas`.
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/PacienteProntuarioId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [tipo]
+              properties:
+                tipo: { $ref: '#/components/schemas/TipoRegistroClinico' }
+                texto: { type: [string, 'null'], maxLength: 20000 }
+                formularioId: { $ref: '#/components/schemas/IdOuNulo' }
+                respostas: { oneOf: [{ $ref: '#/components/schemas/Respostas' }, { type: 'null' }] }
+                agendamentoId: { $ref: '#/components/schemas/IdOuNulo' }
+                registroOrigemId: { $ref: '#/components/schemas/IdOuNulo' }
+                finalizar: { type: boolean, default: false }
+      responses:
+        '201':
+          description: Registro criado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistroClinico' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/registros/{registroId}:
+    get:
+      operationId: prontuarioObterRegistro
+      tags: [prontuario]
+      summary: Registro clínico (registra o acesso)
+      parameters:
+        - $ref: '#/components/parameters/RegistroClinicoId'
+      responses:
+        '200':
+          description: Registro
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistroClinico' }
+        default: { $ref: '#/components/responses/Erro' }
+    patch:
+      operationId: prontuarioEditarRegistro
+      tags: [prontuario]
+      summary: Edita o rascunho (só o autor; If-Match). Registro finalizado não muda (422)
+      parameters:
+        - $ref: '#/components/parameters/RegistroClinicoId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                texto: { type: [string, 'null'], maxLength: 20000 }
+                respostas: { oneOf: [{ $ref: '#/components/schemas/Respostas' }, { type: 'null' }] }
+                agendamentoId: { $ref: '#/components/schemas/IdOuNulo' }
+      responses:
+        '200':
+          description: Rascunho atualizado
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistroClinico' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/registros/{registroId}/finalizar:
+    post:
+      operationId: prontuarioFinalizarRegistro
+      tags: [prontuario]
+      summary: Finaliza o rascunho; a partir daqui é imutável (correção só por adendo)
+      parameters:
+        - $ref: '#/components/parameters/RegistroClinicoId'
+      responses:
+        '200':
+          description: Registro finalizado (repetir não muda nada)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistroClinico' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/registros/{registroId}/descartar:
+    post:
+      operationId: prontuarioDescartarRegistro
+      tags: [prontuario]
+      summary: Descarta o rascunho (só o autor). Finalizado não pode ser descartado (422)
+      parameters:
+        - $ref: '#/components/parameters/RegistroClinicoId'
+      responses:
+        '200':
+          description: Rascunho descartado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistroClinico' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/pacientes/{pacienteId}/linha-do-tempo:
+    get:
+      operationId: prontuarioLinhaDoTempo
+      tags: [prontuario]
+      summary: Registros e eventos clínicos dos outros módulos, do mais recente para o mais antigo (registra o acesso)
+      parameters:
+        - $ref: '#/components/parameters/PacienteProntuarioId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Linha do tempo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    required: [itens]
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/ItemLinhaDoTempo' } }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/pacientes/{pacienteId}/acessos:
+    get:
+      operationId: prontuarioListarAcessos
+      tags: [prontuario]
+      summary: Quem acessou o prontuário do paciente (gestão; `prontuario.acesso.auditar`)
+      parameters:
+        - $ref: '#/components/parameters/PacienteProntuarioId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Acessos, do mais recente para o mais antigo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    required: [itens]
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/AcessoProntuario' } }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/copias:
+    get:
+      operationId: prontuarioListarCopias
+      tags: [prontuario]
+      summary: Pedidos de cópia (equipe com `prontuario.copia.atender`; o paciente vê os próprios)
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [SOLICITADA, DISPONIVEL, RECUSADA] } }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Pedidos, do mais recente para o mais antigo
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    required: [itens]
+                    properties:
+                      itens: { type: array, items: { $ref: '#/components/schemas/CopiaProntuario' } }
+        default: { $ref: '#/components/responses/Erro' }
+    post:
+      operationId: prontuarioSolicitarCopia
+      tags: [prontuario]
+      summary: Paciente pede cópia do prontuário (LGPD art. 19); com pedido em aberto, devolve o mesmo
+      x-idempotente: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [pacienteId]
+              properties:
+                pacienteId: { $ref: '#/components/schemas/Id' }
+      responses:
+        '200':
+          description: Já havia um pedido em aberto para este paciente (o mesmo é devolvido)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CopiaProntuario' }
+        '201':
+          description: Pedido registrado; a equipe é avisada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CopiaProntuario' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/copias/{copiaId}/atender:
+    post:
+      operationId: prontuarioAtenderCopia
+      tags: [prontuario]
+      summary: Gera o PDF do prontuário completo e o disponibiliza ao paciente (avisa)
+      parameters:
+        - $ref: '#/components/parameters/CopiaProntuarioId'
+      responses:
+        '200':
+          description: Cópia disponível
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CopiaProntuario' }
+        default: { $ref: '#/components/responses/Erro' }
+  /v1/prontuario/copias/{copiaId}/recusar:
+    post:
+      operationId: prontuarioRecusarCopia
+      tags: [prontuario]
+      summary: Recusa o pedido, com motivo (avisa o paciente)
+      parameters:
+        - $ref: '#/components/parameters/CopiaProntuarioId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [motivo]
+              properties:
+                motivo: { type: string, minLength: 3, maxLength: 1000 }
+      responses:
+        '200':
+          description: Pedido recusado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CopiaProntuario' }
+        default: { $ref: '#/components/responses/Erro' }
+
   # ───────────────────────────── Documentos (ADR-0018) ─────────────────────────────
   /v1/documentos:
     get:
@@ -2814,6 +3143,21 @@ components:
       in: path
       required: true
       schema: { $ref: '#/components/schemas/Id' }
+    PacienteProntuarioId:
+      name: pacienteId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    RegistroClinicoId:
+      name: registroId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
+    CopiaProntuarioId:
+      name: copiaId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Id' }
     DocumentoId:
       name: documentoId
       in: path
@@ -2969,7 +3313,7 @@ components:
     ModuloId:
       type: string
       x-catalogo-nomes: true
-      enum: [pacientes, acompanhamento, chat, equipe, agenda, exames, documentos]
+      enum: [pacientes, acompanhamento, chat, equipe, agenda, exames, documentos, prontuario]
     Tela:
       type: string
       x-catalogo-nomes: true
@@ -3008,6 +3352,10 @@ components:
         - documentos.novo
         - documentos.detalhe
         - documentos.meus
+        - prontuario.paciente
+        - prontuario.registro
+        - prontuario.copias
+        - prontuario.minhas-copias
     TermoChave:
       type: string
       x-catalogo-nomes: true
@@ -3015,12 +3363,12 @@ components:
     ContadorChave:
       type: string
       x-catalogo-nomes: true
-      enum: [chat.naoLidas, notificacoes.naoLidas, acompanhamento.alertasAbertos, acompanhamento.checkinsPendentes, exames.resultadosParaRevisar, documentos.paraAssinar]
+      enum: [chat.naoLidas, notificacoes.naoLidas, acompanhamento.alertasAbertos, acompanhamento.checkinsPendentes, exames.resultadosParaRevisar, documentos.paraAssinar, prontuario.copiasPendentes]
     Icone:
       type: string
       x-catalogo-nomes: true
       description: Nomes do Lucide. Nome desconhecido vira ícone genérico no frontend.
-      enum: [house, users, user, user-plus, activity, heart-pulse, message-circle, bell, settings, clipboard-list, calendar, stethoscope, paw-print, circle-alert, file-text, camera, credit-card, circle-help, log-out, calendar-plus, calendar-check, calendar-clock, flask-conical, file-pen-line]
+      enum: [house, users, user, user-plus, activity, heart-pulse, message-circle, bell, settings, clipboard-list, calendar, stethoscope, paw-print, circle-alert, file-text, camera, credit-card, circle-help, log-out, calendar-plus, calendar-check, calendar-clock, flask-conical, file-pen-line, notebook-pen]
     CodigoErro:
       type: string
       enum:
@@ -3053,7 +3401,7 @@ components:
         - ASSINATURA_INDISPONIVEL
     TipoNotificacao:
       type: string
-      enum: [CHAT_MENSAGEM, CHECKIN_DISPONIVEL, CHECKIN_LEMBRETE, ALERTA_CRIADO, ACOMPANHAMENTO_INICIADO, ACOMPANHAMENTO_CONCLUIDO, CONVITE_ACEITO, SISTEMA, AGENDAMENTO_CRIADO, AGENDAMENTO_ALTERADO, AGENDAMENTO_LEMBRETE, EXAME_PEDIDO, EXAME_RESULTADO, EXAME_REVISADO, DOCUMENTO_DISPONIVEL, DOCUMENTO_ANULADO]
+      enum: [CHAT_MENSAGEM, CHECKIN_DISPONIVEL, CHECKIN_LEMBRETE, ALERTA_CRIADO, ACOMPANHAMENTO_INICIADO, ACOMPANHAMENTO_CONCLUIDO, CONVITE_ACEITO, SISTEMA, AGENDAMENTO_CRIADO, AGENDAMENTO_ALTERADO, AGENDAMENTO_LEMBRETE, EXAME_PEDIDO, EXAME_RESULTADO, EXAME_REVISADO, DOCUMENTO_DISPONIVEL, DOCUMENTO_ANULADO, COPIA_PRONTUARIO_SOLICITADA, COPIA_PRONTUARIO_DISPONIVEL]
     TipoEvento:
       type: string
       x-catalogo-nomes: true
@@ -3076,9 +3424,12 @@ components:
         - exames.resultado.atualizado
         - documentos.documento.atualizado
         - documentos.assinatura.atualizada
+        - prontuario.ficha.atualizada
+        - prontuario.registro.atualizado
+        - prontuario.copia.atualizada
     TipoSecao:
       type: string
-      enum: [ACOMPANHAMENTO_ATUAL, CHECKINS_PENDENTES, ALERTAS_ABERTOS, CHECKINS_DO_DIA, ACOMPANHAMENTOS_ATIVOS, CONVERSAS_RECENTES, ATALHOS, AVISO, CONTATO_ORGANIZACAO, PROXIMA_CONSULTA, AGENDA_DO_DIA, RESULTADOS_PARA_REVISAR, EXAMES_PENDENTES, DOCUMENTOS_PARA_ASSINAR]
+      enum: [ACOMPANHAMENTO_ATUAL, CHECKINS_PENDENTES, ALERTAS_ABERTOS, CHECKINS_DO_DIA, ACOMPANHAMENTOS_ATIVOS, CONVERSAS_RECENTES, ATALHOS, AVISO, CONTATO_ORGANIZACAO, PROXIMA_CONSULTA, AGENDA_DO_DIA, RESULTADOS_PARA_REVISAR, EXAMES_PENDENTES, DOCUMENTOS_PARA_ASSINAR, COPIAS_PRONTUARIO_PENDENTES]
     Severidade:
       type: string
       enum: [BAIXA, MEDIA, ALTA]
@@ -3497,6 +3848,11 @@ components:
         - exames.resultado.revisar
         - documentos.documento.ler
         - documentos.documento.emitir
+        - prontuario.prontuario.ler
+        - prontuario.registro.escrever
+        - prontuario.copia.atender
+        - prontuario.copia.solicitar
+        - prontuario.acesso.auditar
     Capacidades:
       type: object
       additionalProperties: false
@@ -3700,6 +4056,15 @@ components:
                 properties:
                   total: { type: integer, minimum: 0 }
                   itens: { type: array, items: { $ref: '#/components/schemas/ResultadoExame' } }
+        - if: { properties: { tipo: { const: COPIAS_PRONTUARIO_PENDENTES } } }
+          then:
+            properties:
+              dados:
+                type: object
+                required: [total, itens]
+                properties:
+                  total: { type: integer, minimum: 0 }
+                  itens: { type: array, items: { $ref: '#/components/schemas/CopiaProntuario' } }
         - if: { properties: { tipo: { const: DOCUMENTOS_PARA_ASSINAR } } }
           then:
             properties:
@@ -3761,8 +4126,8 @@ components:
     # ─────────── Arquivos ───────────
     FinalidadeArquivo:
       type: string
-      enum: [CHECKIN, CHAT, PERFIL, ORGANIZACAO, EXAME, DOCUMENTO]
-      description: '`DOCUMENTO` só o servidor cria (PDF assinado, ADR-0018); `POST /v1/arquivos` com ela → 422.'
+      enum: [CHECKIN, CHAT, PERFIL, ORGANIZACAO, EXAME, DOCUMENTO, PRONTUARIO]
+      description: '`DOCUMENTO` e `PRONTUARIO` só o servidor cria (PDF assinado, ADR-0018; cópia do prontuário, ADR-0019); `POST /v1/arquivos` com elas → 422.'
     EnvioArquivo:
       type: object
       additionalProperties: false
@@ -3849,6 +4214,12 @@ components:
           then: { properties: { dados: { required: [documentoId] } } }
         - if: { properties: { tipo: { const: documentos.assinatura.atualizada } } }
           then: { properties: { dados: { required: [sessaoId] } } }
+        - if: { properties: { tipo: { const: prontuario.ficha.atualizada } } }
+          then: { properties: { dados: { required: [pacienteId] } } }
+        - if: { properties: { tipo: { const: prontuario.registro.atualizado } } }
+          then: { properties: { dados: { required: [pacienteId, registroId] } } }
+        - if: { properties: { tipo: { const: prontuario.copia.atualizada } } }
+          then: { properties: { dados: { required: [copiaId] } } }
 
     # ─────────── Pacientes ───────────
     TipoPaciente:
@@ -4013,7 +4384,7 @@ components:
       required: [titulo, campos]
       properties:
         titulo: { type: string, minLength: 1, maxLength: 200 }
-        finalidade: { type: string, enum: [CHECKIN, CADASTRO], default: CHECKIN }
+        finalidade: { type: string, enum: [CHECKIN, CADASTRO, PRONTUARIO], default: CHECKIN, description: '`PRONTUARIO`: modelo de anamnese ou evolução por especialidade (ADR-0019).' }
         campos:
           type: array
           minItems: 1
@@ -4027,7 +4398,7 @@ components:
         id: { $ref: '#/components/schemas/Id' }
         versao: { type: integer, minimum: 1 }
         titulo: { type: string }
-        finalidade: { type: string, enum: [CHECKIN, CADASTRO] }
+        finalidade: { type: string, enum: [CHECKIN, CADASTRO, PRONTUARIO] }
         campos:
           type: array
           items: { $ref: '#/components/schemas/CampoFormulario' }
@@ -4637,6 +5008,145 @@ components:
       required: [pacienteEnviaResultados]
       properties:
         pacienteEnviaResultados: { type: boolean, description: 'Paciente envia resultados pelo app (RN-EXA-003). Padrão: `true`.' }
+    # ─────────── Prontuário (ADR-0019) ───────────
+    AlergiaFicha:
+      type: object
+      additionalProperties: false
+      required: [substancia, reacao, gravidade]
+      properties:
+        substancia: { type: string, minLength: 2, maxLength: 200 }
+        reacao: { type: [string, 'null'], maxLength: 500 }
+        gravidade: { type: string, enum: [LEVE, MODERADA, GRAVE, DESCONHECIDA] }
+    MedicamentoFicha:
+      type: object
+      additionalProperties: false
+      required: [nome, posologia]
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 200 }
+        posologia: { type: [string, 'null'], maxLength: 500 }
+    ProblemaFicha:
+      type: object
+      additionalProperties: false
+      required: [descricao, cid, situacao, desde]
+      description: Problema ou diagnóstico (hipótese ou definitivo).
+      properties:
+        descricao: { type: string, minLength: 2, maxLength: 300 }
+        cid: { type: [string, 'null'], pattern: '^[A-Z][0-9]{2}(\.[0-9]{1,2})?$' }
+        situacao: { type: string, enum: [ATIVO, RESOLVIDO] }
+        desde: { oneOf: [{ $ref: '#/components/schemas/Data' }, { type: 'null' }] }
+    AntecedentesFicha:
+      type: object
+      additionalProperties: false
+      required: [pessoais, familiares, habitos]
+      properties:
+        pessoais: { type: [string, 'null'], maxLength: 4000 }
+        familiares: { type: [string, 'null'], maxLength: 4000 }
+        habitos: { type: [string, 'null'], maxLength: 4000, description: Tabagismo, álcool, atividade física etc. }
+    FichaClinicaConteudo:
+      type: object
+      additionalProperties: false
+      required: [alergias, medicamentosEmUso, problemas, antecedentes]
+      properties:
+        alergias: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/AlergiaFicha' } }
+        medicamentosEmUso: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/MedicamentoFicha' } }
+        problemas: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/ProblemaFicha' } }
+        antecedentes: { $ref: '#/components/schemas/AntecedentesFicha' }
+    FichaClinica:
+      type: object
+      additionalProperties: false
+      description: Versão da ficha clínica. Cada alteração cria uma versão nova; as anteriores ficam em `/versoes`. A versão 0 é a ficha vazia (ninguém editou ainda).
+      required: [pacienteId, versao, alergias, medicamentosEmUso, problemas, antecedentes, atualizadoEm, atualizadoPor, acoesPermitidas]
+      properties:
+        pacienteId: { $ref: '#/components/schemas/Id' }
+        versao: { type: integer, minimum: 0 }
+        alergias: { type: array, items: { $ref: '#/components/schemas/AlergiaFicha' } }
+        medicamentosEmUso: { type: array, items: { $ref: '#/components/schemas/MedicamentoFicha' } }
+        problemas: { type: array, items: { $ref: '#/components/schemas/ProblemaFicha' } }
+        antecedentes: { $ref: '#/components/schemas/AntecedentesFicha' }
+        atualizadoEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+        atualizadoPor: { oneOf: [{ $ref: '#/components/schemas/ReferenciaUsuario' }, { type: 'null' }] }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR] }
+    TipoRegistroClinico:
+      type: string
+      enum: [ANAMNESE, EVOLUCAO, ADENDO]
+    StatusRegistroClinico:
+      type: string
+      enum: [RASCUNHO, FINALIZADO, DESCARTADO]
+    RegistroClinico:
+      type: object
+      additionalProperties: false
+      required: [id, paciente, tipo, status, autor, texto, modelo, respostas, agendamentoId, registroOrigemId, adendosIds, criadoEm, finalizadoEm, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        tipo: { $ref: '#/components/schemas/TipoRegistroClinico' }
+        status: { $ref: '#/components/schemas/StatusRegistroClinico' }
+        autor: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        texto: { type: [string, 'null'] }
+        modelo:
+          oneOf:
+            - type: 'null'
+            - type: object
+              additionalProperties: false
+              required: [formularioId, versao, titulo]
+              properties:
+                formularioId: { $ref: '#/components/schemas/Id' }
+                versao: { type: integer, minimum: 1 }
+                titulo: { type: string }
+          description: Modelo por especialidade (formulário com finalidade `PRONTUARIO`), fixado na versão usada.
+        respostas: { oneOf: [{ $ref: '#/components/schemas/Respostas' }, { type: 'null' }] }
+        agendamentoId: { $ref: '#/components/schemas/IdOuNulo' }
+        registroOrigemId: { $ref: '#/components/schemas/IdOuNulo', description: 'Só em `ADENDO`: o registro finalizado que ele corrige ou complementa.' }
+        adendosIds:
+          type: array
+          items: { $ref: '#/components/schemas/Id' }
+          description: Adendos finalizados deste registro, do mais antigo ao mais recente.
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        finalizadoEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [EDITAR, FINALIZAR, DESCARTAR, ADENDAR] }
+    ItemLinhaDoTempo:
+      type: object
+      additionalProperties: false
+      required: [tipo, id, titulo, resumo, ocorridoEm, destino]
+      properties:
+        tipo: { type: string, enum: [REGISTRO, AGENDAMENTO, ACOMPANHAMENTO, RESULTADO_EXAME, DOCUMENTO] }
+        id: { $ref: '#/components/schemas/Id' }
+        titulo: { type: string }
+        resumo: { type: [string, 'null'] }
+        ocorridoEm: { $ref: '#/components/schemas/DataHora' }
+        destino: { $ref: '#/components/schemas/Destino' }
+    AcessoProntuario:
+      type: object
+      additionalProperties: false
+      required: [usuario, acao, acessadoEm]
+      properties:
+        usuario: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        acao: { type: string, enum: [LER_FICHA, LER_REGISTROS, LER_REGISTRO, LER_LINHA_DO_TEMPO, LER_VERSOES, GERAR_COPIA] }
+        acessadoEm: { $ref: '#/components/schemas/DataHora' }
+    CopiaProntuario:
+      type: object
+      additionalProperties: false
+      required: [id, paciente, solicitante, status, prazoEm, arquivo, motivoRecusa, atendidoPor, criadoEm, atendidoEm, acoesPermitidas]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        paciente: { $ref: '#/components/schemas/Referencia' }
+        solicitante: { $ref: '#/components/schemas/ReferenciaUsuario' }
+        status: { type: string, enum: [SOLICITADA, DISPONIVEL, RECUSADA] }
+        prazoEm: { $ref: '#/components/schemas/DataHora', description: '15 dias depois do pedido (LGPD art. 19, II).' }
+        arquivo:
+          oneOf: [{ $ref: '#/components/schemas/Arquivo' }, { type: 'null' }]
+          description: PDF do prontuário completo (finalidade `PRONTUARIO`), só em `DISPONIVEL`.
+        motivoRecusa: { type: [string, 'null'] }
+        atendidoPor: { oneOf: [{ $ref: '#/components/schemas/ReferenciaUsuario' }, { type: 'null' }] }
+        criadoEm: { $ref: '#/components/schemas/DataHora' }
+        atendidoEm: { $ref: '#/components/schemas/DataHoraOuNulo' }
+        acoesPermitidas:
+          type: array
+          items: { type: string, enum: [ATENDER, RECUSAR] }
     # ─────────── Documentos (ADR-0018) ───────────
     TipoDocumento:
       type: string

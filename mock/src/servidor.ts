@@ -15,6 +15,7 @@ import { handlers, type Res } from './handlers.ts';
 import { carregarAgenda } from './agenda.ts';
 import { carregarExames } from './exames.ts';
 import { autorizarNoPsc, carregarDocumentos } from './documentos.ts';
+import { carregarProntuario } from './prontuario.ts';
 import * as r from './regras.ts';
 import { agoraIso, agoraMs, comRelogioForcado, DIA, definirRelogio, HORA, iso, RELOGIO_INICIAL } from './tempo.ts';
 
@@ -67,6 +68,7 @@ function carregarCenario(cenario: any) {
   carregarAgenda(org, cenario);
   carregarExames(org, cenario, r.arquivoDeExemplo);
   carregarDocumentos(org, cenario);
+  carregarProntuario(org, cenario, agendar);
   for (const c of cenario.conversas ?? []) {
     agendar(`seed:${c.id}:criar`, Date.parse(c.criadoEm), () => {
       const conv = r.criarConversa(org, c.pacienteId, c.participantesIds);

@@ -1,0 +1,50 @@
+{
+  "requisicao": "GET /v1/prontuario/pacientes/pac_marcos/ficha",
+  "status": 200,
+  "contentType": "application/json",
+  "corpo": {
+    "pacienteId": "pac_marcos",
+    "versao": 1,
+    "alergias": [
+      {
+        "substancia": "Penicilina",
+        "reacao": "Urticária e edema de glote",
+        "gravidade": "GRAVE"
+      }
+    ],
+    "medicamentosEmUso": [
+      {
+        "nome": "Losartana 50 mg",
+        "posologia": "1 comprimido ao dia"
+      }
+    ],
+    "problemas": [
+      {
+        "descricao": "Desvio de septo nasal",
+        "cid": "J34.2",
+        "situacao": "ATIVO",
+        "desde": "2026-10-20"
+      },
+      {
+        "descricao": "Hipertensão arterial",
+        "cid": "I10",
+        "situacao": "ATIVO",
+        "desde": null
+      }
+    ],
+    "antecedentes": {
+      "pessoais": "Sinusites de repetição desde a adolescência.",
+      "familiares": "Pai hipertenso.",
+      "habitos": "Não fuma. Atividade física 2x por semana."
+    },
+    "atualizadoEm": "2026-10-20T14:30:00Z",
+    "atualizadoPor": {
+      "usuarioId": "usr_ana",
+      "nome": "Dra. Ana Lima",
+      "perfil": "PROFISSIONAL"
+    },
+    "acoesPermitidas": [
+      "EDITAR"
+    ]
+  }
+}

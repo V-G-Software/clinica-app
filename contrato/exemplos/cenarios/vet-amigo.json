@@ -85,7 +85,8 @@
     { "id": "equipe", "versao": "1.0", "config": {} },
     { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": false, "antecedenciaMinimaHoras": 4, "janelaDias": 60, "cancelamentoAteHoras": 12, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } },
     { "id": "exames", "versao": "1.0", "config": { "pacienteEnviaResultados": false } },
-    { "id": "documentos", "versao": "1.0", "config": { "tiposPermitidos": ["RECEITA"], "entregarPeloChat": true } }
+    { "id": "documentos", "versao": "1.0", "config": { "tiposPermitidos": ["RECEITA"], "entregarPeloChat": true } },
+    { "id": "prontuario", "versao": "1.0", "config": {} }
   ],
   "capacidades": {
     "tempoReal": { "modo": "POLLING", "intervaloPollingSegundos": 15 },
@@ -110,6 +111,12 @@
       "vinculos": [{ "pacienteId": "pac_nina", "relacao": "ANIMAL" }] }
   ],
   "formularios": [
+    { "id": "frm_evolucao_vet", "versao": 1, "titulo": "Evolução — clínica de pequenos animais", "finalidade": "PRONTUARIO", "campos": [
+      { "id": "queixa", "tipo": "TEXTO_LONGO", "rotulo": "Queixa do tutor", "obrigatorio": true },
+      { "id": "peso", "tipo": "NUMERO", "rotulo": "Peso (kg)", "obrigatorio": false, "min": 0, "max": 200 },
+      { "id": "exameFisico", "tipo": "TEXTO_LONGO", "rotulo": "Exame físico", "obrigatorio": false },
+      { "id": "conduta", "tipo": "TEXTO_LONGO", "rotulo": "Conduta", "obrigatorio": true }
+    ] },
     {
       "id": "frm_cadastro_pet", "versao": 1, "titulo": "Dados do pet", "finalidade": "CADASTRO",
       "campos": [
@@ -221,6 +228,19 @@
       { "id": "doc_thor_receita", "tipo": "RECEITA", "pacienteId": "pac_thor", "emissorId": "usr_renata", "criadoEm": "2026-11-06T17:00:00Z",
         "receita": { "itens": [{ "medicamento": "Meloxicam 0,5 mg, comprimido", "posologia": "1 comprimido a cada 24 horas, por 3 dias, junto com a comida.", "quantidade": "3 comprimidos" }], "orientacoes": "Manter o colar até a retirada dos pontos." },
         "assinar": { "em": "2026-11-06T17:05:00Z", "codigo": "THORRECEITAVET01" } }
+    ]
+  },
+  "prontuario": {
+    "$comentario": "Prontuário veterinário (ADR-0019): ficha e evolução do Thor pela Dra. Renata.",
+    "fichas": [
+      { "pacienteId": "pac_thor", "porId": "usr_renata", "em": "2026-11-05T15:00:00Z", "conteudo": {
+        "alergias": [], "medicamentosEmUso": [],
+        "problemas": [{ "descricao": "Castração eletiva", "cid": null, "situacao": "RESOLVIDO", "desde": "2026-11-06" }],
+        "antecedentes": { "pessoais": "Vacinação em dia.", "familiares": null, "habitos": "Ração seca, passeios diários." } } }
+    ],
+    "registros": [
+      { "id": "reg_thor_evolucao", "pacienteId": "pac_thor", "autorId": "usr_renata", "tipo": "EVOLUCAO", "em": "2026-11-06T17:00:00Z", "finalizar": true,
+        "formularioId": "frm_evolucao_vet", "respostas": { "queixa": "Retorno pós-castração.", "peso": 32.5, "conduta": "Manter colar e anti-inflamatório por 3 dias." } }
     ]
   }
 }

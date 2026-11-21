@@ -84,7 +84,8 @@
     { "id": "equipe", "versao": "1.0", "config": {} },
     { "id": "agenda", "versao": "1.0", "config": { "autoagendamento": true, "antecedenciaMinimaHoras": 2, "janelaDias": 30, "cancelamentoAteHoras": 24, "lembreteHorasAntes": 24, "intervaloMinutos": 30 } },
     { "id": "exames", "versao": "1.0", "config": { "pacienteEnviaResultados": true } },
-    { "id": "documentos", "versao": "1.0", "config": { "tiposPermitidos": ["RECEITA", "ATESTADO"], "entregarPeloChat": true } }
+    { "id": "documentos", "versao": "1.0", "config": { "tiposPermitidos": ["RECEITA", "ATESTADO"], "entregarPeloChat": true } },
+    { "id": "prontuario", "versao": "1.0", "config": {} }
   ],
   "capacidades": {
     "tempoReal": { "modo": "SSE", "intervaloPollingSegundos": 20 },
@@ -120,6 +121,14 @@
       "vinculos": [{ "pacienteId": "pac_sonia", "relacao": "PROPRIO" }], "$comentario": "Sem push: avisos vão por e-mail." }
   ],
   "formularios": [
+    { "id": "frm_evolucao_otorrino", "versao": 1, "titulo": "Evolução — otorrinolaringologia", "finalidade": "PRONTUARIO", "campos": [
+      { "id": "queixa", "tipo": "TEXTO_LONGO", "rotulo": "Queixa e história", "obrigatorio": true },
+      { "id": "otoscopia", "tipo": "TEXTO", "rotulo": "Otoscopia", "obrigatorio": false },
+      { "id": "rinoscopia", "tipo": "TEXTO", "rotulo": "Rinoscopia", "obrigatorio": false },
+      { "id": "oroscopia", "tipo": "TEXTO", "rotulo": "Oroscopia", "obrigatorio": false },
+      { "id": "hipotese", "tipo": "TEXTO", "rotulo": "Hipótese diagnóstica", "obrigatorio": false },
+      { "id": "conduta", "tipo": "TEXTO_LONGO", "rotulo": "Conduta", "obrigatorio": true }
+    ] },
     {
       "id": "frm_cadastro_basico", "versao": 1, "titulo": "Dados adicionais", "finalidade": "CADASTRO",
       "campos": [
@@ -316,6 +325,30 @@
           { "medicamento": "Cloreto de sódio 0,9%, solução nasal", "posologia": "Aplicar 2 jatos em cada narina, 4 vezes ao dia.", "quantidade": "1 frasco" },
           { "medicamento": "Paracetamol 750 mg, comprimido", "posologia": "1 comprimido de 8 em 8 horas, se dor ou febre.", "quantidade": "1 caixa" }
         ], "orientacoes": "Começar no dia seguinte à cirurgia." } }
+    ]
+  },
+  "prontuario": {
+    "$comentario": "Prontuário (ADR-0019). Marcos: ficha com alergia grave, anamnese, evolução pós-operatória com modelo e um adendo. Beatriz pediu cópia do prontuário (aguardando a equipe).",
+    "fichas": [
+      { "pacienteId": "pac_marcos", "porId": "usr_ana", "em": "2026-10-20T14:30:00Z", "conteudo": {
+        "alergias": [{ "substancia": "Penicilina", "reacao": "Urticária e edema de glote", "gravidade": "GRAVE" }],
+        "medicamentosEmUso": [{ "nome": "Losartana 50 mg", "posologia": "1 comprimido ao dia" }],
+        "problemas": [
+          { "descricao": "Desvio de septo nasal", "cid": "J34.2", "situacao": "ATIVO", "desde": "2026-10-20" },
+          { "descricao": "Hipertensão arterial", "cid": "I10", "situacao": "ATIVO", "desde": null }
+        ],
+        "antecedentes": { "pessoais": "Sinusites de repetição desde a adolescência.", "familiares": "Pai hipertenso.", "habitos": "Não fuma. Atividade física 2x por semana." } } }
+    ],
+    "registros": [
+      { "id": "reg_marcos_anamnese", "pacienteId": "pac_marcos", "autorId": "usr_ana", "tipo": "ANAMNESE", "em": "2026-10-20T14:20:00Z", "finalizar": true,
+        "texto": "Obstrução nasal crônica à esquerda, pior à noite, há 5 anos. Roncos. Nega epistaxe. Tomografia solicitada." },
+      { "id": "reg_marcos_evolucao", "pacienteId": "pac_marcos", "autorId": "usr_ana", "tipo": "EVOLUCAO", "em": "2026-11-07T13:00:00Z", "finalizar": true,
+        "formularioId": "frm_evolucao_otorrino", "respostas": { "queixa": "Pós-operatório de septoplastia, dia 2. Dor leve controlada.", "rinoscopia": "Splints em posição, sem sangramento ativo.", "conduta": "Manter lavagem nasal. Retorno em 5 dias para retirada dos splints." } },
+      { "id": "reg_marcos_adendo", "pacienteId": "pac_marcos", "autorId": "usr_ana", "tipo": "ADENDO", "em": "2026-11-07T13:40:00Z", "finalizar": true, "registroOrigemId": "reg_marcos_evolucao",
+        "texto": "Correção: retorno em 7 dias (não 5), conforme agenda do centro cirúrgico." }
+    ],
+    "copias": [
+      { "pacienteId": "pac_beatriz", "solicitanteId": "usr_beatriz", "em": "2026-11-07T18:00:00Z" }
     ]
   }
 }

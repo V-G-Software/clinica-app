@@ -41,7 +41,8 @@ export async function criarOrganizacao(c: pg.Client, cen: any, log = console.log
       configuracao(o), cen.termos, modulosSuportados(cen, log), cen.capacidades]);
     await c.query("SELECT set_config('app.organizacao_id', $1, true)", [o.id]);
     const termos = o.autenticacao.termosVersao;
-    for (const f of cen.formularios ?? [])
+    // Modelos de prontuário (finalidade PRONTUARIO, ADR-0019) só entram quando o backend implementar o módulo.
+    for (const f of (cen.formularios ?? []).filter((x: any) => x.finalidade !== 'PRONTUARIO' || MODULOS_IMPLEMENTADOS.has('prontuario')))
       await c.query('INSERT INTO formularios (organizacao_id, id, versao, titulo, finalidade, campos) VALUES ($1,$2,$3,$4,$5,$6)', [o.id, f.id, f.versao, f.titulo, f.finalidade, JSON.stringify(f.campos)]);
     for (const p of cen.pacientes ?? [])
       await c.query(`INSERT INTO pacientes (organizacao_id, id, tipo, nome, nome_social, data_nascimento, contato, campos_adicionais, responsaveis, nome_busca, criado_em)

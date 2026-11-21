@@ -37,8 +37,8 @@
                   "finalidade": "EXAME",
                   "status": "DISPONIVEL",
                   "motivoRejeicao": null,
-                  "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc000062?exp=1794144900182&assinatura=mw7vjsye.000062",
-                  "urlMiniatura": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc000062?exp=1794144900182&assinatura=mw7vjsye.000062&miniatura=1",
+                  "urlVisualizacao": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc000062?exp=1794144900041&assinatura=mw7vjsuh.000062",
+                  "urlMiniatura": "http://localhost:4010/__mock/arquivos/modelo-otorrino/arq_0mw4x9xc000062?exp=1794144900041&assinatura=mw7vjsuh.000062&miniatura=1",
                   "urlsExpiramEm": "2026-11-08T13:35:00Z",
                   "criadoEm": "2026-11-06T12:00:00Z"
                 }
@@ -112,6 +112,38 @@
                 "EDITAR",
                 "DESCARTAR",
                 "ASSINAR"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "copias-prontuario-pendentes",
+        "tipo": "COPIAS_PRONTUARIO_PENDENTES",
+        "dados": {
+          "total": 1,
+          "itens": [
+            {
+              "id": "cop_0mw6pkqo000091",
+              "paciente": {
+                "id": "pac_beatriz",
+                "nome": "Beatriz Costa"
+              },
+              "solicitante": {
+                "usuarioId": "usr_beatriz",
+                "nome": "Beatriz Costa",
+                "perfil": "PACIENTE"
+              },
+              "status": "SOLICITADA",
+              "prazoEm": "2026-11-22T18:00:00Z",
+              "arquivo": null,
+              "motivoRecusa": null,
+              "atendidoPor": null,
+              "criadoEm": "2026-11-07T18:00:00Z",
+              "atendidoEm": null,
+              "acoesPermitidas": [
+                "ATENDER",
+                "RECUSAR"
               ]
             }
           ]
@@ -410,7 +442,7 @@
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw7s5mo00009n",
+                "id": "msg_0mw7s5mo00009q",
                 "resumo": "Hoje começam as lavagens nasais com soro, 3 vezes ao dia.",
                 "autorNome": null,
                 "enviadoEm": "2026-11-08T12:00:00Z"
@@ -454,7 +486,7 @@
                 }
               ],
               "ultimaMensagem": {
-                "id": "msg_0mw6w080000098",
+                "id": "msg_0mw6w08000009b",
                 "resumo": "Mantenha a cabeceira elevada e evite assoar o nariz.",
                 "autorNome": null,
                 "enviadoEm": "2026-11-07T21:00:00Z"
